@@ -1,0 +1,5 @@
+# 复制本文件为 android/key.properties 并填入真实值后再执行 flutter build apk --release
+storePassword=CHANGE_ME
+keyPassword=CHANGE_ME
+keyAlias=upload
+storeFile=../upload-keystore.jks

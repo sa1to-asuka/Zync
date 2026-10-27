@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#051218"/>
+      <stop offset="0.55" stop-color="#0A222C"/>
+      <stop offset="1" stop-color="#103544"/>
+    </linearGradient>
+    <linearGradient id="z" x1="0.15" y1="0.12" x2="0.85" y2="0.88">
+      <stop offset="0" stop-color="#F6FFFD"/>
+      <stop offset="0.48" stop-color="#8CFCEB"/>
+      <stop offset="1" stop-color="#26DFC3"/>
+    </linearGradient>
+    <linearGradient id="orbit" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7AF7E4"/>
+      <stop offset="1" stop-color="#22D3B8"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.46" r="0.54">
+      <stop offset="0" stop-color="#39E8D1" stop-opacity="0.24"/>
+      <stop offset="0.65" stop-color="#39E8D1" stop-opacity="0.06"/>
+      <stop offset="1" stop-color="#39E8D1" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.46"/>
+    </filter>
+  </defs>
+  <!-- Rounded squircle base -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="112" fill="url(#glow)"/>
+
+  <!-- Camera lens outer mount ring & subtle aperture ticks -->
+  <circle cx="256" cy="256" r="206" fill="none" stroke="#39E8D1" stroke-opacity="0.14" stroke-width="2.5"/>
+  <circle cx="256" cy="256" r="142" fill="none" stroke="#39E8D1" stroke-opacity="0.08" stroke-width="2" stroke-dasharray="10 14"/>
+
+  <!-- Outer echo orbit segments -->
+  <g fill="none" stroke="#45EBD5" stroke-width="6" stroke-linecap="round" stroke-opacity="0.26">
+    <path d="M 103.5 344.0 A 176 176 0 0 1 103.5 168.0"/>
+    <path d="M 408.5 168.0 A 176 176 0 0 1 408.5 344.0"/>
+  </g>
+
+  <!-- Primary sync orbit arcs (r=160, 140deg to 220deg & 320deg to 40deg) -->
+  <g fill="none" stroke="url(#orbit)" stroke-width="11" stroke-linecap="round">
+    <path d="M 133.4 358.8 A 160 160 0 0 1 133.4 153.2"/>
+    <path d="M 378.6 153.2 A 160 160 0 0 1 378.6 358.8"/>
+  </g>
+
+  <!-- Tangent-aligned orbit arrowheads -->
+  <g fill="none" stroke="#7AF7E4" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Top-left arrowhead at (133.4, 153.2), tangent pointing NE -->
+    <path d="M 116.5 160.2 L 133.4 153.2 L 137.8 171.2"/>
+    <!-- Bottom-right arrowhead at (378.6, 358.8), tangent pointing SW -->
+    <path d="M 395.5 351.8 L 378.6 358.8 L 374.2 340.8"/>
+  </g>
+
+  <!-- Glowing sync nodes at arc origins -->
+  <circle cx="133.4" cy="358.8" r="7.5" fill="#B8FFF4"/>
+  <circle cx="378.6" cy="153.2" r="7.5" fill="#FFD100"/>
+
+  <!-- Central Z emblem -->
+  <g filter="url(#shadow)">
+    <path d="M154 148H358V202L248 310H358V364H154V310L264 202H154Z" fill="url(#z)"/>
+  </g>
+</svg>

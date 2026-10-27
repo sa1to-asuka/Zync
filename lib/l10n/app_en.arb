@@ -1,0 +1,1399 @@
+{
+  "@@locale": "en",
+  "appTitle": "Zync - Nikon Z Transfer & Darkroom Studio",
+  "navConnect": "Connect",
+  "navGallery": "Camera Roll",
+  "navWatermark": "Watermark Studio",
+  "navSettings": "Settings",
+  "exitConfirmHint": "Press back again to exit Zync",
+  "sidebarCollapse": "Collapse sidebar",
+  "sidebarExpand": "Expand sidebar",
+  "commonCancel": "Cancel",
+  "commonConfirm": "Confirm",
+  "commonSave": "Save",
+  "commonDone": "Done",
+  "commonReset": "Reset",
+  "commonDelete": "Delete",
+  "commonApply": "Apply",
+  "commonRetry": "Retry",
+  "commonRemove": "Remove",
+  "commonClear": "Clear",
+  "commonMore": "More",
+  "commonClose": "Close",
+  "commonExit": "Exit",
+  "commonYes": "Yes",
+  "commonNo": "No",
+  "commonGotIt": "Got it",
+  "commonExport": "Export",
+  "commonImport": "Import",
+  "commonEdit": "Edit",
+  "commonUndo": "Undo",
+  "commonRedo": "Redo",
+  "commonOriginal": "Original",
+  "commonCompare": "Compare",
+  "commonCustom": "Custom",
+  "commonDefault": "Default",
+  "commonNone": "None",
+  "commonAll": "All",
+  "commonView": "View",
+  "commonRefresh": "Refresh",
+  "commonUnknownError": "Unknown error",
+  "commonUnknownSize": "Unknown size",
+  "commonSupported": "Supported",
+  "commonUnsupported": "Unsupported",
+  "commonOn": "On",
+  "commonOff": "Off",
+  "commonDisabled": "Off",
+  "commonSuccess": "Success",
+  "commonFailed": "Failed",
+  "commonWarning": "Warning",
+  "langSystem": "System default",
+  "langSystemDesc": "Follow device language (fallback to English)",
+  "langEn": "English",
+  "langEnSub": "English interface",
+  "langZh": "简体中文",
+  "langZhSub": "Simplified Chinese",
+  "langJa": "日本語",
+  "langJaSub": "Japanese interface",
+  "themeSystem": "System default",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "themeSystemSub": "Switch automatically with device appearance",
+  "themeLightSub": "Soft neutral paper surface with muted teal accent",
+  "themeDarkSub": "Neutral graphite darkroom surface for accurate color judgment",
+  "onboardingSkip": "Skip",
+  "onboardingBack": "Back",
+  "onboardingNext": "Continue",
+  "onboardingStart": "Enter Studio",
+  "onboardingStepOf": "Step {current} of {total}",
+  "@onboardingStepOf": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "onboardingLangTitle": "Choose Your Language",
+  "onboardingLangSubtitle": "Tap a language to preview immediately. You can change this anytime in Settings.",
+  "onboardingThemeTitle": "Darkroom Appearance",
+  "onboardingThemeSubtitle": "Crafted with a neutral graphite surface and muted teal accent so your photos stay true to color.",
+  "onboardingThemePreviewTitle": "Live Darkroom Preview",
+  "onboardingThemePreviewSub": "NIKON Z 8 · NIKKOR Z 50mm f/1.2 S · 1/500s f/1.8 ISO 100",
+  "onboardingConnTitle": "Direct Camera Workflow",
+  "onboardingConnSubtitle": "Connect without cloud accounts or proprietary SDKs, browse RAW & JPEG, and finish in the studio.",
+  "onboardingConnWifiTitle": "Wi-Fi PTP/IP Tethering",
+  "onboardingConnWifiDesc": "Join the camera Wi-Fi hotspot for wireless browsing, chunked downloads, and shoot-and-transfer.",
+  "onboardingConnUsbTitle": "USB OTG PTP Direct",
+  "onboardingConnUsbDesc": "Plug in a Type-C OTG cable in MTP/PTP mode for rock-solid wired transfer of large NEF & video files.",
+  "onboardingConnStudioTitle": "16-Bit RAW, Video & Watermark Studio",
+  "onboardingConnStudioDesc": "Decode NEF RAW with LibRaw, grade video with 3D LUTs, and export EXIF gallery frames.",
+  "connectDetecting": "<Detecting...>",
+  "connectModeWifi": "Camera Wi-Fi",
+  "connectModeUsb": "USB Wired",
+  "connectModeBle": "BLE Lab",
+  "connectWifiWarnTitle": "Current Wi-Fi may not be a camera hotspot",
+  "connectWifiWarnBody": "Current network: {ssid}\nStill attempt a PTP/IP connection?",
+  "@connectWifiWarnBody": {
+    "placeholders": {
+      "ssid": {
+        "type": "String"
+      }
+    }
+  },
+  "connectContinueAttempt": "Connect Anyway",
+  "connectFailedToast": "Connection failed: {error}",
+  "@connectFailedToast": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "connectWifiFailedToast": "Connection failed: {error}\nTip: Join the camera Wi-Fi hotspot in system settings first.",
+  "@connectWifiFailedToast": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "connectDisconnectedToast": "Disconnected from camera and released network binding",
+  "connectUsbScanResult": "Detected {total} USB camera(s), {ready} ready for PTP session",
+  "@connectUsbScanResult": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      },
+      "ready": {
+        "type": "int"
+      }
+    }
+  },
+  "connectUsbScanFailed": "USB scan failed: {error}",
+  "@connectUsbScanFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "connectUsbModeSwitchHint": "{name} is currently in {mode}. Switch USB mode to MTP/PTP in the camera menu and refresh.",
+  "@connectUsbModeSwitchHint": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "connectUsbUnsupportedDriver": "Current driver does not support USB connection",
+  "connectUsbPermissionDenied": "USB permission denied",
+  "connectUsbFailedTitle": "USB Connection Failed",
+  "connectUsbFailedToast": "USB connection failed: {error}",
+  "@connectUsbFailedToast": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "connectUsbTroubleHeader": "Troubleshooting:",
+  "connectUsbTroubleStep1": "1. Set USB mode to MTP/PTP in camera menu (not Mass Storage);",
+  "connectUsbTroubleStep2": "2. Use a data-capable OTG cable connected directly to your phone (avoid USB hubs);",
+  "connectUsbTroubleStep3": "3. Replug the cable, refresh USB devices, and try again.",
+  "connectBleStoppedToast": "Bluetooth scan stopped",
+  "connectBleStartFailedToast": "Failed to start Bluetooth scan. Check Bluetooth & nearby device permissions.",
+  "connectBlePairSuccessToast": "Bluetooth pairing handshake initiated!",
+  "connectBleFailedToast": "Bluetooth connection failed: {error}",
+  "@connectBleFailedToast": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "connectMyCamera": "My Camera",
+  "connectDisconnectShort": "Disconnect",
+  "connectHeroTitle": "Zync · Nikon Z Series",
+  "connectHeroSubtitle": "Pro Wireless Tethering, Transfer & Darkroom Studio for Nikon Z",
+  "connectStatusConnectedBanner": "Connected  {mode} · {endpoint}",
+  "@connectStatusConnectedBanner": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      },
+      "endpoint": {
+        "type": "String"
+      }
+    }
+  },
+  "connectCameraBrand": "Brand",
+  "connectCameraModel": "Model",
+  "connectBrowsePhotos": "Browse Camera Photos",
+  "connectLensSectionTitle": "Mounted Lens",
+  "connectLensIdentified": "Identified",
+  "connectLensUnread": "Not read",
+  "connectLensFocalRange": "Focal Range",
+  "connectLensCurrentFocal": "Focal Length",
+  "connectLensCurrentAperture": "Aperture",
+  "connectDisconnectFull": "Disconnect Camera & Release Network",
+  "connectCurrentWifiLabel": "Current Wi-Fi",
+  "connectRedetectWifiTooltip": "Re-detect Wi-Fi",
+  "connectWifiReadyHint": "Connected to camera hotspot. Tap below to establish a PTP/IP session.",
+  "connectWifiJoinHint": "Join the camera Wi-Fi hotspot in system settings first (e.g. NIKON_...)",
+  "connectOpenSystemWifi": "Open System Wi-Fi Settings",
+  "connectConnectingButton": "Connecting...",
+  "connectWifiButton": "Connect Camera (Wi-Fi Direct)",
+  "connectBlePhoneOn": "Phone Bluetooth On",
+  "connectBlePhoneOff": "Phone Bluetooth Off",
+  "connectStateConnected": "Connected",
+  "connectStatePairing": "Pairing",
+  "connectStateDisconnected": "Disconnected",
+  "connectBlePairedDevice": "Paired: {name}",
+  "@connectBlePairedDevice": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "connectBleRemoteTitle": "Wireless Remote Shutter (ML-L7)",
+  "connectBleHalfPress": "Half-Press AF",
+  "connectBleFullPress": "Shutter Release",
+  "connectBleStopScan": "Stop Scanning",
+  "connectBleStartScan": "Scan Nearby BLE Devices",
+  "connectBleDiscoveredCount": "Discovered Cameras ({count})",
+  "@connectBleDiscoveredCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "connectBleDeviceMeta": "MAC: {address} | RSSI: {rssi} dBm",
+  "@connectBleDeviceMeta": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      },
+      "rssi": {
+        "type": "int"
+      }
+    }
+  },
+  "connectBleSearching": "Searching for nearby cameras and BLE devices...",
+  "connectUsbSectionTitle": "USB OTG Wired Connection",
+  "connectUsbPrepTitle": "Preparation",
+  "connectUsbPrepSub": "Connect camera and phone directly with a Type-C OTG data cable",
+  "connectUsbMenuTitle": "Camera USB Mode",
+  "connectUsbMenuSub": "Camera Menu -> USB Connection -> Set to MTP/PTP",
+  "connectUsbHostStatus": "USB Host Status",
+  "connectUsbHostConnected": "Wired Connected",
+  "connectUsbHostWaiting": "Waiting for Device",
+  "connectUsbChecking": "Checking USB...",
+  "connectUsbRefresh": "Refresh USB Devices",
+  "connectUsbEmptyHint": "No USB camera detected. Ensure the OTG cable is connected, the camera is powered on, and PTP mode is enabled.",
+  "connectUsbPermissionGrantedSuffix": " · Authorized",
+  "connectUsbPermissionNeededSuffix": " · Needs Permission",
+  "statusCameraDisconnected": "Camera Disconnected",
+  "statusSdCard": "SD Card",
+  "statusTapToConnect": "Tap to Connect",
+  "galleryTabCamera": "Camera Photos",
+  "galleryTabExportedCount": "Exported ({count})",
+  "@galleryTabExportedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "galleryTabExportedPhone": "Exported (Phone Album)",
+  "galleryFilterAll": "All",
+  "galleryFilterUnsynced": "Unsynced",
+  "galleryFilterSynced": "Synced",
+  "gallerySlotSelectTitle": "Select Card Slot",
+  "gallerySlotAllMerged": "All Storage (Merged)",
+  "gallerySlot1": "Slot 1",
+  "gallerySlot2": "Slot 2",
+  "galleryCollageButton": "Collage",
+  "galleryTransferCenterTooltip": "Transfers",
+  "galleryRefreshCardTooltip": "Refresh Storage Card",
+  "galleryRefreshExportedTooltip": "Refresh Exported Album",
+  "galleryShootAndTransferBanner": "Shoot & Transfer active: originals sync automatically on shutter release",
+  "galleryEnumeratingStorage": "Enumerating camera storage files (0x1007)...",
+  "galleryEmptyCameraPhotos": "No photos detected on camera or still reading...",
+  "galleryEmptyFilterPhotos": "No photos under filter \"{filter}\"",
+  "@galleryEmptyFilterPhotos": {
+    "placeholders": {
+      "filter": {
+        "type": "String"
+      }
+    }
+  },
+  "galleryReadyFooterHint": "Ready: configure network and cache parameters in Settings",
+  "galleryLocalMissingFallbackToast": "Local file missing or unreadable; loading from camera instead",
+  "galleryLoadingHighResTitle": "Loading High-Resolution Photo",
+  "galleryLoadingHighResBody": "Transferring original ({size}) from camera for full-quality preview and watermark...",
+  "@galleryLoadingHighResBody": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "galleryLoadFailedToast": "Failed to load camera photos: {error}",
+  "@galleryLoadFailedToast": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "galleryEnqueuedToast": "Added to transfer queue: {count} file(s)",
+  "@galleryEnqueuedToast": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "galleryCollageNeed2To9": "Select 2–9 photos before starting a collage",
+  "galleryCollageMax9": "Collage supports up to 9 photos",
+  "galleryCollageNeedJpeg": "Collage requires at least 2 JPEG photos (RAW / video not supported)",
+  "galleryCollageInsufficientCancelled": "Fewer than 2 usable photos; collage cancelled",
+  "galleryCollageEnterTitle": "Enter Collage",
+  "galleryCollageDownloadPrompt": "Collage requires downloading {missing} photo(s) first{reusablePart}{skippedPart}. Collage will open automatically once finished.",
+  "@galleryCollageDownloadPrompt": {
+    "placeholders": {
+      "missing": {
+        "type": "int"
+      },
+      "reusablePart": {
+        "type": "String"
+      },
+      "skippedPart": {
+        "type": "String"
+      }
+    }
+  },
+  "galleryCollageReusablePart": ", {count} already cached locally",
+  "@galleryCollageReusablePart": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "galleryCollageSkippedPart": ", {count} RAW/video skipped",
+  "@galleryCollageSkippedPart": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "galleryConfirmDownload": "Download Now",
+  "galleryExportFormatTitle": "Choose Export Format",
+  "galleryExportFormatPrompt": "The {count} selected photo(s) include RAW + JPEG pairs. How would you like to export?",
+  "@galleryExportFormatPrompt": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "galleryExportBothTitle": "Export All (RAW + JPEG)",
+  "galleryExportBothSub": "Keep full-quality RAW negatives along with camera JPEGs",
+  "galleryExportJpegOnlyTitle": "JPEG Only (Fast Share)",
+  "galleryExportJpegOnlySub": "Transfer camera JPEGs only for faster speed and smaller storage use",
+  "galleryExportBatchSuccessToast": "Exported {count} photo(s) to phone album (/DCIM/Zync)",
+  "@galleryExportBatchSuccessToast": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "galleryExportingModalTitle": "Exporting Photos to Phone",
+  "galleryExportingSocketNotice": "Exclusive transfer channel active to prevent socket conflicts.",
+  "galleryExportingSingleSize": "File size: {size}",
+  "@galleryExportingSingleSize": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "galleryExportingBatchProgress": "Batch progress: {current} / {total}",
+  "@galleryExportingBatchProgress": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "galleryExportingSavePath": "Save path: /DCIM/Zync (visible in system gallery)",
+  "galleryCancelRemainingTasks": "Cancel Remaining",
+  "galleryDeleteLocalOnlyTitle": "Delete Local Only",
+  "galleryDeleteLocalOnlySub": "Remove downloaded copies on phone; camera card stays untouched",
+  "galleryDeleteBothTitle": "Delete Local + Camera",
+  "galleryDeleteBothSub": "Delete from camera card first, then remove local copy",
+  "galleryDeleteGroupsTitle": "Delete {count} Media Group(s)",
+  "@galleryDeleteGroupsTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "galleryDeleteGroupsPrompt": "Choose deletion scope. RAW+JPG pairs are handled together.",
+  "galleryConfirmDeleteTitle": "Confirm Delete",
+  "galleryConfirmDeleteBothBody": "Delete {count} media group(s) from both camera card and local album.",
+  "@galleryConfirmDeleteBothBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "galleryConfirmDeleteLocalBody": "Delete {count} media group(s) from local album only (camera card kept).",
+  "@galleryConfirmDeleteLocalBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "galleryIrreversibleHint": "This action cannot be undone.",
+  "galleryDontAskAgain": "Don't ask again",
+  "galleryDeletedGroupsToast": "Processed {count} media group(s)",
+  "@galleryDeletedGroupsToast": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "galleryDeletedGroupsPartialLocalFailToast": "Processed {handled} group(s), {failed} failed ({localFailed} deleted on camera but failed locally)",
+  "@galleryDeletedGroupsPartialLocalFailToast": {
+    "placeholders": {
+      "handled": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      },
+      "localFailed": {
+        "type": "int"
+      }
+    }
+  },
+  "galleryDeletedGroupsFailToast": "Processed {handled} group(s), {failed} failed; failed items remain selected",
+  "@galleryDeletedGroupsFailToast": {
+    "placeholders": {
+      "handled": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "gallerySelectionCameraSummary": "{count} group(s) selected · Size {size}",
+  "@gallerySelectionCameraSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "galleryLongPressSelectHint": "Long-press a photo to enter multi-select, then choose photos to sync",
+  "gallerySyncToPhoneButton": "Sync to Phone",
+  "gallerySelectionLocalSummary": "{count} selected · {size}",
+  "@gallerySelectionLocalSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "galleryDeletedLocalToast": "Deleted {count} local photo(s)",
+  "@galleryDeletedLocalToast": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "galleryDeletedLocalPartialToast": "Deleted {ok}, {failed} failed; failed items remain selected",
+  "@galleryDeletedLocalPartialToast": {
+    "placeholders": {
+      "ok": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "galleryScanningExported": "Scanning local exported photos...",
+  "galleryEmptyExportedTitle": "No Exported Photos Yet",
+  "galleryEmptyExportedSubtitle": "Photos transferred from your camera or exported in the Watermark Studio will appear here for offline viewing, grading, and sharing.",
+  "galleryRefreshPhoneAlbum": "Refresh Phone Album",
+  "galleryExportedHeaderCount": "Phone Zync Album · {count} exported",
+  "@galleryExportedHeaderCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "galleryBadgeExported": "Exported",
+  "galleryBadgePartial": "Partial",
+  "galleryBadgeOverwrite": "Overwrite",
+  "galleryBadgeSaveAs": "Save Copy",
+  "galleryRawDecodeFailedToast": "RAW decode failed; please verify the file is NEF/NRW",
+  "galleryStreamingVideoToast": "Streaming video to local editing cache…",
+  "galleryVideoDownloadFailedToast": "Video download failed; check connection and retry",
+  "galleryPhotoInfoTitle": "Photo Info",
+  "galleryPreviewLoadingOriginal": "Preview · Loading original…",
+  "galleryLoadingOriginalShort": "Loading original…",
+  "galleryCaptureParamsTitle": "Exposure & Gear",
+  "galleryExifShutter": "Shutter",
+  "galleryExifAperture": "Aperture",
+  "galleryExifFocal": "Focal Length",
+  "galleryExifCamera": "Camera",
+  "galleryExifLens": "Lens",
+  "galleryActionWatermarkGrade": "Watermark / Grade",
+  "galleryActionProRawGrade": "RAW Grade",
+  "galleryNoPhotos": "No photos",
+  "galleryActionGradeShort": "Grade",
+  "galleryDeleteSingleTitle": "Delete This Photo?",
+  "galleryDeleteSingleBody": "Delete {name} from phone album (camera card unaffected). This cannot be undone.",
+  "@galleryDeleteSingleBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "galleryDeleteFailedToast": "Delete failed, please try again",
+  "galleryOpenEditorFailedToast": "Failed to open editor: {error}",
+  "@galleryOpenEditorFailedToast": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "galleryRawNoEmbeddedPreviewToast": "This RAW file has no embedded preview for color grading",
+  "galleryLocalUnreadableToast": "Cannot read local photo: {error}",
+  "@galleryLocalUnreadableToast": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "transferCenterTitle": "Transfers",
+  "transferEmptyTitle": "No Transfer Tasks",
+  "transferEmptySubtitle": "Long-press photos in Camera Roll to sync, or enable Shoot & Transfer",
+  "transferActiveCount": "Downloading {count}",
+  "@transferActiveCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "transferQueuedCount": "Queued {count}",
+  "@transferQueuedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "transferFailedCount": "Failed {count}",
+  "@transferFailedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "transferPausedTag": "Paused",
+  "transferResumeAll": "Resume All",
+  "transferPauseAll": "Pause All",
+  "transferRetryFailed": "Retry Failed",
+  "transferClearCompleted": "Clear Completed",
+  "transferStatusQueued": "Queued",
+  "transferStatusDownloadingPct": "Downloading {percent}%",
+  "@transferStatusDownloadingPct": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "transferStatusCompleted": "Completed",
+  "transferStatusFailedReason": "Failed: {reason}",
+  "@transferStatusFailedReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "transferStatusCancelled": "Cancelled",
+  "editorTitle": "Photo Editor",
+  "editorSaveFailedToast": "Save failed: {error}",
+  "@editorSaveFailedToast": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "editorSaveSheetTitle": "Save Edited Photo",
+  "editorSaveSheetSub": "Overwriting replaces the original file; saving as new creates a separate copy.",
+  "editorOverwriteTitle": "Overwrite Original",
+  "editorOverwriteSub": "Replace existing photo (automatically saves as copy if overwrite fails)",
+  "editorSaveAsNewTitle": "Save as New File",
+  "editorSaveAsNewSub": "Keep original and create a new _edit file",
+  "editorOverwriteAndSaveBothFailed": "Both overwrite and save-as-new failed",
+  "editorSaveAsFailed": "Save as new failed",
+  "editorOverwriteFallbackToast": "Overwrite unsuccessful; original kept and result saved as new file",
+  "editorOverwrittenToast": "Original overwritten",
+  "editorSavedAsNewToast": "Saved as new file",
+  "editorPreparingPreview": "Preparing edit preview…",
+  "editorNoPhotoSelected": "No photo selected",
+  "editorComparingHoldHint": "Comparing original · Release to return",
+  "editorRotateLeft90": "Rotate Left 90°",
+  "editorRotateRight90": "Rotate Right 90°",
+  "editorResetAngle": "Reset Angle",
+  "editorFlipHorizontal": "Flip Horizontal",
+  "editorFlipVertical": "Flip Vertical",
+  "editorResetDistortion": "Reset Distortion",
+  "editorToolRotate": "Rotate",
+  "editorToolFlip": "Flip",
+  "editorToolPerspective": "Perspective",
+  "editorToolDistortion": "Distortion",
+  "editorToolFreeTransform": "Transform",
+  "editorToolCrop": "Crop",
+  "editorPerspectiveHorizontal": "Horizontal {value}",
+  "@editorPerspectiveHorizontal": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "editorPerspectiveVertical": "Vertical {value}",
+  "@editorPerspectiveVertical": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "editorTransformScale": "Scale",
+  "editorTransformPanX": "Horizontal Pan",
+  "editorTransformPanY": "Vertical Pan",
+  "editorCropAspectRatio": "Aspect Ratio",
+  "histogramTitle": "Histogram",
+  "toneBlacks": "Blacks",
+  "toneShadows": "Shadows",
+  "toneExposure": "Exposure",
+  "toneHighlights": "Highlights",
+  "toneWhites": "Whites",
+  "presetTitle": "Color Presets",
+  "presetTabBuiltin": "Built-in",
+  "presetTabMine": "My Presets",
+  "presetScopeGlobal": "Editing: Global Grade",
+  "presetScopeClip": "Editing: Current Clip Grade",
+  "presetSaveNew": "Save as New Preset",
+  "presetSaveDialogTitle": "Save Preset",
+  "presetSearchHint": "Search presets",
+  "presetSavedToast": "Preset saved",
+  "presetImportedToast": "Imported {count} preset(s)",
+  "@presetImportedToast": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "presetImportFailedToast": "Failed to read preset file",
+  "presetExportFailedToast": "Export failed",
+  "presetExportedToast": "Preset exported to Zync/exports",
+  "presetApplyAction": "Apply",
+  "presetEmptyMatch": "No matching presets",
+  "presetNoAdjustments": "No adjustments",
+  "presetUnnamed": "Untitled Preset",
+  "videoReadMetaFailed": "Cannot read video metadata",
+  "videoUnsupportedCodec": "Cannot play this video; verify codec support on device",
+  "videoGeneratingProxyToast": "Generating 4s grade/LUT preview proxy…",
+  "videoProxyFailedToast": "Failed to generate grade preview; check device codec support",
+  "videoProxyReadyToast": "Grade preview ready; toggle Original/Graded in top-right of preview",
+  "videoExportFailedToast": "Video export failed; check device encoder capabilities",
+  "videoExportSaveAlbumFailedToast": "Export finished, but saving to system gallery failed",
+  "videoExportSuccessToast": "Video exported to DCIM/Zync",
+  "videoGeneratePreviewTooltip": "Generate Grade Preview",
+  "videoRefreshGeneratePreview": "Generate / Refresh Preview",
+  "videoExportVideoAction": "Export Video",
+  "videoGeneratingProxyOverlay": "Generating video preview proxy…",
+  "videoSkipProxyUseOriginal": "Skip proxy and use original video",
+  "videoBadge4sProxy": "4s Grade Proxy",
+  "videoBadgeOriginalPreview": "Original Preview · Grade/LUT applied on export",
+  "videoBadgePreviewStale": "Preview Outdated",
+  "videoToggleGradedPreview": "Graded",
+  "videoToggleOriginalPreview": "Original",
+  "videoExitFullscreen": "Exit Fullscreen",
+  "videoEnterFullscreen": "Fullscreen Preview",
+  "videoTabTrim": "Trim",
+  "videoTabGrade": "Grade",
+  "videoTabAudio": "Audio",
+  "videoTabScopes": "Scopes",
+  "videoTimelineClipsHeader": "Timeline Clips",
+  "videoAddLocalClipTooltip": "Add Local Video Clip",
+  "videoClipIndexLabel": "Clip {index}",
+  "@videoClipIndexLabel": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "videoMoveClipEarlier": "Move Clip Earlier",
+  "videoMoveClipLater": "Move Clip Later",
+  "videoTrimRangeLabel": "Trim Range",
+  "videoSplitClipAction": "Split",
+  "videoDeleteClipAction": "Delete Clip",
+  "videoChapterDefaultTitle": "Chapter {index}",
+  "@videoChapterDefaultTitle": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "videoAddChapterButton": "Add Chapter",
+  "videoChapterNavHeader": "Chapter Navigation",
+  "videoGlobalGradeTitle": "Global Grade",
+  "videoGlobalGradeOnSub": "Applied across all timeline clips",
+  "videoGlobalGradeOffSub": "Applied to current clip only",
+  "videoGlobalGradeHint": "Global grade is applied before per-clip adjustments; keyframes remain per clip.",
+  "videoKeyframeParamLabel": "Keyframe Parameter",
+  "videoAddKeyframeButton": "Add Keyframe",
+  "videoKeyframeListHeader": "Keyframes",
+  "videoPresetEntryTitle": "Color Presets: Save / Apply / Import & Export",
+  "videoCopiedGlobalGradeToast": "Copied global grade",
+  "videoCopiedClipGradeToast": "Copied current clip grade",
+  "videoCopyGradeAction": "Copy Grade",
+  "videoPasteGradeAction": "Paste Grade",
+  "videoRefresh4sPreview": "Refresh 4s Preview",
+  "videoGenerate4sPreview": "Generate 4s Preview",
+  "videoGlobalGradeStatusChip": "Global Grade: {status}",
+  "@videoGlobalGradeStatusChip": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "videoStatusEnabled": "Enabled",
+  "videoKeyframeCountChip": "Keyframes: {count}",
+  "@videoKeyframeCountChip": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videoWheelHue": "{wheel} Hue",
+  "@videoWheelHue": {
+    "placeholders": {
+      "wheel": {
+        "type": "String"
+      }
+    }
+  },
+  "videoWheelSaturation": "{wheel} Saturation",
+  "@videoWheelSaturation": {
+    "placeholders": {
+      "wheel": {
+        "type": "String"
+      }
+    }
+  },
+  "videoWheelLuma": "{wheel} Luma",
+  "@videoWheelLuma": {
+    "placeholders": {
+      "wheel": {
+        "type": "String"
+      }
+    }
+  },
+  "videoCurveLinear": "Linear",
+  "videoCurveEaseInOut": "Ease In/Out",
+  "videoLutGlobalTitle": "Global 3D LUT",
+  "videoLutClipTitle": "Current Clip 3D LUT",
+  "videoLutPathHint": ".cube / PNG LUT file path",
+  "videoPickLutTooltip": "Choose LUT File",
+  "videoApplyLutAction": "Apply LUT",
+  "videoLutIntensityLabel": "LUT Intensity",
+  "videoColorUnlabeled": "Unlabeled",
+  "videoSourceColorLabel": "Source Color: {label}",
+  "@videoSourceColorLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "videoHdrToneMapHint": "HDR source detected ({label}). Export tone-maps to SDR Rec.709; pair N-Log with a LUT.",
+  "@videoHdrToneMapHint": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "videoSdrSourceHint": "SDR source: uses current grade and LUT directly without extra HDR tone mapping.",
+  "videoAudioMute": "Mute Audio",
+  "videoAudioVolume": "Volume",
+  "videoAudioFadeIn": "Fade In (s)",
+  "videoAudioFadeOut": "Fade Out (s)",
+  "videoExportSettingsHeader": "Export Settings",
+  "videoHwHevcStatus": "Hardware HEVC Decode: {status}",
+  "@videoHwHevcStatus": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "videoExport4k60Note": "4K/60 is best-effort; if unsupported by the device encoder, export fails safely and keeps the original.",
+  "videoNoHevc10BitWarning": "No HEVC Main10 hardware decoder detected; 10-bit N-Log/HLG may not preview. Test a 4s preview before exporting.",
+  "videoCodecLabel": "Codec",
+  "videoCodecH264": "H.264 (Best Compatibility)",
+  "videoCodecHevc": "HEVC (Smaller File)",
+  "videoCodecHevcUnsupported": "HEVC (Unsupported)",
+  "videoResolutionLabel": "Resolution",
+  "videoFpsLabel": "Frame Rate",
+  "videoBitrateLabel": "Bitrate",
+  "videoBitrate20": "Standard 20 Mbps",
+  "videoBitrate40": "High 40 Mbps",
+  "videoBitrate80": "Pro 80 Mbps",
+  "videoExportingProgressHint": "Exporting {percent}% · Keep Zync in the foreground",
+  "@videoExportingProgressHint": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "videoCancelExport": "Cancel Export",
+  "videoExportToDcimButton": "Export to DCIM/Zync",
+  "scopeTitle": "Video Scopes",
+  "scopeCaptureFrameTooltip": "Capture Current Frame",
+  "scopeWaveform": "Waveform",
+  "scopeVectorscope": "Vectorscope",
+  "scopeAnalyzing": "Analyzing current frame…",
+  "scopeEmptyHint": "Tap refresh in top-right to capture current frame",
+  "scopeLumaHistogram": "Luma Histogram",
+  "scopePeak": "Peak",
+  "scopeAverage": "Avg",
+  "scopeBlackLevel": "Black",
+  "scopeHighlightClip": "Highlight Clip",
+  "scopeShadowClip": "Shadow Clip",
+  "wmStudioTitle": "Watermark Studio",
+  "wmPickFromAlbumTooltip": "Pick from Phone Album",
+  "wmStyleSettingsTooltip": "Watermark Settings (Style / Content / Text / Logo)",
+  "wmExportQualityTitle": "Export Quality",
+  "wmExportQualityMenuLabel": "Export Quality: {label} (q{quality})",
+  "@wmExportQualityMenuLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "quality": {
+        "type": "int"
+      }
+    }
+  },
+  "exportQualityOriginal": "Original Quality",
+  "exportQualityStandard": "Standard",
+  "exportQualityCompact": "Compact Size",
+  "wmSaveHighResTooltip": "Save High-Res Photo to Album",
+  "wmShowingOriginalBadge": "Showing Original",
+  "wmHoldToCompareHint": "Hold to Compare",
+  "wmPickPhotoEmptyPrompt": "Select a local photo to grade and add a watermark",
+  "wmEditExifTag": "Edit EXIF",
+  "wmTabWatermark": "Watermark",
+  "wmTabColorGrade": "Color Grade",
+  "wmTabPhotoEdit": "Crop & Transform",
+  "wmPureGradeModeTitle": "Color Grade Only Mode (No Watermark)",
+  "wmPureGradeModeSub": "No border or text overlay will be added; exports at original full resolution.",
+  "wmGoToGradeButton": "Adjust Color",
+  "wmBorderColorShort": "Frame Color",
+  "wmTextColorShort": "Text Color",
+  "wmDetailSettingsShort": "More Settings",
+  "wmGradeCatTone": "Basic Tone",
+  "wmGradeCatWb": "White Balance",
+  "wmGradeCatPresence": "Presence",
+  "wmGradeCatSplit": "Split Toning",
+  "wmGradeCatFilm": "Film Presets",
+  "wmGradeCatEffects": "Lens & Effects",
+  "wmCurrentModeNoWatermark": "Current Mode: Color Grade Only (No Watermark)",
+  "wmCurrentTemplateLabel": "Current Watermark: {name}",
+  "@wmCurrentTemplateLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "wmEnableWatermarkSwitch": "Enable Watermark",
+  "wmDisableWatermarkSwitch": "Disable Watermark (Grade Only)",
+  "wmImportedExifToast": "Imported photo and extracted EXIF ({title})",
+  "@wmImportedExifToast": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "wmDecodeImageFailed": "Image decode failed",
+  "wmParseImageFailed": "Image parse failed: {error}",
+  "@wmParseImageFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "wmSelectPhotoFirstHint": "Select a photo from top-right album icon or import from Camera Roll first",
+  "wmRawFullDecodeFailed": "Full-size RAW decode failed",
+  "wmSaveAlbumFailed": "Failed to save to system album",
+  "wmSavedSuccessToast": "Saved to album · {width}×{height} · {sizeMb}MB",
+  "@wmSavedSuccessToast": {
+    "placeholders": {
+      "width": {
+        "type": "int"
+      },
+      "height": {
+        "type": "int"
+      },
+      "sizeMb": {
+        "type": "String"
+      }
+    }
+  },
+  "wmViewInAlbumAction": "View in Album",
+  "wmExportFailedToast": "Export failed: {error}",
+  "@wmExportFailedToast": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "wmExifSheetTitle": "Fine-Tune EXIF Parameters",
+  "wmExifSheetSub": "Customize displayed EXIF fields for manual lenses or photos without metadata",
+  "wmExifCameraLabel": "Camera Model",
+  "wmExifCameraHint": "e.g. Z 30, Z 8, Z fc",
+  "wmExifLensLabel": "Lens Model",
+  "wmExifLensHint": "e.g. NIKKOR Z 40mm f/2",
+  "wmExifApertureLabel": "Aperture",
+  "wmExifApertureHint": "e.g. f/1.8",
+  "wmExifShutterLabel": "Shutter Speed",
+  "wmExifShutterHint": "e.g. 1/250s",
+  "wmExifIsoLabel": "ISO Sensitivity",
+  "wmExifIsoHint": "e.g. ISO 100",
+  "wmExifFocalLabel": "Focal Length",
+  "wmExifFocalHint": "e.g. 40mm",
+  "wmExifDateLabel": "Capture Time",
+  "wmExifDateHint": "e.g. 2026.10.06 14:32",
+  "wmExifApplyButton": "Apply Parameters",
+  "wmSettingsSheetTitle": "Watermark Settings",
+  "wmSettingsSheetSub": "Colors, font sizes, spacing, and toggles are saved automatically; custom Logo is kept for this session.",
+  "wmLogoSectionTitle": "Logo Overlay",
+  "wmLogoReadFailedToast": "Failed to read Logo image",
+  "wmLogoPickButton": "Select Logo",
+  "wmLogoChangeButton": "Change Logo",
+  "wmLogoSizeLabel": "Logo Size",
+  "wmLogoOpacityLabel": "Logo Opacity",
+  "wmSizeSmall": "S",
+  "wmSizeMedium": "M",
+  "wmSizeLarge": "L",
+  "wmOpacityOpaque": "100%",
+  "wmOpacitySemi": "65%",
+  "wmOpacityLight": "35%",
+  "wmLogoPositionLabel": "Logo Position",
+  "adjExposure": "Exposure",
+  "adjExposureDesc": "Adjust overall image brightness (-2EV to +2EV)",
+  "adjContrast": "Contrast",
+  "adjContrastDesc": "Increase or soften tonal separation between light and dark",
+  "adjHighlights": "Highlights",
+  "adjHighlightsDesc": "Recover bright highlight detail or boost luminous areas",
+  "adjShadows": "Shadows",
+  "adjShadowsDesc": "Lift dark shadow detail or deepen shadow contrast",
+  "adjWhites": "Whites",
+  "adjWhitesDesc": "Fine-tune the white clipping point",
+  "adjBlacks": "Blacks",
+  "adjBlacksDesc": "Fine-tune the pure black floor",
+  "adjTemperature": "Temperature",
+  "adjTemperatureDesc": "Cooler blue to the left, warmer golden amber to the right",
+  "adjTint": "Tint",
+  "adjTintDesc": "Compensate green cast to the left or magenta to the right",
+  "adjClarity": "Clarity",
+  "adjClarityDesc": "Adjust midtone micro-contrast to emphasize structure",
+  "adjTexture": "Texture",
+  "adjTextureDesc": "Smooth skin to the left or accentuate fine surface detail to the right",
+  "adjDehaze": "Dehaze",
+  "adjDehazeDesc": "Cut through atmospheric haze or add dreamy mist",
+  "adjVibrance": "Vibrance",
+  "adjVibranceDesc": "Boost muted colors while protecting skin tones",
+  "adjSaturation": "Saturation",
+  "adjSaturationDesc": "Global color intensity (-100 monochrome to +100 vivid)",
+  "adjSplitToningInfo": "Split Toning: tint highlights and shadows independently for cinematic warm/cool separation.",
+  "adjHighlightHue": "Highlight Hue",
+  "adjHighlightHueDesc": "Highlight tint hue (0°–360°), warm gold ~35°–45°, cyan ~195°–210°",
+  "adjHighlightSat": "Highlight Saturation",
+  "adjHighlightSatDesc": "Strength of highlight color tint (0%–100%)",
+  "adjShadowHue": "Shadow Hue",
+  "adjShadowHueDesc": "Shadow tint hue (0°–360°), cool teal ~200°–220°, vintage magenta ~300°–320°",
+  "adjShadowSat": "Shadow Saturation",
+  "adjShadowSatDesc": "Strength of shadow color tint (0%–100%)",
+  "adjMidtones": "Midtones",
+  "adjSharpening": "Sharpening",
+  "adjNoiseReduction": "Noise Reduction",
+  "adjLensDistortion": "Lens Distortion",
+  "adjLensVignette": "Lens Vignette",
+  "adjLensVignetteDesc": "Darken corners to the right for cinema vignette, or lighten to the left",
+  "adjChromaticAberration": "Chromatic Aberration",
+  "adjFilmGrain": "Film Grain",
+  "adjFilmGrainDesc": "Simulate organic silver-halide film grain texture",
+  "adjToneCurve": "Curve",
+  "adjColorWheel": "Wheels",
+  "wmFilterAllCount": "All ({count})",
+  "@wmFilterAllCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "wmRecipeSummaryPrefix": "Camera Recipe: {summary}",
+  "@wmRecipeSummaryPrefix": {
+    "placeholders": {
+      "summary": {
+        "type": "String"
+      }
+    }
+  },
+  "wmPresetIntensity": "Preset Intensity",
+  "wmProRawSectionEntry": "Pro Parameters: LUT / Denoise / Sharpen / Lens Correction",
+  "wmLoadedFilterSlidersToast": "Loaded [{name}] parameters into sliders for fine-tuning",
+  "@wmLoadedFilterSlidersToast": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "wmLoadFilterToSlidersButton": "Load [{name}] into Sliders (Fine-Tune)",
+  "@wmLoadFilterToSlidersButton": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "wmProRawSheetTitle": "Pro RAW & Lens Parameters",
+  "wmStyleFollowTemplate": "Follow Template",
+  "wmStylePureWhite": "Pure White",
+  "wmStyleDeepBlack": "Deep Black",
+  "wmStyleCream": "Warm Cream",
+  "wmStyleNikonGold": "Amber Gold",
+  "wmStyleCyan": "Teal Cyan",
+  "wmStyleMagenta": "Magenta",
+  "wmStyleDarkGrey": "Graphite Grey",
+  "wmStyleCustomColorTitle": "Custom Color",
+  "wmStyleColorsSection": "Colors",
+  "wmStyleFrameBgLabel": "Frame / Background",
+  "wmStyleTextColorLabel": "Text Color",
+  "wmStyleAccentColorLabel": "Accent Color",
+  "wmStyleTypographySection": "Typography & Layout",
+  "wmStyleTitleScale": "Title Size",
+  "wmStyleMetaScale": "EXIF Size",
+  "wmStyleCustomTextScale": "Custom Text Size",
+  "wmStyleLetterSpacing": "Letter Spacing",
+  "wmStyleLineSpacing": "Line Spacing",
+  "wmStyleLineThickness": "Divider Weight",
+  "wmStyleMarginScale": "Margin Ratio",
+  "wmStyleCornerRadius": "Card Corner Radius",
+  "wmStyleOpacity": "Opacity",
+  "wmStyleFontFamily": "Font Style",
+  "wmStyleFontDefault": "Default",
+  "wmStyleFontSerif": "Serif",
+  "wmStyleFontMono": "Monospace",
+  "wmStyleFontCondensed": "Condensed",
+  "wmStyleFontWeight": "Font Weight",
+  "wmStyleWeightRegular": "Regular",
+  "wmStyleWeightMedium": "Medium",
+  "wmStyleWeightBold": "Bold",
+  "wmStyleWeightBlack": "Heavy",
+  "wmStyleContentSection": "Displayed Info",
+  "wmStyleShowModel": "Camera Model",
+  "wmStyleShowLens": "Lens Model",
+  "wmStyleShowExposure": "Exposure Settings",
+  "wmStyleShowDate": "Capture Date",
+  "wmStyleShowDetails": "Show Time & Full Details",
+  "wmStyleCustomTextSection": "Custom Text",
+  "wmStyleCustomLine1Label": "Custom Line 1",
+  "wmStyleCustomLine1Hint": "e.g. © 2026 Your Name",
+  "wmStyleCustomLine2Label": "Custom Line 2",
+  "wmStyleCustomLine2Hint": "e.g. Nikon Z 30",
+  "wmStyleTextAlign": "Text Alignment",
+  "wmStyleAlignLeft": "Left",
+  "wmStyleAlignCenter": "Center",
+  "wmStyleAlignRight": "Right",
+  "wmCornerTopLeft": "Top Left",
+  "wmCornerTopRight": "Top Right",
+  "wmCornerBottomLeft": "Bottom Left",
+  "wmCornerBottomRight": "Bottom Right",
+  "collageTitle": "Collage",
+  "collageInsufficientPhotos": "Fewer than 2 usable photos for collage",
+  "collageSkippedUnreadableToast": "Skipped {count} unreadable photo(s)",
+  "@collageSkippedUnreadableToast": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "collageSaveSuccessTitle": "Collage Saved to System Album",
+  "collageSaveSuccessBody": "Saved to Pictures/Zync and ready to view in your phone gallery.",
+  "collagePreparingMaterials": "Preparing collage photos...",
+  "collageWatermarkDragHint": "Watermark template applied. Drag or pinch each cell directly to reframe.",
+  "collageTabLayout": "Layout",
+  "collageTabWatermark": "Watermark",
+  "collageNoWatermark": "No Watermark",
+  "collageMethodLabel": "Grid Style",
+  "collageAspectLabel": "Aspect",
+  "collageBorderLabel": "Border",
+  "collageOutputResolution": "Output Resolution",
+  "collageFileSize": "File Size",
+  "collageSharedWatermarkSub": "Shares color, typography, and layout settings with Watermark Studio",
+  "settingsTitle": "Settings",
+  "settingsGroupPreferences": "Preferences",
+  "settingsGroupSystem": "System & About",
+  "settingsAppearanceTitle": "Appearance & Display",
+  "settingsAppearanceSub": "System, Light, or Darkroom mode",
+  "settingsLanguageTitle": "Language",
+  "settingsLanguageSub": "English · 简体中文 · 日本語",
+  "settingsCameraTitle": "Camera Connection",
+  "settingsCameraSub": "Default IP, port, and Wi-Fi NIC binding",
+  "settingsWirelessTitle": "Wireless & Transfer",
+  "settingsWirelessSub": "Keep-alive, RAW sync, and export quality",
+  "settingsKeepAliveOnShort": "Keep-alive On",
+  "settingsKeepAliveOffShort": "Keep-alive Off",
+  "settingsBatteryTitle": "Battery & Transfer Protection",
+  "settingsBatterySub": "Low-battery pause and hysteresis resume",
+  "settingsThresholdValue": "{threshold}% threshold",
+  "@settingsThresholdValue": {
+    "placeholders": {
+      "threshold": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsLogsTitle": "Diagnostics & Logs",
+  "settingsLogsSub": "PTP handshake and transport diagnostics",
+  "settingsLogsCountValue": "{count} entries",
+  "@settingsLogsCountValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsAboutTitle": "About Zync",
+  "settingsAboutSub": "Version, updates, and open-source licenses",
+  "settingsReplayOnboardingTitle": "Welcome Guide",
+  "settingsReplayOnboardingSub": "Re-open the 3-step setup guide for language, appearance, and connection",
+  "settingsAppearanceModeSection": "Appearance Mode",
+  "settingsColorPreviewSection": "Palette Preview",
+  "settingsColorPreviewTileTitle": "Background / Surface / Accent",
+  "settingsConfigIpTitle": "Configure Camera IP Address",
+  "settingsConfigIpSub": "Default Nikon Z hotspot gateway is 192.168.0.1",
+  "settingsIpAddressField": "IP Address",
+  "settingsConfigPortTitle": "Configure PTP/IP Port",
+  "settingsConfigPortSub": "Standard Nikon PTP/IP hardware port is 15740",
+  "settingsPortField": "Port Number",
+  "settingsPtpNetworkSection": "PTP/IP Network",
+  "settingsDefaultCameraIp": "Default Camera IP Address",
+  "settingsPtpPortTile": "PTP/IP Port",
+  "settingsRestoreDefaultIpTile": "Restore Nikon Z Default Hotspot Preset",
+  "settingsRestoredDefaultIpToast": "Restored default Nikon Z hotspot IP and port",
+  "settingsAndroidNetworkSection": "Android Networking",
+  "settingsAutoBindTitle": "Force Wi-Fi NIC Binding",
+  "settingsAutoBindSub": "Route traffic through camera Wi-Fi even when mobile data is active",
+  "settingsKeepAliveSection": "Session Keep-Alive",
+  "settingsKeepAliveToggleTitle": "Keep Camera Wi-Fi Alive in Background",
+  "settingsHeartbeatTitle": "PTP/IP Heartbeat Interval",
+  "settingsHeartbeatValue": "15s (Prevents camera sleep)",
+  "settingsShootTransferSection": "Shoot & Transfer",
+  "settingsDownloadRawTitle": "Sync RAW Files",
+  "settingsDownloadRawSub": "Also download NEF / NRW files",
+  "settingsDeleteConfirmSection": "Deletion & Confirmation",
+  "settingsConfirmDeleteTitle": "Confirm Before Deleting",
+  "settingsConfirmDeleteSub": "When off, selecting a deletion scope executes immediately",
+  "settingsPowerProtectionSection": "Low-Battery Transfer Protection",
+  "settingsPowerProtectionToggle": "Enable Low-Battery Protection",
+  "settingsPowerThresholdTile": "Pause Threshold",
+  "settingsHysteresisTitle": "Hysteresis Resume (+5%)",
+  "settingsHysteresisValue": "Resumes automatically at threshold +5%",
+  "settingsActiveTransferRuleTitle": "In-Flight File Handling",
+  "settingsActiveTransferRuleValue": "Finishes current file before pausing (no truncation)",
+  "settingsLogsSection": "Protocol Diagnostics",
+  "settingsViewLogsTile": "View Handshake & Protocol Logs",
+  "settingsClearLogsTile": "Clear Diagnostic Logs",
+  "settingsClearedLogsToast": "All diagnostic logs cleared",
+  "settingsLogsViewerTitle": "Protocol & Handshake Logs",
+  "settingsCopyAllLogsTooltip": "Copy All Logs",
+  "settingsCopiedLogsToast": "Copied all logs to clipboard",
+  "settingsClearLogsTooltip": "Clear Logs",
+  "settingsLogsEmpty": "No diagnostic logs yet",
+  "settingsVersionSection": "Version & Updates",
+  "settingsAppVersionTile": "App Version",
+  "settingsCheckUpdateTile": "Check for Updates",
+  "settingsCheckUpdateValue": "Online Check (GitHub)",
+  "settingsTechSection": "Architecture",
+  "settingsDriverArchTile": "Driver Stack",
+  "settingsUiSystemTile": "Design System",
+  "settingsUiSystemValue": "Zync Pro Darkroom Design System",
+  "settingsProjectSection": "Project & Licenses",
+  "settingsRepoUrlTile": "Repository",
+  "settingsOpenSourceCreditsTile": "Open-Source Credits",
+  "settingsOpenSourceCreditsSub": "Core references, protocol research, and runtime packages",
+  "settingsCreditsCountValue": "{count} items",
+  "@settingsCreditsCountValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsLicenseDisclaimerTitle": "License Notice",
+  "settingsLicenseDisclaimerBody": "Copyrights and licenses belong to their respective authors. Unlicensed projects are referenced solely for protocol interoperability.",
+  "settingsCreditsCoreGroup": "Core Projects & Protocol References",
+  "settingsCreditsRuntimeGroup": "Runtime & Foundation Libraries",
+  "settingsAppLicenseTile": "Application License",
+  "settingsCannotOpenUrlToast": "Unable to open repository URL",
+  "updateDefaultChangelog": "Bug fixes and stability improvements.",
+  "updateCheckingToast": "Checking for updates...",
+  "updateCheckFailedTitle": "Update Check Failed",
+  "updateCheckFailedBody": "Unable to reach the update server. Check your internet connection or visit GitHub Releases.",
+  "updateUpToDateTitle": "Up to Date",
+  "updateUpToDateBody": "Zync v{version} is already the latest release.\nSource: {source}",
+  "@updateUpToDateBody": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "updateCheckErrorTitle": "Update Error",
+  "updateOpenWebsite": "Open GitHub",
+  "updatePreparing": "Preparing...",
+  "updateInstallerFailedToast": "Could not launch installer. Check install-unknown-apps permission or download via browser.",
+  "updateBrowserDownload": "Browser Download",
+  "updateSkippedVersionToast": "Skipped v{version}; will not prompt again on startup",
+  "@updateSkippedVersionToast": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateNewVersionTitle": "New Version Available",
+  "updateSourceGithub": "GitHub Release",
+  "updateChangelogHeader": "What's New",
+  "updatePackageSizeLabel": "Package size: {size}",
+  "@updatePackageSizeLabel": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "updateDownloadingPct": "Downloading: {percent}%",
+  "@updateDownloadingPct": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "updateSkipThisVersion": "Skip Version",
+  "updateLater": "Later",
+  "updateInstallNow": "Install Now",
+  "updateDownloadAndInstall": "Download & Install",
+  "updateOpenInBrowserTooltip": "Download in Browser",
+  "updateSha256MismatchError": "APK SHA-256 verification failed; installation aborted",
+  "hubTitle": "Studio Hub",
+  "hubBentoQuickTransferTitle": "Quick Transfer",
+  "hubBentoQuickTransferSub": "Browse and sync camera photos to phone",
+  "hubBentoWatermarkTitle": "Watermark Studio",
+  "hubBentoWatermarkSub": "Frames, photocard & film color grading",
+  "hubBentoCollageTitle": "Collage Studio",
+  "hubBentoCollageSub": "Multi-photo layout storytelling",
+  "hubBentoTransfersTitle": "Transfers",
+  "hubBentoTransfersIdle": "Queue idle",
+  "hubBentoTransfersActive": "{count} tasks in progress",
+  "@hubBentoTransfersActive": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "hubRecentPhotosTitle": "Recent Photos",
+  "hubRecentPhotosEmpty": "No recent photos",
+  "hubShootAndTransferQuick": "Auto-Transfer",
+  "hubHelpGuideTooltip": "Connection guide",
+  "hubGuideTitle": "Camera Connection Guide",
+  "hubGuideWifiTitle": "Wi-Fi Direct Connection",
+  "hubGuideWifiBody": "1. Turn on \"Connect to smart device\" or Wi-Fi mode in camera menu\n2. Join camera hotspot in phone Wi-Fi settings (e.g., NIKON_...)\n3. Return here and tap \"Connect Now\" to establish PTP/IP session",
+  "hubGuideUsbTitle": "USB OTG Connection",
+  "hubGuideUsbBody": "1. Connect phone and camera via USB-C or OTG adapter\n2. Power on the camera\n3. Grant USB permission when prompted and tap \"Connect Now\"",
+  "hubGuideClose": "Got It",
+  "connectOneTapUsb": "Connect USB Camera",
+  "connectSelectWifi": "Select Wi-Fi",
+  "connectQuickConnect": "Connect Now",
+  "connectUsbDetectedHeader": "USB Camera Detected",
+  "connectWifiDetectedHeader": "Current Wi-Fi Network",
+  "wmDockTemplate": "Frame Style",
+  "wmDockFilter": "Film Preset",
+  "wmDockGrade": "Adjustments",
+  "wmDockGeometry": "Geometry",
+  "wmSubPalette": "Colors & Margin",
+  "wmSubToggles": "Display & Text",
+  "wmSubTypography": "Typography",
+  "wmSubLogo": "Brand Logo",
+  "wmHistogramHudTooltip": "Histogram HUD",
+  "wmDialResetAll": "Reset All",
+  "wmDialTransferToGrade": "To Adjustments",
+  "wmDialSaveAsPreset": "Save Preset",
+  "wmDialCategoryPreset": "★ Presets",
+  "wmDialPresetCustomGroup": "My Presets",
+  "wmDialSavePresetPrompt": "Enter preset name",
+  "wmDialSavePresetSuccess": "Saved preset \"{name}\"",
+  "@wmDialSavePresetSuccess": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "wmDialActiveLutButton": "Choose 3D LUT File",
+  "wmDialNoLutChosen": "No LUT file loaded",
+  "wmExportMenuTitle": "Export Quality",
+  "galleryTabCameraCard": "Camera Card",
+  "galleryTabExportedPhoneShort": "Exported",
+  "galleryActionSelectAll": "Select All",
+  "galleryActionDeselect": "Deselect",
+  "galleryExifDetailSheetTitle": "EXIF Details",
+  "galleryCollageDirectModeTitle": "Select Photos for Collage (2-9)",
+  "wmViewModeListTooltip": "Single-item list with scrollbar",
+  "wmViewModePagedTooltip": "Adaptive height paged view",
+  "wmTabletTuneAction": "Tune",
+  "wmTabletSectionTemplates": "Templates",
+  "wmTabletSectionStyle": "Style",
+  "wmTabletPagePrev": "Prev",
+  "wmTabletPageNext": "Next",
+  "wmTabletPageIndicator": "Page {current} of {total}",
+  "wmTabletPureGradeHint": "Currently in pure color grade mode without watermark frame",
+  "wmTabletPureGradeAction": "Choose Template"
+}

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Zync</string>
+    <string name="transfer_channel_name">传输进度</string>
+    <string name="transfer_channel_desc">相机照片下载与边拍边传的后台进度</string>
+    <string name="transfer_default_title">Zync 正在传输</string>
+</resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Zync</string>
+    <string name="transfer_channel_name">Transfer Progress</string>
+    <string name="transfer_channel_desc">Background progress for camera photo downloads and shoot-and-transfer</string>
+    <string name="transfer_default_title">Zync Transferring</string>
+</resources>

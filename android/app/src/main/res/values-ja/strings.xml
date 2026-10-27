@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Zync</string>
+    <string name="transfer_channel_name">転送の進捗</string>
+    <string name="transfer_channel_desc">カメラの写真ダウンロードと撮影時自動転送のバックグラウンド進捗</string>
+    <string name="transfer_default_title">Zync 転送中</string>
+</resources>
