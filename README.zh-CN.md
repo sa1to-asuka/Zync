@@ -267,6 +267,11 @@ Wi-Fi 与 USB 传输遵循公开的 Picture Transfer Protocol 模型：
 
 应用内也可通过 **设置 → 关于 Zync → 项目与许可 → 开源致谢** 查看同一份致谢数据。当前未声明许可证的项目会如实标注，不会被描述为已开源许可。
 
+## 贡献者
+
+- [sa1to-asuka](https://github.com/sa1to-asuka) — 作者与维护者
+- Claude（Anthropic）— 协助实现、测试与文档的 AI 结对编程助手
+
 ## 开源许可
 
 Zync 使用 [MIT License](LICENSE) 开源。欢迎在 <https://github.com/sa1to-asuka/Zync> 提交 Issue 或 Pull Request。

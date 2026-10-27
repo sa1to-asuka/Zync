@@ -267,6 +267,11 @@ Wi-Fi と USB の転送は、公開されている Picture Transfer Protocol の
 
 同じ謝辞データは、アプリ内の **設定 → Zync について → プロジェクトとライセンス → オープンソース謝辞** でも確認できます。ライセンスが宣言されていないプロジェクトは、その事実を明記し、オープンソースライセンス付きとして扱いません。
 
+## コントリビューター
+
+- [sa1to-asuka](https://github.com/sa1to-asuka) — 作者・メンテナー
+- Claude（Anthropic）— 実装・テスト・ドキュメントを支援する AI ペアプログラミングアシスタント
+
 ## ライセンス
 
 Zync は [MIT License](LICENSE) で公開されています。Issue と Pull Request は <https://github.com/sa1to-asuka/Zync> で受け付けています。

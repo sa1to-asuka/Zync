@@ -267,6 +267,11 @@ Thank you to the maintainers and contributors of the projects below. Each projec
 
 The same acknowledgement data is available in the app under **Settings → About Zync → Project & Licenses → Open-source Acknowledgements**. Projects without a declared license are listed for transparency and are not described as open source.
 
+## Contributors
+
+- [sa1to-asuka](https://github.com/sa1to-asuka) — author and maintainer
+- Claude (Anthropic) — AI pair-programming assistant for implementation, tests, and documentation
+
 ## License
 
 Zync is released under the [MIT License](LICENSE). Issues and pull requests are welcome at <https://github.com/sa1to-asuka/Zync>.
