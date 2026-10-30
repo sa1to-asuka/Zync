@@ -78,6 +78,15 @@ Bluetooth Low Energy の LSS 経路は実験的機能で、既定では非表示
 - JPEG 画質は 95、92、85 の 3 段階から選択できます。
 - 書き出し時にサイズ、向き、機種、レンズ、露出、焦点距離、日時を EXIF に書き戻します。
 
+### ピクチャーコントロール
+
+- PTP/IP（`0x90CC` / `0x90CD`）経由でカメラ内カスタムピクチャーコントロールを読み書きし、C1–C9 スロットへ書き込んで読み戻し検証します。
+- NP3/NCP レシピのローカルライブラリを管理し、ファイルマネージャー、WeChat、QQ からの読み込み、名前変更、共有、削除に対応します。
+- 1 スロットへの書き込み、または複数レシピの C1–C9 への一括割り当て書き込みに対応します。
+- 保存済みスロットをカメラの現在のピクチャーコントロール（`0xD200`）として有効化し、カメラ側スロットをスマートフォンへバックアップできます。
+- Flexible Color（0310）レシピを解析し、標準 NP3 へ変換してから書き込めます。
+- 内蔵サンプルシーンでレシピをプレビューし、左右ドラッグ比較、257 点トーンカーブ、全パラメーター調整に対応します。
+
 ### カラー調整と写真編集
 
 - フィルム風のカラーグループとクラシックなルックを適用できます。
@@ -247,6 +256,17 @@ Wi-Fi と USB の転送は、公開されている Picture Transfer Protocol の
 | [NikonCopy](https://github.com/Zephyrion-Yuan/NikonCopy) | Android USB OTG PTP ファイルアクセスの参考 | 現在ライセンスファイルなし |
 | [furble](https://github.com/gkoh/furble) | Nikon BLE シャッター動作の参考 | MIT |
 | [nikongeotag](https://github.com/rjmendez/nikongeotag) | Nikon BLE smart-device プロトコルの参考 | GPL-3.0 |
+
+### ピクチャーコントロールのレシピとプレビュー素材
+
+| プロジェクト | 用途 | ライセンス |
+| --- | --- | --- |
+| [Z30-Recipes](https://github.com/yekong-nasa/Z30-Recipes) | Nikon Z30 PTP/IP（0x90CC/0x90CD/0xD200）カメラ内ピクチャーコントロールの読み書きと NP3/NCP 解析の参考 | MIT |
+| [NikonNP3](https://github.com/Timor88/NikonNP3) | Nikon NP3 クリエイティブカラーレシピ集とカテゴリの参考 | コミュニティ共有 |
+| [nikon-flexible-color-picture-control](https://github.com/ssssota/nikon-flexible-color-picture-control) | Nikon Flexible Color NP3（0310）のバイナリオフセットとカラーミキサー構造の参考 | MIT |
+| [Nikon Imaging（ニコンイメージング）](https://www.nikon-image.com/) | ピクチャーコントロール近似プレビュー用の公式サンプル写真（Z 30 / Z fc / Z f / Z 8） | Nikon 公式サンプル展示条件 |
+| [Pakutaso（ぱくたそ）](https://www.pakutaso.com/) | ピクチャーコントロール近似プレビュー用の無料ポートレート・ライフスタイルサンプル | Pakutaso 無料素材条件 |
+| [影视飓风（YSJF）](https://www.ysjf.com/index) | ピクチャーコントロール近似プレビュー用の風景・自然サンプル素材の謝辞 | 無料サンプル素材条件 |
 
 ### ランタイムと基盤依存関係
 

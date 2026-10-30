@@ -78,6 +78,15 @@ Zync 是一款使用 Flutter 开发的开源摄影工具，围绕尼康 Z 系列
 - 提供 95、92、85 三档 JPEG 导出质量。
 - 将尺寸、方向、机型、镜头、曝光、焦距与时间写回导出图片的 EXIF。
 
+### 色彩优化工作室
+
+- 通过 PTP/IP（`0x90CC` / `0x90CD`）读写机内自定义优化校准，写入 C1–C9 槽位并回读校验。
+- 管理本地 NP3/NCP 配方库，支持从文件管理器、微信、QQ 导入，并可重命名、分享导出和删除。
+- 支持单槽写入，或将多个配方批量分配到 C1–C9。
+- 可将已有槽位设为相机当前优化校准（`0xD200`），或把机内槽位读回手机备份。
+- 解析 Flexible Color（0310）配方，并可一键转换为标准 NP3 后写入。
+- 使用内置场景样片预览配方，支持左右拖拽对比、257 点阶调曲线与完整参数调整。
+
 ### 调色与图像编辑
 
 - 按胶片风格组织色彩预设，并提供经典胶卷外观。
@@ -247,6 +256,17 @@ Wi-Fi 与 USB 传输遵循公开的 Picture Transfer Protocol 模型：
 | [NikonCopy](https://github.com/Zephyrion-Yuan/NikonCopy) | Android USB OTG PTP 文件访问参考 | 仓库当前未声明许可证 |
 | [furble](https://github.com/gkoh/furble) | 尼康 BLE 快门行为参考 | MIT |
 | [nikongeotag](https://github.com/rjmendez/nikongeotag) | 尼康 BLE smart-device 协议参考 | GPL-3.0 |
+
+### 色彩优化配方与预览素材
+
+| 项目 | 用途 | 许可证 |
+| --- | --- | --- |
+| [Z30-Recipes](https://github.com/yekong-nasa/Z30-Recipes) | 尼康 Z30 PTP/IP（0x90CC/0x90CD/0xD200）机内优化校准读写与 NP3/NCP 解析参考 | MIT |
+| [NikonNP3](https://github.com/Timor88/NikonNP3) | 尼康 NP3 创意色彩配方合集与分类标签参考 | 社区共享 |
+| [nikon-flexible-color-picture-control](https://github.com/ssssota/nikon-flexible-color-picture-control) | 尼康 Flexible Color NP3（0310）二进制偏移与色彩混合器结构解析参考 | MIT |
+| [Nikon Imaging（ニコンイメージング）](https://www.nikon-image.com/) | 色彩优化近似效果预览官方样片素材（Z 30 / Z fc / Z f / Z 8 实拍样片） | Nikon 官方样片展示许可 |
+| [Pakutaso（ぱくたそ）](https://www.pakutaso.com/) | 色彩优化近似效果预览免费人像与生活样片素材备选参考 | Pakutaso 免费素材许可 |
+| [影视飓风（YSJF）](https://www.ysjf.com/index) | 色彩优化近似效果预览风光与自然样片素材致谢 | 免费样片素材许可 |
 
 ### 运行时与基础依赖
 

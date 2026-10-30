@@ -78,6 +78,15 @@ The Bluetooth Low Energy LSS path is experimental and hidden by default. It is n
 - Export a high-quality JPEG at 95, 92, or 85 quality.
 - Write dimensions, orientation, camera, lens, exposure, focal length, and timestamp back to the exported EXIF block.
 
+### Picture Control studio
+
+- Read and write in-camera custom Picture Controls over PTP/IP (`0x90CC` / `0x90CD`) into slots C1–C9, with read-back verification.
+- Manage a local NP3/NCP recipe library; import from Files, WeChat, or QQ, then rename, share, or delete recipes.
+- Write one recipe to a single slot or batch-assign recipes across C1–C9.
+- Activate a stored slot as the camera's current Picture Control (`0xD200`) and back up camera slots to the phone.
+- Parse Flexible Color (0310) recipes and convert them to standard NP3 before writing.
+- Preview recipes on bundled sample scenes with a draggable before/after split, a 257-point tone curve, and full parameter controls.
+
 ### Color and editing
 
 - Apply film-inspired color groups and classic stock looks.
@@ -247,6 +256,17 @@ Thank you to the maintainers and contributors of the projects below. Each projec
 | [NikonCopy](https://github.com/Zephyrion-Yuan/NikonCopy) | Android USB OTG PTP file-access reference | No license file currently declared |
 | [furble](https://github.com/gkoh/furble) | Nikon BLE shutter behavior reference | MIT |
 | [nikongeotag](https://github.com/rjmendez/nikongeotag) | Nikon BLE smart-device protocol reference | GPL-3.0 |
+
+### Picture Control recipes and preview material
+
+| Project | Purpose | License |
+| --- | --- | --- |
+| [Z30-Recipes](https://github.com/yekong-nasa/Z30-Recipes) | Nikon Z30 PTP/IP (`0x90CC`/`0x90CD`/`0xD200`) Picture Control read/write and NP3/NCP parsing reference | MIT |
+| [NikonNP3](https://github.com/Timor88/NikonNP3) | Nikon NP3 creative color recipe collection and category reference | Community-shared |
+| [nikon-flexible-color-picture-control](https://github.com/ssssota/nikon-flexible-color-picture-control) | Nikon Flexible Color NP3 (0310) binary offsets and color-mixer structure reference | MIT |
+| [Nikon Imaging](https://www.nikon-image.com/) | Sample photographs for approximate Picture Control previews (Z 30 / Z fc / Z f / Z 8) | Nikon sample display terms |
+| [Pakutaso](https://www.pakutaso.com/) | Free portrait and lifestyle sample photographs as preview fallbacks | Pakutaso free material terms |
+| [影视飓风 (YSJF)](https://www.ysjf.com/index) | Landscape and nature sample material acknowledgement | Free sample material terms |
 
 ### Runtime and foundational dependencies
 
