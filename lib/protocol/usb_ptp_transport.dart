@@ -27,6 +27,22 @@ class UsbPtpTransport implements PtpTransport {
   final StreamController<PtpPacket> _eventController =
       StreamController<PtpPacket>.broadcast();
 
+  /// 原生 UsbPtpSession 不允许并发 bulk 请求；缩略图、属性查询与分块下载
+  /// 必须串行进入同一条 USB 会话。
+  Future<void> _pending = Future<void>.value();
+
+  Future<T> _serialize<T>(Future<T> Function() action) {
+    final completer = Completer<T>();
+    _pending = _pending.then((_) async {
+      try {
+        completer.complete(await action());
+      } catch (error, stack) {
+        completer.completeError(error, stack);
+      }
+    });
+    return completer.future;
+  }
+
   @override
   bool get isConnected => _connected && _deviceId != null;
 
@@ -96,19 +112,21 @@ class UsbPtpTransport implements PtpTransport {
 
   @override
   Future<void> executeOperation(int opCode, [List<int> params = const []]) {
-    return CameraNativeBridge.usbExecuteOperation(_requireId, opCode, params);
+    return _serialize(() =>
+        CameraNativeBridge.usbExecuteOperation(_requireId, opCode, params));
   }
 
   @override
   Future<Uint8List> executeDataIn(int opCode, [List<int> params = const []]) {
-    return CameraNativeBridge.usbExecuteDataIn(_requireId, opCode, params);
+    return _serialize(
+        () => CameraNativeBridge.usbExecuteDataIn(_requireId, opCode, params));
   }
 
   @override
   Future<void> executeDataOut(int opCode, Uint8List data,
       [List<int> params = const []]) {
-    return CameraNativeBridge.usbExecuteDataOut(
-        _requireId, opCode, data, params);
+    return _serialize(() =>
+        CameraNativeBridge.usbExecuteDataOut(_requireId, opCode, data, params));
   }
 
   void dispose() {

@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
+import '../../core/utils/capture_date.dart';
 import '../../core/utils/exif_helper.dart';
 import '../filter/photo_filter.dart';
 import 'watermark_painter.dart';
@@ -76,17 +77,21 @@ class WatermarkRenderer {
     bool writeExif = true,
   }) async {
     final rotated = quarterTurns % 2 != 0;
-    final srcW = rotated ? sourceImage.height.toDouble() : sourceImage.width.toDouble();
-    final srcH = rotated ? sourceImage.width.toDouble() : sourceImage.height.toDouble();
+    final srcW =
+        rotated ? sourceImage.height.toDouble() : sourceImage.width.toDouble();
+    final srcH =
+        rotated ? sourceImage.width.toDouble() : sourceImage.height.toDouble();
 
     // 1. 精确计算目标排版物理像素总宽高 (含边框与展签留白)
-    final layout = WatermarkCanvasPainter.computeLayout(srcW, srcH, template, spacingScale);
+    final layout = WatermarkCanvasPainter.computeLayout(
+        srcW, srcH, template, spacingScale);
     final targetW = layout.totalWidth.round();
     final targetH = layout.totalHeight.round();
 
     // 2. 离线 Canvas 高保真光栅化记录
     final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder, Rect.fromLTWH(0, 0, layout.totalWidth, layout.totalHeight));
+    final canvas = Canvas(
+        recorder, Rect.fromLTWH(0, 0, layout.totalWidth, layout.totalHeight));
 
     final painter = WatermarkCanvasPainter(
       image: sourceImage,
@@ -139,7 +144,8 @@ class WatermarkRenderer {
     // 24MP 大图纯 Dart 编码约需 1~3 秒，放在主 isolate 会冻结界面。
     final Uint8List bytes;
     try {
-      final rgba = await renderedImage.toByteData(format: ui.ImageByteFormat.rawRgba);
+      final rgba =
+          await renderedImage.toByteData(format: ui.ImageByteFormat.rawRgba);
       if (rgba == null) {
         throw Exception('水印图片光栅化失败');
       }
@@ -159,7 +165,8 @@ class WatermarkRenderer {
     final saveDir = await getTemporaryDirectory();
 
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final fileName = 'Zync_${metadata.cameraModel.replaceAll(' ', '_')}_$timestamp.jpg';
+    final fileName =
+        'Zync_${metadata.cameraModel.replaceAll(' ', '_')}_$timestamp.jpg';
     final outFile = File('${saveDir.path}/$fileName');
     await outFile.writeAsBytes(bytes, flush: true);
 
@@ -263,10 +270,13 @@ class WatermarkRenderer {
     ]);
   }
 
-  /// '2026.10.06 14:32' / '2026-10-06 14:32' → '2026:10:06 14:32:00'
+  /// '2026.10.06 14:32' / '2026-10-06 14:32' / '20261006T143200' → '2026:10:06 14:32:00'
   static String? _exifDate(String raw) {
-    final match = RegExp(r'(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})[ T](\d{1,2}):(\d{2})')
-        .firstMatch(raw.trim());
+    final normalized = formatCaptureDate(raw.trim());
+    final text = normalized.isEmpty ? raw.trim() : normalized;
+    final match =
+        RegExp(r'(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})[ T](\d{1,2}):(\d{2})')
+            .firstMatch(text);
     if (match == null) return null;
     String two(String v) => v.padLeft(2, '0');
     return '${match.group(1)}:${two(match.group(2)!)}:${two(match.group(3)!)} '
@@ -301,6 +311,10 @@ class WatermarkRenderer {
   /// 辅助方法：从原始字节快速解码 ui.Image
   static Future<ui.Image> decodeImageFromBytes(Uint8List bytes) async {
     final codec = await ui.instantiateImageCodec(bytes);
-    try { return (await codec.getNextFrame()).image; } finally { codec.dispose(); }
+    try {
+      return (await codec.getNextFrame()).image;
+    } finally {
+      codec.dispose();
+    }
   }
 }

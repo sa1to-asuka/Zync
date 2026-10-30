@@ -227,8 +227,8 @@ class _RootScaffoldState extends State<RootScaffold>
           _onTabSelected(3);
           if (initialBytes != null && initialBytes.isNotEmpty) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              _watermarkKey.currentState?.loadImageBytes(initialBytes,
-                  metadata: meta);
+              _watermarkKey.currentState
+                  ?.loadImageBytes(initialBytes, metadata: meta);
               if (openFilter) _watermarkKey.currentState?.showFilterTab();
             });
           }
@@ -261,7 +261,8 @@ class _RootScaffoldState extends State<RootScaffold>
             final fallbackMeta = PhotoMetadata(
               cameraModel:
                   _driver.cameraModel.isNotEmpty ? _driver.cameraModel : 'Z 30',
-              capturedDate: file.captureDate.isNotEmpty ? file.captureDate : '',
+              capturedDate:
+                  file.captureDate.isNotEmpty ? file.captureDateDisplay : '',
             );
             if (_watermarkKey.currentState != null) {
               _watermarkKey.currentState!.loadImageBytes(

@@ -1,6 +1,7 @@
 import 'package:exif/exif.dart';
 import 'package:flutter/services.dart';
 import '../../protocol/nikon_ble_lss.dart';
+import 'capture_date.dart';
 
 /// 照片拍摄元数据实体模型 (EXIF)
 class PhotoMetadata {
@@ -20,14 +21,14 @@ class PhotoMetadata {
   final double? altitude;
 
   const PhotoMetadata({
-    this.cameraMake = 'Nikon',
-    this.cameraModel = 'Z 30',
-    this.lensModel = 'NIKKOR Z 40mm f/2',
-    this.shutterSpeed = '1/250s',
-    this.aperture = 'f/2.0',
-    this.iso = 'ISO 100',
-    this.focalLength = '40mm',
-    this.capturedDate = '2026.10.06 14:32',
+    this.cameraMake = '',
+    this.cameraModel = '',
+    this.lensModel = '',
+    this.shutterSpeed = '',
+    this.aperture = '',
+    this.iso = '',
+    this.focalLength = '',
+    this.capturedDate = '',
     this.orientation = 1,
     this.width = 6000,
     this.height = 4000,
@@ -56,10 +57,15 @@ class PhotoMetadata {
   /// 返回标题栏简洁格式: "NIKON Z 30"
   String get titleText {
     final make = cameraMake
-        .replaceAll(RegExp(r'NIKON CORPORATION|NIKON', caseSensitive: false), 'NIKON')
+        .replaceAll(
+            RegExp(r'NIKON CORPORATION|NIKON', caseSensitive: false), 'NIKON')
         .trim();
-    var model = cameraModel.replaceAll(RegExp(make, caseSensitive: false), '').trim();
-    if (model.isEmpty) model = 'CAMERA';
+    var model = cameraModel.trim();
+    if (make.isNotEmpty && model.isNotEmpty) {
+      model = model
+          .replaceAll(RegExp(RegExp.escape(make), caseSensitive: false), '')
+          .trim();
+    }
     return '$make $model'.trim().toUpperCase();
   }
 
@@ -139,14 +145,20 @@ class ExifHelper {
       }
 
       // 1. 提取相机制造商与机型
-      var make = tags['Image Make']?.printable ?? 'Nikon';
-      var model = tags['Image Model']?.printable ?? 'Z Series';
+      var make = tags['Image Make']?.printable ?? '';
+      var model = tags['Image Model']?.printable ?? '';
 
       make = make
-          .replaceAll(RegExp(r'NIKON CORPORATION|NIKON', caseSensitive: false), 'Nikon')
+          .replaceAll(
+              RegExp(r'NIKON CORPORATION|NIKON', caseSensitive: false), 'Nikon')
           .trim();
-      model = model.replaceAll(RegExp(make, caseSensitive: false), '').trim();
-      if (model.isEmpty) model = 'Camera';
+      if (make.isNotEmpty) {
+        model = model
+            .replaceAll(RegExp(RegExp.escape(make), caseSensitive: false), '')
+            .trim();
+      } else {
+        model = model.trim();
+      }
 
       // 2. 提取镜头规格
       final lens = tags['EXIF LensModel']?.printable ??
@@ -156,16 +168,16 @@ class ExifHelper {
       // 3. 提取曝光三要素
       final rawShutter = tags['EXIF ExposureTime']?.printable ?? '';
       final formattedShutter =
-          rawShutter.isNotEmpty ? _formatShutterSpeed(rawShutter) : '1/250s';
+          rawShutter.isNotEmpty ? _formatShutterSpeed(rawShutter) : '';
 
       final rawAperture = tags['EXIF FNumber']?.printable ?? '';
       final formattedAperture =
-          rawAperture.isNotEmpty ? _formatAperture(rawAperture) : 'f/2.8';
+          rawAperture.isNotEmpty ? _formatAperture(rawAperture) : '';
 
       final rawIso = tags['EXIF ISOSpeedRatings']?.printable ??
           tags['EXIF PhotographicSensitivity']?.printable ??
           '';
-      final formattedIso = rawIso.isNotEmpty ? 'ISO $rawIso' : 'ISO 100';
+      final formattedIso = rawIso.isNotEmpty ? 'ISO $rawIso' : '';
 
       // 4. 焦距与拍摄时间
       final rawFocal = tags['EXIF FocalLength']?.printable ?? '';
@@ -224,7 +236,8 @@ class ExifHelper {
   static Future<({double latitude, double longitude, double altitude})?>
       fetchPhoneLocation() async {
     try {
-      final res = await _nativeChannel.invokeMethod<dynamic>('getCurrentLocation');
+      final res =
+          await _nativeChannel.invokeMethod<dynamic>('getCurrentLocation');
       if (res is Map && res['success'] == true) {
         final lat = (res['latitude'] as num?)?.toDouble();
         final lon = (res['longitude'] as num?)?.toDouble();
@@ -289,15 +302,13 @@ class ExifHelper {
   }
 
   static String _formatShutterSpeed(String raw) {
-    if (raw.contains('/')) return '${raw}s';
-    final val = double.tryParse(raw);
-    if (val != null) {
+    final text = raw.trim().replaceAll(RegExp(r'[sS]$'), '').trim();
+    final val = _ratioToDouble(text);
+    if (val != null && val > 0) {
       if (val >= 1.0) {
         return '${val.toStringAsFixed(val == val.roundToDouble() ? 0 : 1)}s';
-      } else if (val > 0) {
-        final denom = (1.0 / val).round();
-        return '1/${denom}s';
       }
+      return '1/${(1.0 / val).round()}s';
     }
     return '${raw}s';
   }
@@ -338,22 +349,5 @@ class ExifHelper {
     return '${raw}mm';
   }
 
-  static String _formatDateTime(String raw) {
-    if (raw.isEmpty) return '';
-    // 原格式通常为 "YYYY:MM:DD HH:MM:SS"
-    // 转换为 "YYYY.MM.DD HH:MM"
-    final parts = raw.split(' ');
-    if (parts.length >= 2) {
-      final datePart = parts[0].replaceAll(':', '.');
-      final timeParts = parts[1].split(':');
-      final timePart =
-          timeParts.length >= 2 ? '${timeParts[0]}:${timeParts[1]}' : parts[1];
-      return '$datePart $timePart';
-    }
-    var clean = raw.replaceAll(':', '.');
-    if (clean.length >= 16) {
-      clean = clean.substring(0, 16);
-    }
-    return clean;
-  }
+  static String _formatDateTime(String raw) => formatCaptureDate(raw);
 }

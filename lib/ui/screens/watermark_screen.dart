@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import '../../core/settings/app_settings.dart';
+import '../../core/utils/capture_date.dart';
 import '../../core/utils/exif_helper.dart';
 import '../../engine/editor/builtin_grade_presets.dart';
 import '../../engine/editor/color_grade_preset.dart';
@@ -130,16 +131,7 @@ class WatermarkScreenState extends State<WatermarkScreen>
     }
   }
 
-  PhotoMetadata _metadata = const PhotoMetadata(
-    cameraMake: 'Nikon',
-    cameraModel: 'Z 30',
-    lensModel: 'NIKKOR Z 40mm f/2',
-    shutterSpeed: '1/250s',
-    aperture: 'f/2.0',
-    iso: 'ISO 100',
-    focalLength: '40mm',
-    capturedDate: '2026.10.06 14:32',
-  );
+  PhotoMetadata _metadata = const PhotoMetadata();
 
   late final TabController _tabController;
   final ScrollController _wmScrollController = ScrollController();
@@ -259,9 +251,7 @@ class WatermarkScreenState extends State<WatermarkScreen>
         meta = PhotoMetadata(
           cameraMake: parsed.cameraMake.isNotEmpty
               ? parsed.cameraMake
-              : (metadata.cameraMake.isNotEmpty
-                  ? metadata.cameraMake
-                  : 'Nikon'),
+              : metadata.cameraMake,
           cameraModel: parsed.cameraModel.isNotEmpty
               ? parsed.cameraModel
               : metadata.cameraModel,
@@ -278,8 +268,8 @@ class WatermarkScreenState extends State<WatermarkScreen>
               ? parsed.focalLength
               : metadata.focalLength,
           capturedDate: parsed.capturedDate.isNotEmpty
-              ? parsed.capturedDate
-              : metadata.capturedDate,
+              ? formatCaptureDate(parsed.capturedDate)
+              : formatCaptureDate(metadata.capturedDate),
           latitude: parsed.latitude ??
               metadata.latitude ??
               NikonBleLss.sessionLatitude,

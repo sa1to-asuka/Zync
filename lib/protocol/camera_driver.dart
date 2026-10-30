@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import '../core/utils/capture_date.dart';
+
 /// 相机连接状态枚举
 enum CameraConnectionState {
   disconnected,
@@ -68,6 +70,10 @@ class CameraFileItem {
         pixelWidth: (json['pixelWidth'] as num?)?.toInt() ?? 0,
         pixelHeight: (json['pixelHeight'] as num?)?.toInt() ?? 0,
       );
+
+  /// 展示用拍摄时间（归一化为 YYYY.MM.DD HH:MM）。
+  /// 原始 [captureDate] 保留给导出历史索引，避免既有记录失配。
+  String get captureDateDisplay => formatCaptureDate(captureDate);
 
   String get sizeFormatted {
     if (size >= 1024 * 1024 * 1024) {

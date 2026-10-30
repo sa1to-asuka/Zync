@@ -215,7 +215,8 @@ extension _WatermarkScreenSheets on WatermarkScreenState {
                           shutterSpeed: shutterController.text.trim(),
                           iso: isoController.text.trim(),
                           focalLength: focalController.text.trim(),
-                          capturedDate: dateController.text.trim(),
+                          capturedDate:
+                              formatCaptureDate(dateController.text.trim()),
                           latitude: parsedLat,
                           longitude: parsedLon,
                           clearGps: clearGps,

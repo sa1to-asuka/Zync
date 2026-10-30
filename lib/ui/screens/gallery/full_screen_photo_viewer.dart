@@ -42,6 +42,7 @@ class FullScreenPhotoViewer extends StatefulWidget {
 class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
   late final PageController _pageController;
   late int _currentIndex;
+  final Set<String> _viewedDuringSession = <String>{};
   final Set<String> _fullTried = {};
   final Map<String, PhotoMetadata> _parsedMetas = {};
 
@@ -52,14 +53,19 @@ class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
     _pageController = PageController(initialPage: widget.initialIndex);
     if (widget.initialIndex >= 0 &&
         widget.initialIndex < widget.groups.length) {
-      CameraViewedTracker.instance
-          .markViewed(widget.groups[widget.initialIndex].baseName);
+      _viewedDuringSession.add(widget.groups[widget.initialIndex].baseName);
     }
     _preloadMetaForCurrent();
   }
 
   @override
   void dispose() {
+    // 退出查看器后再统一标记已查看，避免打开/翻页期间相册网格在背后重建
+    // 并抢用同一条 USB PTP 连接。
+    if (_viewedDuringSession.isNotEmpty) {
+      unawaited(
+          CameraViewedTracker.instance.markAllViewed(_viewedDuringSession));
+    }
     _pageController.dispose();
     super.dispose();
   }
@@ -67,8 +73,7 @@ class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
   void _preloadMetaForCurrent() {
     if (widget.groups.isEmpty) return;
     final primary = widget
-        .groups[_currentIndex.clamp(0, widget.groups.length - 1)]
-        .primaryItem;
+        .groups[_currentIndex.clamp(0, widget.groups.length - 1)].primaryItem;
     final key = cameraCacheKey(primary.storageId, primary.handle);
     if (_parsedMetas.containsKey(key)) return;
 
@@ -147,9 +152,15 @@ class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
     final fullKey = cameraCacheKey(file.storageId, file.handle);
     final full = widget.fullCache[fullKey];
     if (full != null && full.isNotEmpty) {
+      final targetWidth = (MediaQuery.sizeOf(context).width *
+              MediaQuery.devicePixelRatioOf(context) *
+              2)
+          .round()
+          .clamp(800, 2048);
       return Image.memory(
         full,
         fit: fit,
+        cacheWidth: targetWidth,
         gaplessPlayback: true,
         errorBuilder: (_, __, ___) =>
             Icon(Icons.broken_image, color: dark.textTertiary, size: 64),
@@ -323,7 +334,7 @@ class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
                         const SizedBox(height: 6),
                         _buildExifMetaRow(
                           l10n.wmStyleShowDate,
-                          primary.captureDate,
+                          primary.captureDateDisplay,
                         ),
                       ],
                     ],
@@ -424,8 +435,7 @@ class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
                 setState(() => _currentIndex = idx);
                 _preloadMetaForCurrent();
                 if (idx >= 0 && idx < widget.groups.length) {
-                  CameraViewedTracker.instance
-                      .markViewed(widget.groups[idx].baseName);
+                  _viewedDuringSession.add(widget.groups[idx].baseName);
                 }
               },
               itemBuilder: (context, index) {
@@ -507,7 +517,8 @@ class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
                   ),
                 ),
                 GestureDetector(
-                  onTap: () => _showExifDetailSheet(context, currentGroup, meta),
+                  onTap: () =>
+                      _showExifDetailSheet(context, currentGroup, meta),
                   child: Container(
                     width: 40,
                     height: 40,
@@ -572,8 +583,8 @@ class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
 
     final exifSummary = meta.exposureSummary.isNotEmpty
         ? meta.exposureSummary
-        : (primary.captureDate.isNotEmpty
-            ? primary.captureDate
+        : (primary.captureDateDisplay.isNotEmpty
+            ? primary.captureDateDisplay
             : primary.fileName);
 
     final close = Material(
@@ -625,7 +636,8 @@ class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
               onPressed: () => _handleOpenFilter(primary),
               icon: const Icon(Icons.palette_outlined, size: 16),
               label: Text(l10n.galleryActionGradeShort,
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  style: const TextStyle(
+                      fontSize: 12, fontWeight: FontWeight.bold)),
             ),
             if (hasRaw) ...[
               const SizedBox(height: 8),
@@ -643,7 +655,8 @@ class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
                 },
                 icon: const Icon(Icons.auto_awesome, size: 15),
                 label: Text(l10n.galleryActionProRawGrade,
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    style: const TextStyle(
+                        fontSize: 11, fontWeight: FontWeight.bold)),
               ),
             ],
             if (widget.onExportSingle != null) ...[
@@ -693,7 +706,8 @@ class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
                 // 第一行：单行 EXIF 速览
                 Row(
                   children: [
-                    Icon(Icons.camera_alt_outlined, size: 13, color: dark.accent),
+                    Icon(Icons.camera_alt_outlined,
+                        size: 13, color: dark.accent),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
@@ -748,8 +762,10 @@ class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
                             style: OutlinedButton.styleFrom(
                               foregroundColor: dark.accent,
                               side: BorderSide(
-                                  color: dark.accent.withAlpha(160), width: 1.0),
-                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                                  color: dark.accent.withAlpha(160),
+                                  width: 1.0),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 6),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -782,10 +798,12 @@ class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
                               backgroundColor: dark.surfaceHigh,
                               foregroundColor: dark.textPrimary,
                               elevation: 0,
-                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 6),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                side: BorderSide(color: dark.outline, width: 0.8),
+                                side:
+                                    BorderSide(color: dark.outline, width: 0.8),
                               ),
                             ),
                             onPressed: () => widget.onExportSingle!(group),

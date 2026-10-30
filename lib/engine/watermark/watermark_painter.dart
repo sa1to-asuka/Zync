@@ -147,7 +147,9 @@ class WatermarkCanvasPainter extends CustomPainter {
   });
 
   /// 计算在给定源图尺寸与模板下的目标排版画布尺寸与图片放置位置
-  static LayoutMetrics computeLayout(double srcW, double srcH, WatermarkTemplate template, [double spacing = 1.0]) {
+  static LayoutMetrics computeLayout(
+      double srcW, double srcH, WatermarkTemplate template,
+      [double spacing = 1.0]) {
     // 水印字号以 1200px 设计基准等比缩放；输入低于基准时整体等比放大光栅
     // (版式比例不变，照片随之放大)，否则低分辨率裁切后字号过小、导出糊成一团。
     if (template != WatermarkTemplate.none && srcW < 1200) {
@@ -155,172 +157,188 @@ class WatermarkCanvasPainter extends CustomPainter {
       srcW = 1200;
     }
     switch (template) {
-      case WatermarkTemplate.none: {
-        return LayoutMetrics(
-          totalWidth: srcW,
-          totalHeight: srcH,
-          imageRect: Rect.fromLTWH(0, 0, srcW, srcH),
-        );
-      }
-      case WatermarkTemplate.inPhotoOverlay: {
-        // 满幅无边框，文字排在照片内部
-        return LayoutMetrics(
-          totalWidth: srcW,
-          totalHeight: srcH,
-          imageRect: Rect.fromLTWH(0, 0, srcW, srcH),
-        );
-      }
-      case WatermarkTemplate.bottomBannerBlur: {
-        // 周围全幅高斯虚化 + 纯下边框 (图片左右上与卡片齐平，无多余白边)
-        final marginX = srcW * 0.07 * spacing;
-        final marginY = srcH * 0.07 * spacing;
-        final bottomH = srcH * 0.15 * spacing;
-        final totalW = srcW + marginX * 2;
-        final totalH = srcH + bottomH + marginY * 2;
-        return LayoutMetrics(
-          totalWidth: totalW,
-          totalHeight: totalH,
-          imageRect: Rect.fromLTWH(marginX, marginY, srcW, srcH),
-        );
-      }
-      case WatermarkTemplate.topBottomBannerBlur: {
-        // 周围全幅高斯虚化 + 上下双边框 (顶部 LIGHT AND SHADOW，底部大师参数)
-        final marginX = srcW * 0.07 * spacing;
-        final marginY = srcH * 0.07 * spacing;
-        final topH = srcH * 0.09 * spacing;
-        final bottomH = srcH * 0.15 * spacing;
-        final totalW = srcW + marginX * 2;
-        final totalH = srcH + topH + bottomH + marginY * 2;
-        return LayoutMetrics(
-          totalWidth: totalW,
-          totalHeight: totalH,
-          imageRect: Rect.fromLTWH(marginX, marginY + topH, srcW, srcH),
-        );
-      }
-      case WatermarkTemplate.darkGlassBlur: {
-        // 周围暗调虚化 + 悬浮磨砂黑玻质感卡片
-        final marginX = srcW * 0.065 * spacing;
-        final marginY = srcH * 0.065 * spacing;
-        final topH = srcH * 0.05 * spacing;
-        final bottomH = srcH * 0.15 * spacing;
-        final totalW = srcW + marginX * 2;
-        final totalH = srcH + topH + bottomH + marginY * 2;
-        return LayoutMetrics(
-          totalWidth: totalW,
-          totalHeight: totalH,
-          imageRect: Rect.fromLTWH(marginX, marginY + topH, srcW, srcH),
-        );
-      }
-      case WatermarkTemplate.polaroidBlur: {
-        // 周围全幅高斯虚化 + 浮动复古白卡立体相纸
-        final pad = srcW * 0.032 * spacing;
-        final marginX = srcW * 0.06 * spacing;
-        final marginY = srcH * 0.06 * spacing;
-        final bottomH = srcH * 0.16 * spacing;
-        final cardW = srcW + pad * 2;
-        final cardH = srcH + pad + bottomH;
-        final totalW = cardW + marginX * 2;
-        final totalH = cardH + marginY * 2;
-        return LayoutMetrics(
-          totalWidth: totalW,
-          totalHeight: totalH,
-          imageRect: Rect.fromLTWH(marginX + pad, marginY + pad, srcW, srcH),
-        );
-      }
-      case WatermarkTemplate.flushMasterBar: {
-        // 大师画廊 · 纯净直出底栏 (零虚化，满幅照片直接拼接)
-        final bottomH = srcH * 0.13 * spacing;
-        final totalH = srcH + bottomH;
-        return LayoutMetrics(
-          totalWidth: srcW,
-          totalHeight: totalH,
-          imageRect: Rect.fromLTWH(0, 0, srcW, srcH),
-        );
-      }
-      case WatermarkTemplate.magazineCover: {
-        // 杂志封面：顶部大标题区 + 底部信息区，四周留白卡片
-        final marginX = srcW * 0.05 * spacing;
-        final marginY = srcH * 0.05 * spacing;
-        final topH = srcH * 0.11 * spacing;
-        final bottomH = srcH * 0.13 * spacing;
-        return LayoutMetrics(
-          totalWidth: srcW + marginX * 2,
-          totalHeight: srcH + topH + bottomH + marginY * 2,
-          imageRect: Rect.fromLTWH(marginX, marginY + topH, srcW, srcH),
-        );
-      }
-      case WatermarkTemplate.gradientCaption: {
-        // 渐变字幕：满幅照片，底部渐变遮罩压字
-        return LayoutMetrics(
-          totalWidth: srcW,
-          totalHeight: srcH,
-          imageRect: Rect.fromLTWH(0, 0, srcW, srcH),
-        );
-      }
-      case WatermarkTemplate.minimalLine: {
-        // 极简细线：满幅照片 + 内嵌细框
-        return LayoutMetrics(
-          totalWidth: srcW,
-          totalHeight: srcH,
-          imageRect: Rect.fromLTWH(0, 0, srcW, srcH),
-        );
-      }
-      case WatermarkTemplate.brandClassicWhite: {
-        // 经典白边 · 品牌框 (Copicseal / PicSeal 风格：纯下底栏拼接)
-        final bottomH = srcH * 0.135 * spacing;
-        return LayoutMetrics(
-          totalWidth: srcW,
-          totalHeight: srcH + bottomH,
-          imageRect: Rect.fromLTWH(0, 0, srcW, srcH),
-        );
-      }
-      case WatermarkTemplate.brandEmblemCenter: {
-        // 徽标居中 · 展签框 (semi-utils 风格：四周留白 + 底部居中品牌徽标与参数)
-        final pad = srcW * 0.036 * spacing;
-        final bottomH = srcH * 0.18 * spacing;
-        return LayoutMetrics(
-          totalWidth: srcW + pad * 2,
-          totalHeight: srcH + pad + bottomH,
-          imageRect: Rect.fromLTWH(pad, pad, srcW, srcH),
-        );
-      }
-      case WatermarkTemplate.blurFloatingShadow: {
-        // 圆角阴影 · 品牌悬浮 (semi-utils / camera-watermark 风格：模糊底 + 悬浮圆角阴影 + 底部徽标)
-        final marginX = srcW * 0.075 * spacing;
-        final topMargin = srcH * 0.07 * spacing;
-        final bottomH = srcH * 0.16 * spacing;
-        return LayoutMetrics(
-          totalWidth: srcW + marginX * 2,
-          totalHeight: srcH + topMargin + bottomH,
-          imageRect: Rect.fromLTWH(marginX, topMargin, srcW, srcH),
-        );
-      }
-      case WatermarkTemplate.minimalCornerParam: {
-        // 右下角 · 极简参数 (semi-utils 风格：无外框内嵌)
-        return LayoutMetrics(
-          totalWidth: srcW,
-          totalHeight: srcH,
-          imageRect: Rect.fromLTWH(0, 0, srcW, srcH),
-        );
-      }
-      case WatermarkTemplate.retroTimestamp: {
-        // 复古胶片 · 日期戳 (Copicseal 风格：无外框胶片时间戳)
-        return LayoutMetrics(
-          totalWidth: srcW,
-          totalHeight: srcH,
-          imageRect: Rect.fromLTWH(0, 0, srcW, srcH),
-        );
-      }
-      case WatermarkTemplate.geoLocationEditorial: {
-        // 地理坐标 · 经纬度展签 (四周细白边 + 底部经纬度与品牌展签)
-        final pad = srcW * 0.024 * spacing;
-        final bottomH = srcH * 0.155 * spacing;
-        return LayoutMetrics(
-          totalWidth: srcW + pad * 2,
-          totalHeight: srcH + pad + bottomH,
-          imageRect: Rect.fromLTWH(pad, pad, srcW, srcH),
-        );
-      }
+      case WatermarkTemplate.none:
+        {
+          return LayoutMetrics(
+            totalWidth: srcW,
+            totalHeight: srcH,
+            imageRect: Rect.fromLTWH(0, 0, srcW, srcH),
+          );
+        }
+      case WatermarkTemplate.inPhotoOverlay:
+        {
+          // 满幅无边框，文字排在照片内部
+          return LayoutMetrics(
+            totalWidth: srcW,
+            totalHeight: srcH,
+            imageRect: Rect.fromLTWH(0, 0, srcW, srcH),
+          );
+        }
+      case WatermarkTemplate.bottomBannerBlur:
+        {
+          // 周围全幅高斯虚化 + 纯下边框 (图片左右上与卡片齐平，无多余白边)
+          final marginX = srcW * 0.07 * spacing;
+          final marginY = srcH * 0.07 * spacing;
+          final bottomH = srcH * 0.15 * spacing;
+          final totalW = srcW + marginX * 2;
+          final totalH = srcH + bottomH + marginY * 2;
+          return LayoutMetrics(
+            totalWidth: totalW,
+            totalHeight: totalH,
+            imageRect: Rect.fromLTWH(marginX, marginY, srcW, srcH),
+          );
+        }
+      case WatermarkTemplate.topBottomBannerBlur:
+        {
+          // 周围全幅高斯虚化 + 上下双边框 (顶部 LIGHT AND SHADOW，底部大师参数)
+          final marginX = srcW * 0.07 * spacing;
+          final marginY = srcH * 0.07 * spacing;
+          final topH = srcH * 0.09 * spacing;
+          final bottomH = srcH * 0.15 * spacing;
+          final totalW = srcW + marginX * 2;
+          final totalH = srcH + topH + bottomH + marginY * 2;
+          return LayoutMetrics(
+            totalWidth: totalW,
+            totalHeight: totalH,
+            imageRect: Rect.fromLTWH(marginX, marginY + topH, srcW, srcH),
+          );
+        }
+      case WatermarkTemplate.darkGlassBlur:
+        {
+          // 周围暗调虚化 + 悬浮磨砂黑玻质感卡片
+          final marginX = srcW * 0.065 * spacing;
+          final marginY = srcH * 0.065 * spacing;
+          final topH = srcH * 0.05 * spacing;
+          final bottomH = srcH * 0.15 * spacing;
+          final totalW = srcW + marginX * 2;
+          final totalH = srcH + topH + bottomH + marginY * 2;
+          return LayoutMetrics(
+            totalWidth: totalW,
+            totalHeight: totalH,
+            imageRect: Rect.fromLTWH(marginX, marginY + topH, srcW, srcH),
+          );
+        }
+      case WatermarkTemplate.polaroidBlur:
+        {
+          // 周围全幅高斯虚化 + 浮动复古白卡立体相纸
+          final pad = srcW * 0.032 * spacing;
+          final marginX = srcW * 0.06 * spacing;
+          final marginY = srcH * 0.06 * spacing;
+          final bottomH = srcH * 0.16 * spacing;
+          final cardW = srcW + pad * 2;
+          final cardH = srcH + pad + bottomH;
+          final totalW = cardW + marginX * 2;
+          final totalH = cardH + marginY * 2;
+          return LayoutMetrics(
+            totalWidth: totalW,
+            totalHeight: totalH,
+            imageRect: Rect.fromLTWH(marginX + pad, marginY + pad, srcW, srcH),
+          );
+        }
+      case WatermarkTemplate.flushMasterBar:
+        {
+          // 大师画廊 · 纯净直出底栏 (零虚化，满幅照片直接拼接)
+          final bottomH = srcH * 0.13 * spacing;
+          final totalH = srcH + bottomH;
+          return LayoutMetrics(
+            totalWidth: srcW,
+            totalHeight: totalH,
+            imageRect: Rect.fromLTWH(0, 0, srcW, srcH),
+          );
+        }
+      case WatermarkTemplate.magazineCover:
+        {
+          // 杂志封面：顶部大标题区 + 底部信息区，四周留白卡片
+          final marginX = srcW * 0.05 * spacing;
+          final marginY = srcH * 0.05 * spacing;
+          final topH = srcH * 0.11 * spacing;
+          final bottomH = srcH * 0.13 * spacing;
+          return LayoutMetrics(
+            totalWidth: srcW + marginX * 2,
+            totalHeight: srcH + topH + bottomH + marginY * 2,
+            imageRect: Rect.fromLTWH(marginX, marginY + topH, srcW, srcH),
+          );
+        }
+      case WatermarkTemplate.gradientCaption:
+        {
+          // 渐变字幕：满幅照片，底部渐变遮罩压字
+          return LayoutMetrics(
+            totalWidth: srcW,
+            totalHeight: srcH,
+            imageRect: Rect.fromLTWH(0, 0, srcW, srcH),
+          );
+        }
+      case WatermarkTemplate.minimalLine:
+        {
+          // 极简细线：满幅照片 + 内嵌细框
+          return LayoutMetrics(
+            totalWidth: srcW,
+            totalHeight: srcH,
+            imageRect: Rect.fromLTWH(0, 0, srcW, srcH),
+          );
+        }
+      case WatermarkTemplate.brandClassicWhite:
+        {
+          // 经典白边 · 品牌框 (Copicseal / PicSeal 风格：纯下底栏拼接)
+          final bottomH = srcH * 0.135 * spacing;
+          return LayoutMetrics(
+            totalWidth: srcW,
+            totalHeight: srcH + bottomH,
+            imageRect: Rect.fromLTWH(0, 0, srcW, srcH),
+          );
+        }
+      case WatermarkTemplate.brandEmblemCenter:
+        {
+          // 徽标居中 · 展签框 (semi-utils 风格：四周留白 + 底部居中品牌徽标与参数)
+          final pad = srcW * 0.036 * spacing;
+          final bottomH = srcH * 0.18 * spacing;
+          return LayoutMetrics(
+            totalWidth: srcW + pad * 2,
+            totalHeight: srcH + pad + bottomH,
+            imageRect: Rect.fromLTWH(pad, pad, srcW, srcH),
+          );
+        }
+      case WatermarkTemplate.blurFloatingShadow:
+        {
+          // 圆角阴影 · 品牌悬浮 (semi-utils / camera-watermark 风格：模糊底 + 悬浮圆角阴影 + 底部徽标)
+          final marginX = srcW * 0.075 * spacing;
+          final topMargin = srcH * 0.07 * spacing;
+          final bottomH = srcH * 0.16 * spacing;
+          return LayoutMetrics(
+            totalWidth: srcW + marginX * 2,
+            totalHeight: srcH + topMargin + bottomH,
+            imageRect: Rect.fromLTWH(marginX, topMargin, srcW, srcH),
+          );
+        }
+      case WatermarkTemplate.minimalCornerParam:
+        {
+          // 右下角 · 极简参数 (semi-utils 风格：无外框内嵌)
+          return LayoutMetrics(
+            totalWidth: srcW,
+            totalHeight: srcH,
+            imageRect: Rect.fromLTWH(0, 0, srcW, srcH),
+          );
+        }
+      case WatermarkTemplate.retroTimestamp:
+        {
+          // 复古胶片 · 日期戳 (Copicseal 风格：无外框胶片时间戳)
+          return LayoutMetrics(
+            totalWidth: srcW,
+            totalHeight: srcH,
+            imageRect: Rect.fromLTWH(0, 0, srcW, srcH),
+          );
+        }
+      case WatermarkTemplate.geoLocationEditorial:
+        {
+          // 地理坐标 · 经纬度展签 (四周细白边 + 底部经纬度与品牌展签)
+          final pad = srcW * 0.024 * spacing;
+          final bottomH = srcH * 0.155 * spacing;
+          return LayoutMetrics(
+            totalWidth: srcW + pad * 2,
+            totalHeight: srcH + pad + bottomH,
+            imageRect: Rect.fromLTWH(pad, pad, srcW, srcH),
+          );
+        }
     }
   }
 
@@ -339,7 +357,8 @@ class WatermarkCanvasPainter extends CustomPainter {
   void _paintPlaceholderPreview(Canvas canvas, Size size) {
     final layout = computeLayout(1200, 800, template, spacingScale);
     // contain 适配：按排版比例完整呈现居中，画布外留白保持透明 (所见即所得，不铺任何装饰底)
-    final scaleRatio = math.min(size.width / layout.totalWidth, size.height / layout.totalHeight);
+    final scaleRatio = math.min(
+        size.width / layout.totalWidth, size.height / layout.totalHeight);
     final offsetX = (size.width - layout.totalWidth * scaleRatio) / 2.0;
     final offsetY = (size.height - layout.totalHeight * scaleRatio) / 2.0;
 
@@ -359,7 +378,8 @@ class WatermarkCanvasPainter extends CustomPainter {
     final srcH = rotated ? img.width.toDouble() : img.height.toDouble();
     final layout = computeLayout(srcW, srcH, template, spacingScale);
     // contain 适配：画布与排版比例不一致时整体缩放居中，不裁切、不加装饰底 (所见即所得)
-    final scaleRatio = math.min(size.width / layout.totalWidth, size.height / layout.totalHeight);
+    final scaleRatio = math.min(
+        size.width / layout.totalWidth, size.height / layout.totalHeight);
     final offsetX = (size.width - layout.totalWidth * scaleRatio) / 2.0;
     final offsetY = (size.height - layout.totalHeight * scaleRatio) / 2.0;
 
@@ -372,7 +392,8 @@ class WatermarkCanvasPainter extends CustomPainter {
     canvas.restore();
   }
 
-  void _drawTemplateOverlays(Canvas canvas, Size size, ui.Image? img, Rect imgRect) {
+  void _drawTemplateOverlays(
+      Canvas canvas, Size size, ui.Image? img, Rect imgRect) {
     switch (template) {
       case WatermarkTemplate.none:
         if (img != null) {
@@ -507,8 +528,7 @@ class WatermarkCanvasPainter extends CustomPainter {
   }
 
   /// 三组独立字号倍率。
-  double _titleSize(double base, double scale) =>
-      base * scale * titleTextScale;
+  double _titleSize(double base, double scale) => base * scale * titleTextScale;
 
   double _metaSize(double base, double scale) => base * scale * metaTextScale;
 
@@ -625,7 +645,8 @@ class WatermarkCanvasPainter extends CustomPainter {
       filterIntensity: filterIntensity,
       adjustments: adjustments,
     );
-    final srcRect = Rect.fromLTWH(0, 0, img.width.toDouble(), img.height.toDouble());
+    final srcRect =
+        Rect.fromLTWH(0, 0, img.width.toDouble(), img.height.toDouble());
     final turns = quarterTurns % 4;
     if (turns == 0 && !mirrorX) {
       canvas.drawImageRect(img, srcRect, dstRect, paint);
@@ -655,7 +676,9 @@ class WatermarkCanvasPainter extends CustomPainter {
   }
 
   /// 绘制原图全景高斯虚化背景 (Gaussian Blur Background)
-  void _drawGaussianBlurBackground(Canvas canvas, Size size, ui.Image? img, double scale, {double tintOpacity = 0.28}) {
+  void _drawGaussianBlurBackground(
+      Canvas canvas, Size size, ui.Image? img, double scale,
+      {double tintOpacity = 0.28}) {
     if (img != null) {
       final bgDst = Rect.fromLTWH(0, 0, size.width, size.height);
       final bgPaint = Paint()
@@ -678,14 +701,17 @@ class WatermarkCanvasPainter extends CustomPainter {
       canvas.drawImageRect(img, bgSrc, bgDst, bgPaint);
 
       // 暗调遮罩层，提升悬浮卡片高对比度与空间深度感
-      canvas.drawRect(bgDst, Paint()..color = Color.fromRGBO(0, 0, 0, tintOpacity));
+      canvas.drawRect(
+          bgDst, Paint()..color = Color.fromRGBO(0, 0, 0, tintOpacity));
     } else {
-      canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), Paint()..color = const Color(0xFF1E2026));
+      canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height),
+          Paint()..color = const Color(0xFF1E2026));
     }
   }
 
   /// 绘制悬浮卡片双层多阶真实立体阴影
-  void _drawFloatingShadow(Canvas canvas, RRect rrect, double scale, {bool isDark = false}) {
+  void _drawFloatingShadow(Canvas canvas, RRect rrect, double scale,
+      {bool isDark = false}) {
     // 1. 大范围空间漫反射柔和阴影
     canvas.drawRRect(
       rrect.shift(Offset(0, 16 * scale)),
@@ -703,7 +729,9 @@ class WatermarkCanvasPainter extends CustomPainter {
   }
 
   /// 照片绘制或占位符
-  void _drawPhotoOrPlaceholder(Canvas canvas, ui.Image? img, Rect imgRect, double scale, {RRect? clipRRect}) {
+  void _drawPhotoOrPlaceholder(
+      Canvas canvas, ui.Image? img, Rect imgRect, double scale,
+      {RRect? clipRRect}) {
     if (img != null) {
       if (clipRRect != null) {
         canvas.save();
@@ -735,7 +763,8 @@ class WatermarkCanvasPainter extends CustomPainter {
       )..layout();
       phText.paint(
         canvas,
-        Offset(imgRect.left + (imgRect.width - phText.width) / 2, imgRect.top + (imgRect.height - phText.height) / 2),
+        Offset(imgRect.left + (imgRect.width - phText.width) / 2,
+            imgRect.top + (imgRect.height - phText.height) / 2),
       );
     }
   }
@@ -757,7 +786,8 @@ class WatermarkCanvasPainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    _paintText(canvas, titleP, Offset((size.width - titleP.width) / 2, size.height * 0.45));
+    _paintText(canvas, titleP,
+        Offset((size.width - titleP.width) / 2, size.height * 0.45));
 
     final subP = TextPainter(
       text: TextSpan(
@@ -769,11 +799,13 @@ class WatermarkCanvasPainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    subP.paint(canvas, Offset((size.width - subP.width) / 2, size.height * 0.45 + 34 * scale));
+    subP.paint(canvas,
+        Offset((size.width - subP.width) / 2, size.height * 0.45 + 34 * scale));
   }
 
   /// 模板: 照片内嵌 · 参数入画 (满幅无边框，机型与曝光参数直接排在照片内部)
-  void _drawInPhotoOverlay(Canvas canvas, Size size, ui.Image? img, Rect imgRect) {
+  void _drawInPhotoOverlay(
+      Canvas canvas, Size size, ui.Image? img, Rect imgRect) {
     final scale = size.width / 1200.0;
 
     // 1. 满幅照片 (无边框无虚化)
@@ -783,7 +815,8 @@ class WatermarkCanvasPainter extends CustomPainter {
     final scrimColor = _cardFill(Colors.transparent);
     if (scrimColor.a > 0) {
       final maskH = imgRect.height * 0.42;
-      final maskRect = Rect.fromLTWH(0, imgRect.bottom - maskH, imgRect.width, maskH);
+      final maskRect =
+          Rect.fromLTWH(0, imgRect.bottom - maskH, imgRect.width, maskH);
       canvas.drawRect(
         maskRect,
         Paint()
@@ -802,7 +835,10 @@ class WatermarkCanvasPainter extends CustomPainter {
     final shadowColor = _textShadowColor(
         textDark ? Colors.white.withAlpha(150) : Colors.black.withAlpha(170));
     final shadows = [
-      Shadow(color: shadowColor, offset: Offset(0, 1.5 * scale), blurRadius: 6 * scale),
+      Shadow(
+          color: shadowColor,
+          offset: Offset(0, 1.5 * scale),
+          blurRadius: 6 * scale),
     ];
 
     final padX = size.width * 0.045 * spacingScale;
@@ -884,8 +920,10 @@ class WatermarkCanvasPainter extends CustomPainter {
 
     // 5. 底部内侧两列底对齐排布
     final bottomY = size.height - padY;
-    final leftBlockH = titleP.height + (lensP != null ? lineGap + lensP.height : 0);
-    final rightBlockH = expoP.height + (dateP != null ? lineGap + dateP.height : 0);
+    final leftBlockH =
+        titleP.height + (lensP != null ? lineGap + lensP.height : 0);
+    final rightBlockH =
+        expoP.height + (dateP != null ? lineGap + dateP.height : 0);
 
     var leftY = bottomY - leftBlockH;
     _paintText(canvas, titleP, Offset(padX, leftY));
@@ -898,7 +936,8 @@ class WatermarkCanvasPainter extends CustomPainter {
     _paintText(canvas, expoP, Offset(size.width - padX - expoP.width, rightY));
     if (dateP != null) {
       rightY += expoP.height + lineGap;
-      _paintText(canvas, dateP, Offset(size.width - padX - dateP.width, rightY));
+      _paintText(
+          canvas, dateP, Offset(size.width - padX - dateP.width, rightY));
     }
   }
 
@@ -915,14 +954,18 @@ class WatermarkCanvasPainter extends CustomPainter {
   // 用户强推核心款：图片左右上无多余白边，仅带纯白下边框，周围全幅高斯虚化 + 悬浮阴影
   // 对标实拍设计: media_1791281238085.jpg, media_1791281238135.jpg, media_1791281248682.jpg
   // =========================================================================
-  void _drawBottomBannerBlur(Canvas canvas, Size size, ui.Image? img, Rect imgRect) {
+  void _drawBottomBannerBlur(
+      Canvas canvas, Size size, ui.Image? img, Rect imgRect) {
     final scale = size.width / 1200.0;
-    final cardFill = _cardFill(cardDark ? const Color(0xFF0C0D10) : Colors.white);
-    final strongText = _textColor(textDark ? const Color(0xFF1E1E1E) : Colors.white);
+    final cardFill =
+        _cardFill(cardDark ? const Color(0xFF0C0D10) : Colors.white);
+    final strongText =
+        _textColor(textDark ? const Color(0xFF1E1E1E) : Colors.white);
     final mutedText = _secondaryTextColor(
         textDark ? const Color(0xFF757575) : const Color(0xFFB3B3B3));
     final bottomH = imgRect.height * 0.15 * spacingScale;
-    final cardRect = Rect.fromLTRB(imgRect.left, imgRect.top, imgRect.right, imgRect.bottom + bottomH);
+    final cardRect = Rect.fromLTRB(
+        imgRect.left, imgRect.top, imgRect.right, imgRect.bottom + bottomH);
     final cardRadius = _cardRadius(scale);
     final cardRRect = RRect.fromRectAndRadius(cardRect, cardRadius);
 
@@ -930,7 +973,9 @@ class WatermarkCanvasPainter extends CustomPainter {
     _drawGaussianBlurBackground(canvas, size, img, scale, tintOpacity: 0.24);
 
     // 2. 悬浮立体阴影
-    _drawFloatingShadow(canvas, cardRRect, scale, isDark: _isEffectiveCardDark(cardDark ? const Color(0xFF0C0D10) : Colors.white));
+    _drawFloatingShadow(canvas, cardRRect, scale,
+        isDark: _isEffectiveCardDark(
+            cardDark ? const Color(0xFF0C0D10) : Colors.white));
 
     // 3. 悬浮卡片底层 (边框颜色黑白可选)
     canvas.drawRRect(cardRRect, Paint()..color = cardFill);
@@ -987,7 +1032,8 @@ class WatermarkCanvasPainter extends CustomPainter {
       ),
     );
 
-    final modelName = _meta.titleText.replaceAll(RegExp(r'^Nikon\s+', caseSensitive: false), '');
+    final modelName = _meta.titleText
+        .replaceAll(RegExp(r'^Nikon\s+', caseSensitive: false), '');
     final titleP = TextPainter(
       text: TextSpan(
         text: modelName.isNotEmpty ? modelName : _meta.titleText,
@@ -1000,7 +1046,8 @@ class WatermarkCanvasPainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    _paintText(canvas, titleP, Offset(paddingX + badgeW + 12 * scale, line1Y - titleP.height * 0.65));
+    _paintText(canvas, titleP,
+        Offset(paddingX + badgeW + 12 * scale, line1Y - titleP.height * 0.65));
 
     // 左侧第二行: 镜头型号
     if (_meta.lensModel.isNotEmpty) {
@@ -1033,7 +1080,8 @@ class WatermarkCanvasPainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    _paintText(canvas, expoP, Offset(rightMarginX - expoP.width, line1Y - expoP.height * 0.65));
+    _paintText(canvas, expoP,
+        Offset(rightMarginX - expoP.width, line1Y - expoP.height * 0.65));
 
     // 右侧第二行: 拍摄时间与经纬度
     final dateGps = _dateAndGpsSubline();
@@ -1050,7 +1098,8 @@ class WatermarkCanvasPainter extends CustomPainter {
         ),
         textDirection: TextDirection.ltr,
       )..layout();
-      _paintText(canvas, dateP, Offset(rightMarginX - dateP.width, line2Y - dateP.height * 0.5));
+      _paintText(canvas, dateP,
+          Offset(rightMarginX - dateP.width, line2Y - dateP.height * 0.5));
     }
   }
 
@@ -1074,10 +1123,13 @@ class WatermarkCanvasPainter extends CustomPainter {
   // 用户强推核心款：图片带精致上下留白边框，顶部艺术光影标，底部大师参数，周围全幅高斯虚化 + 阴影
   // 对标实拍设计: media_1791281238081.jpg, media_1791281238119.jpg
   // =========================================================================
-  void _drawTopBottomBannerBlur(Canvas canvas, Size size, ui.Image? img, Rect imgRect) {
+  void _drawTopBottomBannerBlur(
+      Canvas canvas, Size size, ui.Image? img, Rect imgRect) {
     final scale = size.width / 1200.0;
-    final cardFill = _cardFill(cardDark ? const Color(0xFF0C0D10) : const Color(0xFFF5F4F0));
-    final strongText = _textColor(textDark ? const Color(0xFF1E1E1E) : Colors.white);
+    final cardFill =
+        _cardFill(cardDark ? const Color(0xFF0C0D10) : const Color(0xFFF5F4F0));
+    final strongText =
+        _textColor(textDark ? const Color(0xFF1E1E1E) : Colors.white);
     final lensText = _secondaryTextColor(
         textDark ? const Color(0xFF757575) : Colors.white.withAlpha(165));
     final expoText = _textColor(
@@ -1088,7 +1140,8 @@ class WatermarkCanvasPainter extends CustomPainter {
         textDark ? const Color(0xFF555555) : Colors.white.withAlpha(225));
     final topH = imgRect.height * 0.09 * spacingScale;
     final bottomH = imgRect.height * 0.15 * spacingScale;
-    final cardRect = Rect.fromLTRB(imgRect.left, imgRect.top - topH, imgRect.right, imgRect.bottom + bottomH);
+    final cardRect = Rect.fromLTRB(imgRect.left, imgRect.top - topH,
+        imgRect.right, imgRect.bottom + bottomH);
     final cardRadius = _cardRadius(scale);
     final cardRRect = RRect.fromRectAndRadius(cardRect, cardRadius);
 
@@ -1096,7 +1149,9 @@ class WatermarkCanvasPainter extends CustomPainter {
     _drawGaussianBlurBackground(canvas, size, img, scale, tintOpacity: 0.38);
 
     // 2. 悬浮立体阴影
-    _drawFloatingShadow(canvas, cardRRect, scale, isDark: _isEffectiveCardDark(cardDark ? const Color(0xFF0C0D10) : const Color(0xFFF5F4F0)));
+    _drawFloatingShadow(canvas, cardRRect, scale,
+        isDark: _isEffectiveCardDark(
+            cardDark ? const Color(0xFF0C0D10) : const Color(0xFFF5F4F0)));
 
     // 3. 悬浮卡片底板 (边框颜色黑白可选)
     canvas.drawRRect(cardRRect, Paint()..color = cardFill);
@@ -1115,7 +1170,11 @@ class WatermarkCanvasPainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    _paintText(canvas, topP, Offset(cardRect.left + (cardRect.width - topP.width) / 2, topCenterY - topP.height / 2));
+    _paintText(
+        canvas,
+        topP,
+        Offset(cardRect.left + (cardRect.width - topP.width) / 2,
+            topCenterY - topP.height / 2));
 
     // 5. 居中照片 (左右与卡片边缘齐平)
     _drawPhotoOrPlaceholder(canvas, img, imgRect, scale);
@@ -1172,11 +1231,14 @@ class WatermarkCanvasPainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    _paintText(canvas, expoP, Offset(rightMarginX - expoP.width, line1Y - expoP.height * 0.65));
+    _paintText(canvas, expoP,
+        Offset(rightMarginX - expoP.width, line1Y - expoP.height * 0.65));
 
     // 右侧第二行: 拍摄时间
     if (showDetails && _meta.capturedDate.isNotEmpty) {
-      final dateStr = _meta.capturedDate.length > 10 ? _meta.capturedDate.substring(0, 10).replaceAll('-', '.') : _meta.capturedDate;
+      final dateStr = _meta.capturedDate.length > 10
+          ? _meta.capturedDate.substring(0, 10).replaceAll('-', '.')
+          : _meta.capturedDate;
       final dateP = TextPainter(
         text: TextSpan(
           text: dateStr,
@@ -1189,7 +1251,8 @@ class WatermarkCanvasPainter extends CustomPainter {
         ),
         textDirection: TextDirection.ltr,
       )..layout();
-      _paintText(canvas, dateP, Offset(rightMarginX - dateP.width, line2Y - dateP.height * 0.5));
+      _paintText(canvas, dateP,
+          Offset(rightMarginX - dateP.width, line2Y - dateP.height * 0.5));
     }
   }
 
@@ -1197,13 +1260,16 @@ class WatermarkCanvasPainter extends CustomPainter {
   // 模板 3: 高斯虚化 · 极光暗黑黑玻 (Dark Glass Blur)
   // 周围暗调虚化氛围 · 悬浮磨砂黑玻质感卡片 · 顶部微标与高反差银白参数
   // =========================================================================
-  void _drawDarkGlassBlur(Canvas canvas, Size size, ui.Image? img, Rect imgRect) {
+  void _drawDarkGlassBlur(
+      Canvas canvas, Size size, ui.Image? img, Rect imgRect) {
     final scale = size.width / 1200.0;
-    final cardFill = _cardFill(cardDark ? const Color(0xDE13151B) : const Color(0xFFF2F1ED));
+    final cardFill =
+        _cardFill(cardDark ? const Color(0xDE13151B) : const Color(0xFFF2F1ED));
     final cardStroke = cardFill.computeLuminance() < 0.45
         ? const Color(0x28FFFFFF)
         : const Color(0x22000000);
-    final strongText = _textColor(textDark ? const Color(0xFF1B1D24) : Colors.white);
+    final strongText =
+        _textColor(textDark ? const Color(0xFF1B1D24) : Colors.white);
     final lensText = _secondaryTextColor(
         textDark ? const Color(0xFF757575) : Colors.white.withAlpha(150));
     final expoText = _textColor(
@@ -1212,14 +1278,17 @@ class WatermarkCanvasPainter extends CustomPainter {
         textDark ? const Color(0xFF757575) : Colors.white.withAlpha(130));
     final topH = imgRect.height * 0.05 * spacingScale;
     final bottomH = imgRect.height * 0.15 * spacingScale;
-    final cardRect = Rect.fromLTRB(imgRect.left, imgRect.top - topH, imgRect.right, imgRect.bottom + bottomH);
+    final cardRect = Rect.fromLTRB(imgRect.left, imgRect.top - topH,
+        imgRect.right, imgRect.bottom + bottomH);
     final cardRRect = RRect.fromRectAndRadius(cardRect, _cardRadius(scale));
 
     // 1. 周围暗调高斯虚化
     _drawGaussianBlurBackground(canvas, size, img, scale, tintOpacity: 0.45);
 
     // 2. 悬浮立体阴影
-    _drawFloatingShadow(canvas, cardRRect, scale, isDark: _isEffectiveCardDark(cardDark ? const Color(0xDE13151B) : const Color(0xFFF2F1ED)));
+    _drawFloatingShadow(canvas, cardRRect, scale,
+        isDark: _isEffectiveCardDark(
+            cardDark ? const Color(0xDE13151B) : const Color(0xFFF2F1ED)));
 
     // 3. 悬浮磨砂底板 + 微光高光边框 (边框颜色黑白可选)
     canvas.drawRRect(cardRRect, Paint()..color = cardFill);
@@ -1262,10 +1331,12 @@ class WatermarkCanvasPainter extends CustomPainter {
     )..layout();
     badgeText.paint(
       canvas,
-      Offset(paddingX + (badgeW - badgeText.width) / 2, line1Y - badgeH * 0.75 + (badgeH - badgeText.height) / 2),
+      Offset(paddingX + (badgeW - badgeText.width) / 2,
+          line1Y - badgeH * 0.75 + (badgeH - badgeText.height) / 2),
     );
 
-    final modelName = _meta.titleText.replaceAll(RegExp(r'^Nikon\s+', caseSensitive: false), '');
+    final modelName = _meta.titleText
+        .replaceAll(RegExp(r'^Nikon\s+', caseSensitive: false), '');
     final titleP = TextPainter(
       text: TextSpan(
         text: modelName.isNotEmpty ? modelName : _meta.titleText,
@@ -1278,7 +1349,8 @@ class WatermarkCanvasPainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    _paintText(canvas, titleP, Offset(paddingX + badgeW + 10 * scale, line1Y - titleP.height * 0.65));
+    _paintText(canvas, titleP,
+        Offset(paddingX + badgeW + 10 * scale, line1Y - titleP.height * 0.65));
 
     // 左侧第二行: 镜头型号
     if (_meta.lensModel.isNotEmpty) {
@@ -1308,11 +1380,14 @@ class WatermarkCanvasPainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    _paintText(canvas, expoP, Offset(rightMarginX - expoP.width, line1Y - expoP.height * 0.65));
+    _paintText(canvas, expoP,
+        Offset(rightMarginX - expoP.width, line1Y - expoP.height * 0.65));
 
     // 右侧第二行: 拍摄时间
     if (showDetails && _meta.capturedDate.isNotEmpty) {
-      final dateStr = _meta.capturedDate.length > 10 ? _meta.capturedDate.substring(0, 10).replaceAll('-', '.') : _meta.capturedDate;
+      final dateStr = _meta.capturedDate.length > 10
+          ? _meta.capturedDate.substring(0, 10).replaceAll('-', '.')
+          : _meta.capturedDate;
       final dateP = TextPainter(
         text: TextSpan(
           text: dateStr,
@@ -1323,7 +1398,8 @@ class WatermarkCanvasPainter extends CustomPainter {
         ),
         textDirection: TextDirection.ltr,
       )..layout();
-      _paintText(canvas, dateP, Offset(rightMarginX - dateP.width, line2Y - dateP.height * 0.5));
+      _paintText(canvas, dateP,
+          Offset(rightMarginX - dateP.width, line2Y - dateP.height * 0.5));
     }
   }
 
@@ -1331,9 +1407,11 @@ class WatermarkCanvasPainter extends CustomPainter {
   // 模板 4: 高斯虚化 · 拍立得相纸 (Polaroid Blur)
   // 周围全幅高斯虚化 · 浮动复古白卡立体相纸 · 四周留白与经典宽厚底标
   // =========================================================================
-  void _drawPolaroidBlur(Canvas canvas, Size size, ui.Image? img, Rect imgRect) {
+  void _drawPolaroidBlur(
+      Canvas canvas, Size size, ui.Image? img, Rect imgRect) {
     final scale = size.width / 1200.0;
-    final cardFill = _cardFill(cardDark ? const Color(0xFF17181C) : const Color(0xFFFAF9F6));
+    final cardFill =
+        _cardFill(cardDark ? const Color(0xFF17181C) : const Color(0xFFFAF9F6));
     final strongText = _textColor(
         textDark ? const Color(0xFF2B2B2B) : const Color(0xFFF0F0F0));
     final mutedText = _secondaryTextColor(
@@ -1345,14 +1423,17 @@ class WatermarkCanvasPainter extends CustomPainter {
         : const Color(0x0F000000);
     final pad = imgRect.width * 0.032 * spacingScale;
     final bottomH = imgRect.height * 0.16 * spacingScale;
-    final cardRect = Rect.fromLTRB(imgRect.left - pad, imgRect.top - pad, imgRect.right + pad, imgRect.bottom + bottomH);
+    final cardRect = Rect.fromLTRB(imgRect.left - pad, imgRect.top - pad,
+        imgRect.right + pad, imgRect.bottom + bottomH);
     final cardRRect = RRect.fromRectAndRadius(cardRect, _cardRadius(scale, 8));
 
     // 1. 周围全幅高斯虚化背景
     _drawGaussianBlurBackground(canvas, size, img, scale, tintOpacity: 0.22);
 
     // 2. 悬浮真实纸质阴影
-    _drawFloatingShadow(canvas, cardRRect, scale, isDark: _isEffectiveCardDark(cardDark ? const Color(0xFF17181C) : const Color(0xFFFAF9F6)));
+    _drawFloatingShadow(canvas, cardRRect, scale,
+        isDark: _isEffectiveCardDark(
+            cardDark ? const Color(0xFF17181C) : const Color(0xFFFAF9F6)));
 
     // 3. 相纸底层 (边框颜色黑白可选)
     canvas.drawRRect(cardRRect, Paint()..color = cardFill);
@@ -1418,11 +1499,14 @@ class WatermarkCanvasPainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    _paintText(canvas, expoP, Offset(rightMarginX - expoP.width, line1Y - expoP.height * 0.65));
+    _paintText(canvas, expoP,
+        Offset(rightMarginX - expoP.width, line1Y - expoP.height * 0.65));
 
     // 右侧第二行: 时间
     if (showDetails && _meta.capturedDate.isNotEmpty) {
-      final dateStr = _meta.capturedDate.length > 10 ? _meta.capturedDate.substring(0, 10).replaceAll('-', '.') : _meta.capturedDate;
+      final dateStr = _meta.capturedDate.length > 10
+          ? _meta.capturedDate.substring(0, 10).replaceAll('-', '.')
+          : _meta.capturedDate;
       final dateP = TextPainter(
         text: TextSpan(
           text: dateStr,
@@ -1433,7 +1517,8 @@ class WatermarkCanvasPainter extends CustomPainter {
         ),
         textDirection: TextDirection.ltr,
       )..layout();
-      _paintText(canvas, dateP, Offset(rightMarginX - dateP.width, line2Y - dateP.height * 0.5));
+      _paintText(canvas, dateP,
+          Offset(rightMarginX - dateP.width, line2Y - dateP.height * 0.5));
     }
   }
 
@@ -1441,10 +1526,13 @@ class WatermarkCanvasPainter extends CustomPainter {
   // 模板 5: 大师画廊 · 纯净直出底栏 (Flush Master Bar)
   // 满幅照片直接拼接 · 无周围虚化背景 · 底部追加德味大师信息条 · 保留照片最大展示面积
   // =========================================================================
-  void _drawFlushMasterBar(Canvas canvas, Size size, ui.Image? img, Rect imgRect) {
+  void _drawFlushMasterBar(
+      Canvas canvas, Size size, ui.Image? img, Rect imgRect) {
     final scale = size.width / 1200.0;
-    final barFill = _cardFill(cardDark ? const Color(0xFF0E0F12) : Colors.white);
-    final strongText = _textColor(textDark ? const Color(0xFF111111) : Colors.white);
+    final barFill =
+        _cardFill(cardDark ? const Color(0xFF0E0F12) : Colors.white);
+    final strongText =
+        _textColor(textDark ? const Color(0xFF111111) : Colors.white);
     final divColor = _secondaryTextColor(
         textDark ? const Color(0xFFCCCCCC) : const Color(0xFF444444));
     final lensColor = _secondaryTextColor(
@@ -1458,14 +1546,16 @@ class WatermarkCanvasPainter extends CustomPainter {
     final bottomH = size.height - bottomTop;
     final padding = 32 * scale;
 
-    canvas.drawRect(Rect.fromLTWH(0, bottomTop, size.width, bottomH), Paint()..color = barFill);
+    canvas.drawRect(Rect.fromLTWH(0, bottomTop, size.width, bottomH),
+        Paint()..color = barFill);
 
     final centerY = bottomTop + bottomH / 2.0;
 
     // 左侧: 经典尼康金标印记圆标 + 机型
     final badgeRadius = 14 * scale;
     final badgePaint = Paint()..color = accentColor;
-    canvas.drawCircle(Offset(padding + badgeRadius, centerY), badgeRadius, badgePaint);
+    canvas.drawCircle(
+        Offset(padding + badgeRadius, centerY), badgeRadius, badgePaint);
 
     final badgeText = TextPainter(
       text: TextSpan(
@@ -1477,7 +1567,11 @@ class WatermarkCanvasPainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    _paintText(canvas, badgeText, Offset(padding + badgeRadius - badgeText.width / 2, centerY - badgeText.height / 2));
+    _paintText(
+        canvas,
+        badgeText,
+        Offset(padding + badgeRadius - badgeText.width / 2,
+            centerY - badgeText.height / 2));
 
     final titleP = TextPainter(
       text: TextSpan(
@@ -1499,7 +1593,8 @@ class WatermarkCanvasPainter extends CustomPainter {
     final divPaint = Paint()
       ..color = divColor
       ..strokeWidth = _stroke(1.5, scale);
-    canvas.drawLine(Offset(divX, centerY - 14 * scale), Offset(divX, centerY + 14 * scale), divPaint);
+    canvas.drawLine(Offset(divX, centerY - 14 * scale),
+        Offset(divX, centerY + 14 * scale), divPaint);
 
     // 镜头名称
     if (_meta.lensModel.isNotEmpty) {
@@ -1514,7 +1609,8 @@ class WatermarkCanvasPainter extends CustomPainter {
         ),
         textDirection: TextDirection.ltr,
       )..layout();
-      _paintText(canvas, lensP, Offset(divX + 20 * scale, centerY - lensP.height / 2));
+      _paintText(
+          canvas, lensP, Offset(divX + 20 * scale, centerY - lensP.height / 2));
     }
 
     // 右侧: 等宽曝光参数
@@ -1530,28 +1626,32 @@ class WatermarkCanvasPainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    _paintText(canvas, expoP, Offset(size.width - padding - expoP.width, centerY - expoP.height / 2));
+    _paintText(canvas, expoP,
+        Offset(size.width - padding - expoP.width, centerY - expoP.height / 2));
   }
-
 
   // =========================================================================
   // 新模板 1: 杂志封面 (Magazine Cover)
   // =========================================================================
-  void _drawMagazineCover(Canvas canvas, Size size, ui.Image? img, Rect imgRect) {
+  void _drawMagazineCover(
+      Canvas canvas, Size size, ui.Image? img, Rect imgRect) {
     final scale = size.width / 1200.0;
-    final cardFill = _cardFill(cardDark ? const Color(0xFF101216) : const Color(0xFFF6F3EC));
-    final strongText = _textColor(
-        textDark ? const Color(0xFF15161A) : Colors.white);
+    final cardFill =
+        _cardFill(cardDark ? const Color(0xFF101216) : const Color(0xFFF6F3EC));
+    final strongText =
+        _textColor(textDark ? const Color(0xFF15161A) : Colors.white);
     final mutedText = _secondaryTextColor(
         textDark ? const Color(0xFF6B6B6B) : Colors.white70);
     final topH = imgRect.height * 0.11 * spacingScale;
     final bottomH = imgRect.height * 0.13 * spacingScale;
-    final cardRect = Rect.fromLTRB(
-        imgRect.left, imgRect.top - topH, imgRect.right, imgRect.bottom + bottomH);
+    final cardRect = Rect.fromLTRB(imgRect.left, imgRect.top - topH,
+        imgRect.right, imgRect.bottom + bottomH);
     final cardRRect = RRect.fromRectAndRadius(cardRect, _cardRadius(scale, 14));
 
     _drawGaussianBlurBackground(canvas, size, img, scale, tintOpacity: 0.30);
-    _drawFloatingShadow(canvas, cardRRect, scale, isDark: _isEffectiveCardDark(cardDark ? const Color(0xFF101216) : const Color(0xFFF6F3EC)));
+    _drawFloatingShadow(canvas, cardRRect, scale,
+        isDark: _isEffectiveCardDark(
+            cardDark ? const Color(0xFF101216) : const Color(0xFFF6F3EC)));
     canvas.drawRRect(cardRRect, Paint()..color = cardFill);
     _drawPhotoOrPlaceholder(canvas, img, imgRect, scale);
 
@@ -1575,7 +1675,8 @@ class WatermarkCanvasPainter extends CustomPainter {
     _paintText(canvas, titleP, Offset(padX, imgRect.top - topH * 0.72));
 
     canvas.drawRect(
-      Rect.fromLTWH(padX, imgRect.top - topH * 0.24, imgRect.width * 0.22, 3 * scale),
+      Rect.fromLTWH(
+          padX, imgRect.top - topH * 0.24, imgRect.width * 0.22, 3 * scale),
       Paint()..color = accentColor,
     );
 
@@ -1607,7 +1708,8 @@ class WatermarkCanvasPainter extends CustomPainter {
         maxLines: 1,
         ellipsis: '…',
       )..layout(maxWidth: imgRect.width * 0.55);
-      _paintText(canvas, expoP, Offset(rightX - expoP.width, imgRect.bottom + bottomH * 0.28));
+      _paintText(canvas, expoP,
+          Offset(rightX - expoP.width, imgRect.bottom + bottomH * 0.28));
     }
     if (_meta.capturedDate.isNotEmpty) {
       final dateP = TextPainter(
@@ -1619,20 +1721,23 @@ class WatermarkCanvasPainter extends CustomPainter {
                 letterSpacing: _letter(0.4, scale))),
         textDirection: TextDirection.ltr,
       )..layout();
-      _paintText(canvas, dateP, Offset(rightX - dateP.width, imgRect.bottom + bottomH * 0.58));
+      _paintText(canvas, dateP,
+          Offset(rightX - dateP.width, imgRect.bottom + bottomH * 0.58));
     }
   }
 
   // =========================================================================
   // 新模板 3: 渐变字幕 (Gradient Caption)
   // =========================================================================
-  void _drawGradientCaption(Canvas canvas, Size size, ui.Image? img, Rect imgRect) {
+  void _drawGradientCaption(
+      Canvas canvas, Size size, ui.Image? img, Rect imgRect) {
     final scale = size.width / 1200.0;
     _drawPhotoOrPlaceholder(canvas, img, imgRect, scale);
 
     // 底部渐变遮罩（沉浸式压底，无实体边框；边框色映射为渐变基色）
     final maskH = imgRect.height * 0.42;
-    final maskRect = Rect.fromLTWH(0, imgRect.bottom - maskH, imgRect.width, maskH);
+    final maskRect =
+        Rect.fromLTWH(0, imgRect.bottom - maskH, imgRect.width, maskH);
     final maskColor = _cardFill(const Color(0xFF000000));
     canvas.drawRect(
       maskRect,
@@ -1719,13 +1824,17 @@ class WatermarkCanvasPainter extends CustomPainter {
     if (_meta.exposureSummary.isNotEmpty) {
       final expoP = TextPainter(
         text: TextSpan(
-            text: _meta.exposureSummary,
-            style: TextStyle(
-                color: _textColor(Colors.white),
-                fontSize: _metaSize(13, scale),
-                fontFamily: 'monospace',
-                shadows: [Shadow(color: _textShadowColor(const Color(0xAA000000)), blurRadius: 6)]),
-            ),
+          text: _meta.exposureSummary,
+          style: TextStyle(
+              color: _textColor(Colors.white),
+              fontSize: _metaSize(13, scale),
+              fontFamily: 'monospace',
+              shadows: [
+                Shadow(
+                    color: _textShadowColor(const Color(0xAA000000)),
+                    blurRadius: 6)
+              ]),
+        ),
         textDirection: TextDirection.ltr,
       )..layout();
       _paintText(canvas, expoP, Offset(padX - expoP.width, bottom));
@@ -1739,14 +1848,18 @@ class WatermarkCanvasPainter extends CustomPainter {
                 color: _secondaryTextColor(Colors.white70),
                 fontSize: _metaSize(11, scale),
                 letterSpacing: _letter(0.6, scale),
-                shadows: [Shadow(color: _textShadowColor(const Color(0xAA000000)), blurRadius: 6)])),
+                shadows: [
+                  Shadow(
+                      color: _textShadowColor(const Color(0xAA000000)),
+                      blurRadius: 6)
+                ])),
         textDirection: TextDirection.ltr,
       )..layout();
       _paintText(canvas, modelP, Offset(padX - modelP.width, bottom));
     }
     canvas.drawRect(
-      Rect.fromLTWH(imgRect.left + inset + 16 * scale, imgRect.bottom - inset - 18 * scale,
-          18 * scale, 3 * scale),
+      Rect.fromLTWH(imgRect.left + inset + 16 * scale,
+          imgRect.bottom - inset - 18 * scale, 18 * scale, 3 * scale),
       Paint()..color = accentColor,
     );
   }
@@ -2160,8 +2273,8 @@ class WatermarkCanvasPainter extends CustomPainter {
 
     final padH = 20 * scale;
     final padV = 14 * scale;
-    final innerW = textBlockW +
-        (showBrandLogo ? logoSize.width + 24 * scale : 0.0);
+    final innerW =
+        textBlockW + (showBrandLogo ? logoSize.width + 24 * scale : 0.0);
     final pillW = innerW + padH * 2;
     final pillH = math.max(textBlockH, logoH) + padV * 2;
 
@@ -2233,37 +2346,38 @@ class WatermarkCanvasPainter extends CustomPainter {
     final marginX = 42 * scale * spacingScale;
     final marginY = 36 * scale * spacingScale;
 
-    final rawDate = _meta.capturedDate.isNotEmpty
-        ? _meta.capturedDate
-        : '2026.10.26 14:32';
-    final formattedStamp = "'${rawDate.replaceAll('.', ' ').replaceAll('-', ' ')}";
+    final rawDate = _meta.capturedDate;
+    if (rawDate.isNotEmpty) {
+      final formattedStamp =
+          "'${rawDate.replaceAll('.', ' ').replaceAll('-', ' ')}";
 
-    final stampP = TextPainter(
-      text: TextSpan(
-        text: formattedStamp,
-        style: TextStyle(
-          color: stampOrange,
-          fontSize: _titleSize(28, scale),
-          fontFamily: 'monospace',
-          fontWeight: FontWeight.w800,
-          letterSpacing: _letter(2.2, scale),
-          shadows: [
-            Shadow(color: glowColor, blurRadius: 12 * scale),
-            Shadow(color: const Color(0x99000000), blurRadius: 4 * scale),
-          ],
+      final stampP = TextPainter(
+        text: TextSpan(
+          text: formattedStamp,
+          style: TextStyle(
+            color: stampOrange,
+            fontSize: _titleSize(28, scale),
+            fontFamily: 'monospace',
+            fontWeight: FontWeight.w800,
+            letterSpacing: _letter(2.2, scale),
+            shadows: [
+              Shadow(color: glowColor, blurRadius: 12 * scale),
+              Shadow(color: const Color(0x99000000), blurRadius: 4 * scale),
+            ],
+          ),
         ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
+        textDirection: TextDirection.ltr,
+      )..layout();
 
-    _paintText(
-      canvas,
-      stampP,
-      Offset(
-        imgRect.right - marginX - stampP.width,
-        imgRect.bottom - marginY - stampP.height,
-      ),
-    );
+      _paintText(
+        canvas,
+        stampP,
+        Offset(
+          imgRect.right - marginX - stampP.width,
+          imgRect.bottom - marginY - stampP.height,
+        ),
+      );
+    }
 
     // 左下角胶片帧号 + 机型 + 经纬度
     final leftInfo = <String>[
@@ -2423,7 +2537,8 @@ class WatermarkCanvasPainter extends CustomPainter {
       final logoSize = CameraBrandEmblem.measure(metadata, height: logoH);
       CameraBrandEmblem.paint(
         canvas,
-        Rect.fromLTWH(rightX - logoSize.width, cy - logoH / 2, logoSize.width, logoH),
+        Rect.fromLTWH(
+            rightX - logoSize.width, cy - logoH / 2, logoSize.width, logoH),
         metadata,
         textColor: strongText,
         accentColor: accentColor,
@@ -2434,44 +2549,44 @@ class WatermarkCanvasPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant WatermarkCanvasPainter old) {
     return old.image != image ||
-           old.metadata != metadata ||
-           old.template != template ||
-           old.filterType != filterType ||
-           old.filterIntensity != filterIntensity ||
-           old.adjustments != adjustments ||
-           old.spacingScale != spacingScale ||
-           old.showDetails != showDetails ||
-           old.cardDark != cardDark ||
-           old.textDark != textDark ||
-           old.cardColorOverride != cardColorOverride ||
-           old.textColorOverride != textColorOverride ||
-           old.titleTextScale != titleTextScale ||
-           old.metaTextScale != metaTextScale ||
-           old.letterSpacingScale != letterSpacingScale ||
-           old.lineSpacingScale != lineSpacingScale ||
-           old.fontWeight != fontWeight ||
-           old.borderThicknessScale != borderThicknessScale ||
-           old.fontFamily != fontFamily ||
-           old.quarterTurns != quarterTurns ||
-           old.mirrorX != mirrorX ||
-           old.logoImage != logoImage ||
-           old.logoScale != logoScale ||
-           old.logoOpacity != logoOpacity ||
-           old.customTextScale != customTextScale ||
-           old.customLines.length != customLines.length ||
-           !_sameLines(old.customLines, customLines) ||
-           old.accentColor != accentColor ||
-           old.cardTone != cardTone ||
-           old.cornerRadiusFactor != cornerRadiusFactor ||
-           old.showModel != showModel ||
-           old.showLens != showLens ||
-           old.showExposure != showExposure ||
-           old.showDate != showDate ||
-           old.showBrandLogo != showBrandLogo ||
-           old.showGps != showGps ||
-           old.watermarkOpacity != watermarkOpacity ||
-           old.customTextAlign != customTextAlign ||
-           old.logoCorner != logoCorner;
+        old.metadata != metadata ||
+        old.template != template ||
+        old.filterType != filterType ||
+        old.filterIntensity != filterIntensity ||
+        old.adjustments != adjustments ||
+        old.spacingScale != spacingScale ||
+        old.showDetails != showDetails ||
+        old.cardDark != cardDark ||
+        old.textDark != textDark ||
+        old.cardColorOverride != cardColorOverride ||
+        old.textColorOverride != textColorOverride ||
+        old.titleTextScale != titleTextScale ||
+        old.metaTextScale != metaTextScale ||
+        old.letterSpacingScale != letterSpacingScale ||
+        old.lineSpacingScale != lineSpacingScale ||
+        old.fontWeight != fontWeight ||
+        old.borderThicknessScale != borderThicknessScale ||
+        old.fontFamily != fontFamily ||
+        old.quarterTurns != quarterTurns ||
+        old.mirrorX != mirrorX ||
+        old.logoImage != logoImage ||
+        old.logoScale != logoScale ||
+        old.logoOpacity != logoOpacity ||
+        old.customTextScale != customTextScale ||
+        old.customLines.length != customLines.length ||
+        !_sameLines(old.customLines, customLines) ||
+        old.accentColor != accentColor ||
+        old.cardTone != cardTone ||
+        old.cornerRadiusFactor != cornerRadiusFactor ||
+        old.showModel != showModel ||
+        old.showLens != showLens ||
+        old.showExposure != showExposure ||
+        old.showDate != showDate ||
+        old.showBrandLogo != showBrandLogo ||
+        old.showGps != showGps ||
+        old.watermarkOpacity != watermarkOpacity ||
+        old.customTextAlign != customTextAlign ||
+        old.logoCorner != logoCorner;
   }
 
   /// 统一文字绘制出口：用户选择字体/字重时覆盖，auto/null 保持模板原生样式。
@@ -2485,7 +2600,8 @@ class WatermarkCanvasPainter extends CustomPainter {
         tp.text = TextSpan(
           text: span.text,
           children: span.children,
-          style: span.style?.copyWith(fontFamily: fontFamily, fontWeight: weight),
+          style:
+              span.style?.copyWith(fontFamily: fontFamily, fontWeight: weight),
           recognizer: span.recognizer,
         );
         tp.layout();

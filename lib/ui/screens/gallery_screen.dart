@@ -113,6 +113,12 @@ class GalleryScreenState extends State<GalleryScreen> {
   /// 同一文件的缩略图 Future 去重表
   final Map<String, Future<Uint8List>> _thumbFutures = {};
 
+  /// 缩略图解码失败后的有限重试计数，避免坏图无限重建。
+  final Map<String, int> _thumbRetryCounts = {};
+
+  /// 缩略图重试延时（页面销毁时统一取消，避免测试/生命周期泄漏）。
+  final Map<Timer, Completer<void>> _thumbRetryDelays = {};
+
   /// 相机会话代数：断线时自增，防止在途请求把旧 handle 的数据写回缓存。
   int _cacheEpoch = 0;
 
@@ -171,6 +177,11 @@ class GalleryScreenState extends State<GalleryScreen> {
 
   @override
   void dispose() {
+    for (final entry in _thumbRetryDelays.entries) {
+      entry.key.cancel();
+      if (!entry.value.isCompleted) entry.value.complete();
+    }
+    _thumbRetryDelays.clear();
     CameraViewedTracker.instance.removeListener(_onHistoryChanged);
     _historyManager.removeListener(_onHistoryChanged);
     _historyScrollController.dispose();
@@ -263,6 +274,7 @@ class GalleryScreenState extends State<GalleryScreen> {
           final validDisk = NikonDriver.extractValidJpegSlice(rawBytes);
           if (validDisk != null && validDisk.isNotEmpty) {
             _thumbCache[cacheKey] = validDisk;
+            _thumbRetryCounts.remove(cacheKey);
             return validDisk;
           } else {
             // 发现旧缓存或截断文件，立即清理重拉
@@ -273,12 +285,29 @@ class GalleryScreenState extends State<GalleryScreen> {
         }
       } catch (_) {}
 
-      final fetched = await widget.driver.getThumbnail(file.handle);
-      if (epoch != _cacheEpoch) return Uint8List(0);
-      final validBytes = NikonDriver.extractValidJpegSlice(fetched) ?? fetched;
-      if (validBytes.isNotEmpty &&
-          NikonDriver.extractValidJpegSlice(validBytes) != null) {
+      Future<Uint8List> fetchFromCamera() async {
+        final fetched = await widget.driver.getThumbnail(file.handle);
+        if (epoch != _cacheEpoch) return Uint8List(0);
+        final valid = NikonDriver.extractValidJpegSlice(fetched) ?? fetched;
+        if (valid.isNotEmpty &&
+            NikonDriver.extractValidJpegSlice(valid) != null) {
+          return valid;
+        }
+        return Uint8List(0);
+      }
+
+      var validBytes = await fetchFromCamera();
+      if (validBytes.isEmpty &&
+          widget.driver.isConnected &&
+          epoch == _cacheEpoch) {
+        // 查看器的大图分块下载与缩略图共用串行 USB 会话，短暂等待后重试一次。
+        await _cancelableDelay(const Duration(milliseconds: 250));
+        if (!mounted || epoch != _cacheEpoch) return Uint8List(0);
+        validBytes = await fetchFromCamera();
+      }
+      if (validBytes.isNotEmpty) {
         _thumbCache[cacheKey] = validBytes;
+        _thumbRetryCounts.remove(cacheKey);
         try {
           final disk = await _thumbCacheFile(
             file.storageId,
@@ -304,11 +333,30 @@ class GalleryScreenState extends State<GalleryScreen> {
     return future;
   }
 
-  /// 当缩略图解码异常时，立即淘汰内存与磁盘坏缓存以便自动重拉修复
+  /// 可取消的等待：页面销毁时立即完成，避免 Timer 悬挂。
+  Future<void> _cancelableDelay(Duration duration) {
+    final completer = Completer<void>();
+    late final Timer timer;
+    timer = Timer(duration, () {
+      _thumbRetryDelays.remove(timer);
+      if (!completer.isCompleted) completer.complete();
+    });
+    _thumbRetryDelays[timer] = completer;
+    return completer.future;
+  }
+
   void _evictCorruptedThumb(CameraFileItem file) {
     final cacheKey = cameraCacheKey(file.storageId, file.handle);
     _thumbCache.remove(cacheKey);
-    _thumbFutures.remove(cacheKey);
+    final attempts = (_thumbRetryCounts[cacheKey] ?? 0) + 1;
+    _thumbRetryCounts[cacheKey] = attempts;
+    if (attempts <= 2) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() {});
+      });
+      return;
+    }
+    _thumbRetryCounts.remove(cacheKey);
     unawaited(() async {
       try {
         final disk = await _thumbCacheFile(
@@ -326,11 +374,11 @@ class GalleryScreenState extends State<GalleryScreen> {
 
   /// 后台低速预取缩略图：先磁盘后相机，让滚动到哪都秒显。
   Future<void> _prefetchThumbnails(List<CameraFileItem> items) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    await _cancelableDelay(const Duration(milliseconds: 300));
     for (final item in items) {
       if (!mounted || !widget.driver.isConnected) return;
       while (_backgroundPrefetchHold && mounted && widget.driver.isConnected) {
-        await Future.delayed(const Duration(milliseconds: 150));
+        await _cancelableDelay(const Duration(milliseconds: 150));
       }
       if (!mounted || !widget.driver.isConnected) return;
       if (item.isFolder ||
@@ -341,7 +389,8 @@ class GalleryScreenState extends State<GalleryScreen> {
       try {
         await _resolveThumb(item);
       } catch (_) {}
-      await Future.delayed(const Duration(milliseconds: 40));
+      if (!mounted) return;
+      await _cancelableDelay(const Duration(milliseconds: 40));
     }
   }
 
@@ -711,23 +760,28 @@ class GalleryScreenState extends State<GalleryScreen> {
       unawaited(precacheImage(MemoryImage(cachedThumb), context));
     }
     _backgroundPrefetchHold = true;
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => FullScreenPhotoViewer(
-          groups: groups,
-          initialIndex: index,
-          thumbCache: _thumbCache,
-          fullCache: _fullCache,
-          driver: widget.driver,
-          resolveThumb: _resolveThumb,
-          onExportSingle: _handleExportSingle,
-          onOpenWatermark: widget.onOpenWatermark,
-          onOpenProfessionalRaw: _handleOpenProfessionalRaw,
+    try {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FullScreenPhotoViewer(
+            groups: groups,
+            initialIndex: index,
+            thumbCache: _thumbCache,
+            fullCache: _fullCache,
+            driver: widget.driver,
+            resolveThumb: _resolveThumb,
+            onExportSingle: _handleExportSingle,
+            onOpenWatermark: widget.onOpenWatermark,
+            onOpenProfessionalRaw: _handleOpenProfessionalRaw,
+          ),
         ),
-      ),
-    );
-    _backgroundPrefetchHold = false;
+      );
+    } finally {
+      _backgroundPrefetchHold = false;
+      // 退出后重建一次，让查看器期间失败/空结果的缩略图自动重试。
+      if (mounted) setState(() {});
+    }
   }
 
   /// RAW 调色：把相机 NEF 落到临时文件，再交给水印/调色工作室走原生全质量渲染。
