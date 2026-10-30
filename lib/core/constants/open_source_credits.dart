@@ -115,6 +115,42 @@ const List<OpenSourceCredit> openSourceProjectCredits = [
     url: 'https://github.com/myWsq/camera-watermark',
     license: 'MIT',
   ),
+  OpenSourceCredit(
+    name: 'Z30-Recipes',
+    description: '尼康 Z30 PTP/IP (0x90CC/0x90CD/0xD200) 机内优化校准读写与 NP3/NCP 解析参考',
+    url: 'https://github.com/yekong-nasa/Z30-Recipes',
+    license: 'MIT',
+  ),
+  OpenSourceCredit(
+    name: 'NikonNP3',
+    description: '尼康 NP3 创意色彩灵感库配方合集与分类标签参考',
+    url: 'https://github.com/Timor88/NikonNP3',
+    license: '社区共享',
+  ),
+  OpenSourceCredit(
+    name: 'nikon-flexible-color-picture-control',
+    description: '尼康 Flexible Color NP3 (0310) 二进制偏移与色彩混合器结构解析参考',
+    url: 'https://github.com/ssssota/nikon-flexible-color-picture-control',
+    license: 'MIT',
+  ),
+  OpenSourceCredit(
+    name: 'Nikon Imaging (ニコンイメージング)',
+    description: '色彩优化近似效果预览官方样片素材（Z 30 / Z fc / Z f / Z 8 实拍样片）',
+    url: 'https://www.nikon-image.com/',
+    license: 'Nikon 官方样片展示许可',
+  ),
+  OpenSourceCredit(
+    name: 'Pakutaso (ぱくたそ)',
+    description: '色彩优化近似效果预览免费人像与生活样片素材备选参考',
+    url: 'https://www.pakutaso.com/',
+    license: 'Pakutaso 免费素材许可',
+  ),
+  OpenSourceCredit(
+    name: '影视飓风 (YSJF)',
+    description: '色彩优化近似效果预览风光与自然样片素材致谢',
+    url: 'https://www.ysjf.com/index',
+    license: '免费样片素材许可',
+  ),
 ];
 
 const List<OpenSourceCredit> openSourceRuntimeCredits = [

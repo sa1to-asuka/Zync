@@ -45,8 +45,20 @@ Future<void> _writeCameraListCache(
   } catch (_) {}
 }
 
-/// 缩略图磁盘缓存文件名：按 v2_storageId_handle_size_fileName 唯一化，避免跨会话 handle 复用导致脏缓存碰撞
-String _thumbCacheName(
+/// 缩略图磁盘缓存文件名：
+/// v3: 按 storageId_size_fileName 唯一化，彻底解耦相机动态 handle。
+/// 只要相机卡内该照片物理存在，跨连接、跨重启永久命中本地缓存，绝不向相机发起重复网络请求。
+String _thumbCacheNameV3(
+  int storageId, {
+  int fileSize = 0,
+  String fileName = '',
+}) {
+  final safeName = fileName.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+  return 'v3_${storageId}_${fileSize}_$safeName.jpg';
+}
+
+/// 兼容旧版 v2 格式文件名（用于平滑迁移老版本历史缓存）
+String _thumbCacheNameV2(
   int storageId,
   int handle, {
   int fileSize = 0,
@@ -69,9 +81,28 @@ Future<File> _thumbCacheFile(
   if (!await dir.exists()) {
     await dir.create(recursive: true);
   }
-  return File(
-    '${dir.path}/${_thumbCacheName(storageId, handle, fileSize: fileSize, fileName: fileName)}',
+  // 1. 优先使用跨会话永久稳定的 v3 缓存路径
+  final v3File = File(
+    '${dir.path}/${_thumbCacheNameV3(storageId, fileSize: fileSize, fileName: fileName)}',
   );
+  if (await v3File.exists()) {
+    return v3File;
+  }
+
+  // 2. 若命中旧版 v2 缓存，平滑迁移为 v3 规范文件
+  final v2File = File(
+    '${dir.path}/${_thumbCacheNameV2(storageId, handle, fileSize: fileSize, fileName: fileName)}',
+  );
+  if (await v2File.exists()) {
+    try {
+      await v2File.rename(v3File.path);
+      return v3File;
+    } catch (_) {
+      return v2File;
+    }
+  }
+
+  return v3File;
 }
 
 final _cameraOriginalLoads = Expando<Map<String, Future<Uint8List>>>();
@@ -172,35 +203,41 @@ Future<Uint8List?> fetchFullPhotoBytesSilent(
 }
 
 /// 顶层共用方法：带进度弹窗获取相机高清原图（供相册详情页、全屏预览器与一键调色共同调用）
+///
+/// [rawOriginal] 为 true 时返回相机里的原始 NEF 字节（不做内嵌 JPEG 提取、不写
+/// `fullCache`），供 RAW 调色写入临时文件后交给原生 LibRaw。
 Future<Uint8List?> fetchFullPhotoBytesWithDialog(
   BuildContext context,
   CameraDriver driver,
   LruImageCache fullCache,
-  CameraFileItem item,
-) async {
+  CameraFileItem item, {
+  bool rawOriginal = false,
+}) async {
   final key = cameraCacheKey(item.storageId, item.handle);
 
   // 1. 优先命中本地已导出原图
-  try {
-    final local = await _readLocalOriginal(item);
-    if (local != null && local.isNotEmpty) {
-      fullCache[key] = local;
-      return local;
+  if (!rawOriginal) {
+    try {
+      final local = await _readLocalOriginal(item);
+      if (local != null && local.isNotEmpty) {
+        fullCache[key] = local;
+        return local;
+      }
+    } catch (_) {
+      if (context.mounted) {
+        showZToast(
+          context,
+          context.l10n.galleryLocalMissingFallbackToast,
+          tone: ZStatusTone.warning,
+        );
+      }
     }
-  } catch (_) {
-    if (context.mounted) {
-      showZToast(
-        context,
-        context.l10n.galleryLocalMissingFallbackToast,
-        tone: ZStatusTone.warning,
-      );
-    }
-  }
 
-  // 2. 命中内存缓存
-  final cached = fullCache[key];
-  if (cached != null && cached.isNotEmpty) {
-    return cached;
+    // 2. 命中内存缓存
+    final cached = fullCache[key];
+    if (cached != null && cached.isNotEmpty) {
+      return cached;
+    }
   }
 
   if (!context.mounted) return null;
@@ -315,7 +352,7 @@ Future<Uint8List?> fetchFullPhotoBytesWithDialog(
       },
     );
     Uint8List? bytes = downloaded;
-    if (item.isRaw) {
+    if (!rawOriginal && item.isRaw) {
       bytes = await RawPreviewExtractor.extractEmbeddedJpeg(downloaded);
       if (bytes == null || bytes.isEmpty) {
         final thumb = await driver.getThumbnail(item.handle);
@@ -326,7 +363,7 @@ Future<Uint8List?> fetchFullPhotoBytesWithDialog(
       Navigator.pop(context);
     }
     if (isCanceled || bytes == null || bytes.isEmpty) return null;
-    fullCache[key] = bytes;
+    if (!rawOriginal) fullCache[key] = bytes;
     return bytes;
   } catch (_) {
     if (context.mounted && !isCanceled && Navigator.canPop(context)) {

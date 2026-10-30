@@ -426,3 +426,382 @@ class _FullScreenLocalImageViewerState
     );
   }
 }
+
+/// 本地历史导出视频全屏播放器
+class FullScreenExportedVideoViewer extends StatefulWidget {
+  final ExportedMediaItem item;
+  final Future<bool> Function(ExportedMediaItem item)? onDelete;
+
+  const FullScreenExportedVideoViewer({
+    super.key,
+    required this.item,
+    this.onDelete,
+  });
+
+  @override
+  State<FullScreenExportedVideoViewer> createState() =>
+      _FullScreenExportedVideoViewerState();
+}
+
+class _FullScreenExportedVideoViewerState
+    extends State<FullScreenExportedVideoViewer> {
+  VideoPlayerController? _controller;
+  File? _localFile;
+  bool _isLoading = true;
+  bool _showControls = true;
+  Timer? _hideTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _initVideo();
+  }
+
+  Future<void> _initVideo() async {
+    try {
+      final file = await ExportHistoryManager().ensureLocalFile(widget.item);
+      if (!mounted) return;
+      _localFile = file;
+      final ctrl = VideoPlayerController.file(file);
+      await ctrl.initialize();
+      if (!mounted) {
+        await ctrl.dispose();
+        return;
+      }
+      ctrl.addListener(_onControllerUpdate);
+      _controller = ctrl;
+      _isLoading = false;
+      _controller?.play();
+      _startHideTimer();
+      setState(() {});
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _onControllerUpdate() {
+    if (mounted) setState(() {});
+  }
+
+  void _startHideTimer() {
+    _hideTimer?.cancel();
+    if (_controller?.value.isPlaying ?? false) {
+      _hideTimer = Timer(const Duration(seconds: 3), () {
+        if (mounted) setState(() => _showControls = false);
+      });
+    }
+  }
+
+  void _togglePlayPause() {
+    if (_controller == null || !_controller!.value.isInitialized) return;
+    if (_controller!.value.isPlaying) {
+      _controller!.pause();
+      _hideTimer?.cancel();
+      setState(() => _showControls = true);
+    } else {
+      if (_controller!.value.position >= _controller!.value.duration) {
+        _controller!.seekTo(Duration.zero);
+      }
+      _controller!.play();
+      setState(() => _showControls = true);
+      _startHideTimer();
+    }
+  }
+
+  void _toggleControls() {
+    setState(() => _showControls = !_showControls);
+    if (_showControls) _startHideTimer();
+  }
+
+  String _formatDuration(Duration d) {
+    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
+  @override
+  void dispose() {
+    _hideTimer?.cancel();
+    _controller?.removeListener(_onControllerUpdate);
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = context.zc;
+    final l10n = context.l10n;
+
+    return Scaffold(
+      backgroundColor: dark.bg,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // 视频画面
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: _toggleControls,
+            child: Center(
+              child: _isLoading
+                  ? CircularProgressIndicator(color: dark.accent)
+                  : (_controller != null && _controller!.value.isInitialized)
+                      ? AspectRatio(
+                          aspectRatio: _controller!.value.aspectRatio,
+                          child: VideoPlayer(_controller!),
+                        )
+                      : Icon(
+                          Icons.broken_image_outlined,
+                          size: 64,
+                          color: dark.textTertiary,
+                        ),
+            ),
+          ),
+
+          // 居中播放/暂停大按扭 (仅控件可见时)
+          if (_showControls &&
+              _controller != null &&
+              _controller!.value.isInitialized)
+            Center(
+              child: GestureDetector(
+                onTap: _togglePlayPause,
+                child: Container(
+                  width: 58,
+                  height: 58,
+                  decoration: BoxDecoration(
+                    color: dark.scrim.withAlpha(160),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: dark.outline, width: 0.8),
+                  ),
+                  child: Icon(
+                    _controller!.value.isPlaying
+                        ? Icons.pause_rounded
+                        : Icons.play_arrow_rounded,
+                    color: dark.onAccent,
+                    size: 34,
+                  ),
+                ),
+              ),
+            ),
+
+          // 顶部标题栏
+          AnimatedPositioned(
+            duration: ZMotion.fast,
+            top: _showControls ? 0 : -90,
+            left: 0,
+            right: 0,
+            child: Container(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                MediaQuery.of(context).padding.top + 8,
+                16,
+                12,
+              ),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [dark.scrim.withAlpha(200), ZSwatch.transparent],
+                ),
+              ),
+              child: Row(
+                children: [
+                  ZIconButton(
+                    icon: Icons.arrow_back_rounded,
+                    tooltip:
+                        MaterialLocalizations.of(context).backButtonTooltip,
+                    onTap: () => Navigator.pop(context),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      widget.item.fileName,
+                      style: TextStyle(
+                        color: dark.textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (_localFile != null)
+                    ZButton(
+                      label: l10n.videoEnterEditor,
+                      icon: Icons.movie_creation_outlined,
+                      size: ZButtonSize.sm,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => VideoEditorScreen(
+                              path: _localFile!.path,
+                              fileName: widget.item.fileName,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                ],
+              ),
+            ),
+          ),
+
+          // 底部控制条
+          AnimatedPositioned(
+            duration: ZMotion.fast,
+            bottom: _showControls ? 0 : -100,
+            left: 0,
+            right: 0,
+            child: Container(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                12,
+                16,
+                MediaQuery.of(context).padding.bottom + 12,
+              ),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [dark.scrim.withAlpha(220), ZSwatch.transparent],
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_controller != null &&
+                      _controller!.value.isInitialized) ...[
+                    Row(
+                      children: [
+                        Text(
+                          _formatDuration(_controller!.value.position),
+                          style: TextStyle(
+                            color: dark.textPrimary,
+                            fontSize: 11,
+                            fontFamily: 'monospace',
+                          ),
+                        ),
+                        Expanded(
+                          child: SliderTheme(
+                            data: SliderTheme.of(context).copyWith(
+                              trackHeight: 3.0,
+                              activeTrackColor: dark.accent,
+                              inactiveTrackColor: dark.outline,
+                              thumbColor: dark.accent,
+                              thumbShape: const RoundSliderThumbShape(
+                                enabledThumbRadius: 6,
+                              ),
+                              overlayShape: SliderComponentShape.noOverlay,
+                            ),
+                            child: Slider(
+                              value: _controller!.value.position.inMilliseconds
+                                  .toDouble()
+                                  .clamp(
+                                    0.0,
+                                    _controller!.value.duration.inMilliseconds
+                                        .toDouble(),
+                                  ),
+                              max: _controller!.value.duration.inMilliseconds
+                                  .toDouble(),
+                              onChanged: (val) {
+                                _controller?.seekTo(
+                                  Duration(milliseconds: val.round()),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                        Text(
+                          _formatDuration(_controller!.value.duration),
+                          style: TextStyle(
+                            color: dark.textSecondary,
+                            fontSize: 11,
+                            fontFamily: 'monospace',
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                  ],
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      ZIconButton(
+                        icon: (_controller?.value.isPlaying ?? false)
+                            ? Icons.pause_rounded
+                            : Icons.play_arrow_rounded,
+                        tooltip: (_controller?.value.isPlaying ?? false)
+                            ? l10n.videoPause
+                            : l10n.videoPlay,
+                        onTap: _togglePlayPause,
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (_localFile != null)
+                            ZIconButton(
+                              icon: Icons.ios_share_rounded,
+                              tooltip: l10n.pcShareAction,
+                              onTap: () {
+                                CameraNativeBridge.shareFile(
+                                  _localFile!.path,
+                                  title: widget.item.fileName,
+                                );
+                              },
+                            ),
+                          const SizedBox(width: 8),
+                          ZIconButton(
+                            icon: Icons.delete_outline_rounded,
+                            tooltip: l10n.commonDelete,
+                            onTap: () async {
+                              final confirmed = await showDialog<bool>(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  backgroundColor: dark.surfaceElevated,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(ZRadius.lg),
+                                    side: BorderSide(
+                                        color: dark.outline, width: 0.8),
+                                  ),
+                                  title: Text(l10n.galleryDeleteSingleTitle),
+                                  content: Text(
+                                    l10n.galleryDeleteSingleBody(
+                                        widget.item.fileName),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(ctx, false),
+                                      child: Text(l10n.commonCancel),
+                                    ),
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(ctx, true),
+                                      child: Text(
+                                        l10n.commonDelete,
+                                        style: TextStyle(color: dark.danger),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (confirmed == true && mounted) {
+                                await widget.onDelete?.call(widget.item);
+                                if (mounted) Navigator.pop(context);
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

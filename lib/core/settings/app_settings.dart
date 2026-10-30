@@ -26,6 +26,7 @@ class AppSettings extends ChangeNotifier {
   static const AppLanguage defaultLanguage = AppLanguage.system;
   static const bool defaultOnboardingCompleted = false;
   static const bool defaultConfirmDelete = true;
+  static const String defaultGalleryFilter = 'unviewed';
 
   /// 水印导出 JPEG 质量：95 原图质量 / 92 标准 / 85 省空间
   static const int defaultExportQuality = 92;
@@ -66,6 +67,7 @@ class AppSettings extends ChangeNotifier {
   bool confirmDelete = defaultConfirmDelete;
   int exportQuality = defaultExportQuality;
   String ptpClientGuid = '';
+  String galleryFilter = defaultGalleryFilter;
 
   int? watermarkCardColorValue;
   int? watermarkTextColorValue;
@@ -200,6 +202,8 @@ class AppSettings extends ChangeNotifier {
           _readBool(m, 'tabletWatermarkViewPaged', false);
       tabletFilterViewPaged =
           _readBool(m, 'tabletFilterViewPaged', false);
+      galleryFilter =
+          _readString(m, 'galleryFilter', defaultGalleryFilter);
     } catch (_) {
       // 配置文件损坏：保持默认值
     } finally {
@@ -253,6 +257,7 @@ class AppSettings extends ChangeNotifier {
         'watermarkTextAlign': watermarkTextAlign,
         'tabletWatermarkViewPaged': tabletWatermarkViewPaged,
         'tabletFilterViewPaged': tabletFilterViewPaged,
+        'galleryFilter': galleryFilter,
       }));
     } catch (_) {
       // 落盘失败不中断用户操作
@@ -515,6 +520,14 @@ class AppSettings extends ChangeNotifier {
     _scheduleSave();
   }
 
+  void setGalleryFilter(String value) {
+    final v = value.trim();
+    if (v.isEmpty || v == galleryFilter) return;
+    galleryFilter = v;
+    notifyListeners();
+    _scheduleSave();
+  }
+
   @visibleForTesting
   void resetForTest() {
     cameraIp = defaultCameraIp;
@@ -527,6 +540,7 @@ class AppSettings extends ChangeNotifier {
     themeMode = defaultThemeMode;
     language = defaultLanguage;
     onboardingCompleted = defaultOnboardingCompleted;
+    galleryFilter = defaultGalleryFilter;
     L10n.syncWithLocale(const Locale('zh'));
     confirmDelete = defaultConfirmDelete;
     exportQuality = defaultExportQuality;

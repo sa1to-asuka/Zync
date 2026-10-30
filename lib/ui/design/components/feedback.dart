@@ -1,8 +1,12 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../palette.dart';
 import '../tokens.dart';
 import 'buttons.dart';
 import 'controls.dart';
+
+/// 提示条在大屏上的最大宽度（与底部 Sheet 的 560 保持一致）。
+const double _kZToastMaxWidth = 560;
 
 /// 全应用统一的底部浮层入口（自动带顶部拖拽条、大屏宽度限制与暗房风描边）。
 Future<T?> showZSheet<T>({
@@ -161,7 +165,8 @@ class ZDialog extends StatelessWidget {
                           label: cancelLabel!,
                           variant: ZButtonVariant.ghost,
                           size: ZButtonSize.sm,
-                          onTap: onCancel ?? () => Navigator.of(context).pop(false),
+                          onTap: onCancel ??
+                              () => Navigator.of(context).pop(false),
                         ),
                         const SizedBox(width: ZSpace.sm),
                       ],
@@ -172,7 +177,8 @@ class ZDialog extends StatelessWidget {
                               ? ZButtonVariant.danger
                               : ZButtonVariant.filled,
                           size: ZButtonSize.sm,
-                          onTap: onConfirm ?? () => Navigator.of(context).pop(true),
+                          onTap: onConfirm ??
+                              () => Navigator.of(context).pop(true),
                         ),
                     ],
               ),
@@ -184,7 +190,7 @@ class ZDialog extends StatelessWidget {
   }
 }
 
-/// 全应用统一的浮动轻提示入口（带微型关闭按钮、点击即隐与浮动安全边距，不遮挡底栏操作）。
+/// 全应用统一的浮动轻提示入口（带微型关闭按钮、点击即隐，并限制大屏宽度）。
 void showZToast(
   BuildContext context,
   String message, {
@@ -192,7 +198,7 @@ void showZToast(
   bool isError = false,
   ZStatusTone? tone,
   SnackBarAction? action,
-  double bottomMargin = 72,
+  double? bottomMargin,
 }) {
   final messenger = ScaffoldMessenger.maybeOf(context);
   if (messenger == null) return;
@@ -207,6 +213,14 @@ void showZToast(
     _ => effectiveError ? zc.danger : zc.outline,
   };
 
+  // SnackBar 的 width 与 margin 互斥，用对称水平 margin 实现「限宽 + 居中」：
+  // 手机保持左右 16，大屏按 560 上限自动加大左右留白。
+  final horizontal = math.max(
+    ZSpace.lg,
+    (MediaQuery.sizeOf(context).width - _kZToastMaxWidth) / 2,
+  );
+  final bottomGap = bottomMargin ?? ZSpace.md;
+
   messenger
     ..hideCurrentSnackBar()
     ..showSnackBar(
@@ -215,9 +229,9 @@ void showZToast(
         backgroundColor: zc.surfaceElevated,
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.only(
-          left: 16,
-          right: 16,
-          bottom: bottomMargin,
+          left: horizontal,
+          right: horizontal,
+          bottom: bottomGap,
         ),
         dismissDirection: DismissDirection.horizontal,
         shape: RoundedRectangleBorder(

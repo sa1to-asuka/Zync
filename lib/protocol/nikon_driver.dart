@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import '../core/constants/ptp_opcodes.dart';
 import '../core/settings/app_settings.dart';
 import '../core/utils/byte_buffer_ext.dart';
+import '../engine/picture_control/np3_codec.dart';
 import 'camera_driver.dart';
 import 'camera_native_bridge.dart';
 import 'ptp_ip_client.dart';
@@ -875,7 +876,9 @@ class NikonDriver implements CameraDriver {
         // 只有在见过帧头后直接结束才算有效（正常应在 SOS 分支内返回）
         return hasSof ? p + 2 : -1;
       }
-      if (marker == 0xD8 || (marker >= 0xD0 && marker <= 0xD7) || marker == 0x01) {
+      if (marker == 0xD8 ||
+          (marker >= 0xD0 && marker <= 0xD7) ||
+          marker == 0x01) {
         p += 2;
         continue;
       }
@@ -1049,4 +1052,282 @@ class NikonDriver implements CameraDriver {
     _photoCapturedController.close();
     _stateController.close();
   }
+
+  // ==========================================
+  // 尼康优化校准 (Picture Control C1–C9, 0x90CC / 0x90CD / 0xD200)
+  // ==========================================
+
+  /// 当前连接的机身是否支持优化校准 C1–C9 读写 (0x90CC & 0x90CD)。
+  bool get supportsPictureControlWrite {
+    if (!isConnected) return false;
+    final ops = _deviceInfo.operationsSupported;
+    if (ops.isEmpty) {
+      // 当 DeviceInfo 采用备用启发式字符串扫描而未解析出完整操作码表时，允许尝试
+      return true;
+    }
+    return ops.contains(PtpOpCodes.nikonGetPicCtrlData) &&
+        ops.contains(PtpOpCodes.nikonSetPicCtrlData);
+  }
+
+  /// 是否为经过完整实机验证的优化校准直写机型（Nikon Z 30）。
+  bool get isVerifiedPictureControlModel {
+    final m = _cameraModel.toUpperCase().replaceAll(' ', '');
+    return m.contains('Z30');
+  }
+
+  /// 读取相机当前激活的优化校准 Profile ID (0xD200 ActivePicCtrlItem)。
+  /// 返回值：1..8 为内置基底，101..120 为创意优化校准，201..209 对应自定义槽 C1..C9。
+  Future<int?> getActivePictureControlProfileId() async {
+    if (!isConnected || _client == null) return null;
+    try {
+      final data = await _client!.executeDataIn(
+        PtpOpCodes.getDevicePropValue,
+        [PtpOpCodes.nikonPropActivePicCtrlItem],
+      );
+      if (data.length >= 2) {
+        return data[0] | (data[1] << 8);
+      } else if (data.length == 1) {
+        return data[0];
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  /// 将指定 Profile ID (如 201..209 对应 C1..C9) 设为相机当前激活的优化校准 (0xD200)。
+  Future<bool> setActivePictureControl(int profileId) async {
+    if (!isConnected || _client == null) return false;
+    try {
+      final payload = Uint8List.fromList([
+        profileId & 0xFF,
+        (profileId >> 8) & 0xFF,
+      ]);
+      await _client!.executeDataOut(
+        PtpOpCodes.setDevicePropValue,
+        payload,
+        [PtpOpCodes.nikonPropActivePicCtrlItem],
+      );
+      final readback = await getActivePictureControlProfileId();
+      return readback == null || readback == profileId;
+    } catch (e) {
+      _logCallback?.call('【设置当前优化校准 0xD200 失败】: $e');
+      return false;
+    }
+  }
+
+  /// 枚举相机 C1–C9 (Profile ID 201–209) 共 9 个自定义优化校准槽位状态。
+  Future<List<CameraPictureControlSlot>> listPictureControlSlots() async {
+    if (!isConnected || _client == null) {
+      throw StateError('Camera is not connected.');
+    }
+    final activeProfileId = await getActivePictureControlProfileId();
+    final slots = <CameraPictureControlSlot>[];
+
+    for (var slot = 1; slot <= 9; slot++) {
+      final profileId = 200 + slot;
+      final isActive = activeProfileId == profileId;
+      try {
+        final raw = await _client!.executeDataIn(
+          PtpOpCodes.nikonGetPicCtrlData,
+          [profileId, 0],
+        );
+        if (raw.length == Np3Codec.wireShortLength ||
+            raw.length == Np3Codec.wireFullLength) {
+          final recipe = Np3Codec.fromWirePayload(raw);
+          slots.add(CameraPictureControlSlot(
+            slotNumber: slot,
+            profileId: profileId,
+            isPopulated: true,
+            isActive: isActive,
+            recipe: recipe,
+            rawWireBytes: raw,
+          ));
+        } else {
+          slots.add(CameraPictureControlSlot(
+            slotNumber: slot,
+            profileId: profileId,
+            isPopulated: false,
+            isActive: isActive,
+          ));
+        }
+      } catch (_) {
+        // 若空槽位返回 0x2005 / 0x2006 或未初始化，记为空槽位
+        slots.add(CameraPictureControlSlot(
+          slotNumber: slot,
+          profileId: profileId,
+          isPopulated: false,
+          isActive: isActive,
+        ));
+      }
+    }
+    return slots;
+  }
+
+  /// 将配方写入相机自定义优化校准槽位 C1–C9 (Profile ID 201–209)，并读回校验。
+  ///
+  /// 相机可能对负载做归一化（36/614 字节、名称填充、原生标志位），因此读回校验
+  /// 以 [Np3Codec.sameParameters] 的语义比较为准；校验不通过不抛异常，交由调用方
+  /// 结合相机槽位实际状态决定提示。
+  Future<PictureControlWriteResult> writePictureControlSlot({
+    required int slotNumber,
+    required PictureControlRecipe recipe,
+    bool setActive = false,
+  }) async {
+    if (!isConnected || _client == null) {
+      throw StateError('Camera is not connected.');
+    }
+    if (slotNumber < 1 || slotNumber > 9) {
+      throw ArgumentError.value(slotNumber, 'slotNumber', 'Must be in 1..9');
+    }
+    // 若为 Flexible Color ("0310") 配方，在写入机身 C1–C9 槽位前于内存中自动拟合转换为标准 NP3
+    var targetRecipe = recipe;
+    if (targetRecipe.isFlexibleColor) {
+      final stdBytes = Np3Codec.convertFlexibleToStandardNp3Bytes(targetRecipe);
+      targetRecipe = Np3Codec.parse(stdBytes);
+    }
+
+    final profileId = 200 + slotNumber;
+
+    // 1. 对非 Neutral 基底，先读取机身内置基底 (profile = base.wireId, mode = 0) 校验长度并获取原生标志位
+    Uint8List? nativeBaseTemplate;
+    if (targetRecipe.base != PictureControlBase.neutral) {
+      try {
+        final baseBytes = await _client!.executeDataIn(
+          PtpOpCodes.nikonGetPicCtrlData,
+          [targetRecipe.base.wireId, 0],
+        );
+        if (baseBytes.isNotEmpty &&
+            baseBytes.length != Np3Codec.wireShortLength &&
+            baseBytes.length != Np3Codec.wireFullLength) {
+          throw StateError(
+            'Unexpected camera Picture Control wire length (${baseBytes.length} bytes).',
+          );
+        }
+        if (baseBytes.length >= Np3Codec.wireShortLength) {
+          nativeBaseTemplate = baseBytes;
+        }
+      } catch (e) {
+        if (e is StateError) rethrow;
+        // 若内置基底读取被跳过，回退默认标志位
+      }
+    }
+
+    // 2. 组装 36 或 614 字节线上负载
+    final wirePayload = Np3Codec.toWirePayload(
+      targetRecipe,
+      nativeBaseTemplate: nativeBaseTemplate,
+    );
+
+    // 3. 发送 0x90CD SetPicCtrlData [profileId, 0]
+    await _client!.executeDataOut(
+      PtpOpCodes.nikonSetPicCtrlData,
+      wirePayload,
+      [profileId, 0],
+    );
+
+    // 4. 调用 0x90CC GetPicCtrlData [profileId, 0] 读回校验；不一致时短暂等待后再读一次
+    var verified = await _tryVerifySlot(profileId, targetRecipe, wirePayload);
+    if (!verified && isConnected && _client != null) {
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+      verified = await _tryVerifySlot(profileId, targetRecipe, wirePayload);
+    }
+
+    _logCallback?.call(
+      verified
+          ? '【色彩优化写入成功】槽位 C$slotNumber ($profileId) <- ${recipe.cameraName} (读回校验通过)'
+          : '【色彩优化写入校验未通过】槽位 C$slotNumber ($profileId) <- ${recipe.cameraName}',
+    );
+
+    // 5. 可选：将刚写入的槽位设为相机当前激活优化校准 (0xD200)
+    var active = false;
+    if (setActive) {
+      active = await setActivePictureControl(profileId);
+    }
+    return PictureControlWriteResult(verified: verified, active: active);
+  }
+
+  /// 只读取指定槽位并与目标配方做语义比较，供写入后的兜底判定使用。
+  Future<bool> verifyPictureControlSlot({
+    required int slotNumber,
+    required PictureControlRecipe recipe,
+  }) async {
+    if (!isConnected || _client == null) return false;
+    if (slotNumber < 1 || slotNumber > 9) {
+      throw ArgumentError.value(slotNumber, 'slotNumber', 'Must be in 1..9');
+    }
+    var target = recipe;
+    if (target.isFlexibleColor) {
+      final stdBytes = Np3Codec.convertFlexibleToStandardNp3Bytes(target);
+      target = Np3Codec.parse(stdBytes);
+    }
+    return _tryVerifySlot(200 + slotNumber, target, null);
+  }
+
+  Future<bool> _tryVerifySlot(
+    int profileId,
+    PictureControlRecipe target,
+    Uint8List? writtenPayload,
+  ) async {
+    if (_client == null) return false;
+    try {
+      final readback = await _client!.executeDataIn(
+        PtpOpCodes.nikonGetPicCtrlData,
+        [profileId, 0],
+      );
+      if (writtenPayload != null &&
+          Np3Codec.verifyWireReadback(writtenPayload, readback)) {
+        return true;
+      }
+      if (readback.length != Np3Codec.wireShortLength &&
+          readback.length != Np3Codec.wireFullLength) {
+        return false;
+      }
+      return Np3Codec.sameParameters(
+          target, Np3Codec.fromWirePayload(readback));
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// 将相机槽位 C1–C9 的线上数据直接导出为标准 .NP3 文件二进制。
+  Uint8List exportSlotAsNp3Bytes(CameraPictureControlSlot slot) {
+    if (!slot.isPopulated || slot.recipe == null) {
+      throw StateError('Slot C${slot.slotNumber} is empty.');
+    }
+    return Np3Codec.encodeNp3File(slot.recipe!);
+  }
+}
+
+/// 优化校准写入结果。
+class PictureControlWriteResult {
+  /// 0x90CD 已发出后，0x90CC 读回与目标配方语义一致。
+  final bool verified;
+
+  /// 请求了写入后激活，且相机确认成功。
+  final bool active;
+
+  const PictureControlWriteResult({
+    required this.verified,
+    this.active = false,
+  });
+}
+
+/// 相机自定义优化校准槽位 (C1–C9, Profile ID 201–209) 实时状态实体。
+class CameraPictureControlSlot {
+  final int slotNumber; // 1..9
+  final int profileId; // 201..209
+  final bool isPopulated;
+  final bool isActive;
+  final PictureControlRecipe? recipe;
+  final Uint8List? rawWireBytes;
+
+  const CameraPictureControlSlot({
+    required this.slotNumber,
+    required this.profileId,
+    required this.isPopulated,
+    this.isActive = false,
+    this.recipe,
+    this.rawWireBytes,
+  });
+
+  String get slotCode => 'C$slotNumber';
 }

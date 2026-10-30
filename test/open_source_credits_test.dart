@@ -10,7 +10,7 @@ void main() {
       expect(credit.name.trim(), isNotEmpty);
       expect(credit.description.trim(), isNotEmpty);
       expect(credit.license.trim(), isNotEmpty);
-      expect(credit.url, startsWith('https://github.com/'));
+      expect(credit.url, startsWith('https://'));
       expect(urls.add(credit.url), isTrue, reason: '重复地址: ${credit.url}');
     }
   });

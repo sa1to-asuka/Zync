@@ -5,17 +5,20 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../core/constants/network_config.dart';
 import '../../core/settings/app_settings.dart';
 import '../../core/utils/exif_helper.dart';
 import '../../core/utils/lru_image_cache.dart';
 import '../../core/utils/raw_preview_extractor.dart';
+import '../../engine/transfer/camera_viewed_tracker.dart';
 import '../../engine/transfer/download_manager.dart';
 import '../../engine/transfer/export_history_manager.dart';
 import '../../engine/transfer/shoot_and_transfer.dart';
 import '../../l10n/l10n.dart';
 import '../../protocol/camera_driver.dart';
+import '../../protocol/camera_native_bridge.dart';
 import '../../protocol/nikon_driver.dart';
 import '../design/design.dart';
 import '../widgets/adaptive_layout.dart';
@@ -95,7 +98,7 @@ class GalleryScreenState extends State<GalleryScreen> {
   int? _selectedStorageId;
 
   /// 当前激活的快捷筛选标签
-  _GalleryFilter _activeFilter = _GalleryFilter.all;
+  late _GalleryFilter _activeFilter;
 
   /// 顶部子视图切换: 0 = 相机照片, 1 = 历史导出 (手机相册)
   int _activeTab = 0;
@@ -103,12 +106,15 @@ class GalleryScreenState extends State<GalleryScreen> {
   /// 历史导出管理器
   final ExportHistoryManager _historyManager = ExportHistoryManager();
 
-  /// 缩略图与原图 LRU 缓存（容量 120 / 12）
-  final LruImageCache _thumbCache = LruImageCache(maxEntries: 120);
+  /// 缩略图与原图 LRU 缓存（容量 500 / 12）
+  final LruImageCache _thumbCache = LruImageCache(maxEntries: 500);
   final LruImageCache _fullCache = LruImageCache(maxEntries: 12);
 
   /// 同一文件的缩略图 Future 去重表
   final Map<String, Future<Uint8List>> _thumbFutures = {};
+
+  /// 相机会话代数：断线时自增，防止在途请求把旧 handle 的数据写回缓存。
+  int _cacheEpoch = 0;
 
   /// 列表滚动控制器
   final ScrollController _scrollController = ScrollController();
@@ -121,6 +127,14 @@ class GalleryScreenState extends State<GalleryScreen> {
   @override
   void initState() {
     super.initState();
+    final savedFilter = AppSettings.instance.galleryFilter;
+    _activeFilter = _GalleryFilter.values.firstWhere(
+      (f) => f.name == savedFilter,
+      orElse: () => _GalleryFilter.unviewed,
+    );
+    unawaited(CameraViewedTracker.instance.ensureInitialized());
+    CameraViewedTracker.instance.addListener(_onHistoryChanged);
+
     _historyManager.refresh();
     _historyManager.addListener(_onHistoryChanged);
 
@@ -134,6 +148,10 @@ class GalleryScreenState extends State<GalleryScreen> {
         setState(() => _activeTab = 0);
         _loadCameraFiles();
       } else if (state == CameraConnectionState.disconnected) {
+        _cacheEpoch++;
+        _thumbCache.clear();
+        _fullCache.clear();
+        _thumbFutures.clear();
         setState(() => _activeTab = 1);
       }
     });
@@ -153,6 +171,7 @@ class GalleryScreenState extends State<GalleryScreen> {
 
   @override
   void dispose() {
+    CameraViewedTracker.instance.removeListener(_onHistoryChanged);
     _historyManager.removeListener(_onHistoryChanged);
     _historyScrollController.dispose();
     _connSub?.cancel();
@@ -230,6 +249,7 @@ class GalleryScreenState extends State<GalleryScreen> {
     if (inflight != null) return inflight;
 
     final future = () async {
+      final epoch = _cacheEpoch;
       try {
         final disk = await _thumbCacheFile(
           file.storageId,
@@ -239,6 +259,7 @@ class GalleryScreenState extends State<GalleryScreen> {
         );
         if (await disk.exists()) {
           final rawBytes = await disk.readAsBytes();
+          if (epoch != _cacheEpoch) return Uint8List(0);
           final validDisk = NikonDriver.extractValidJpegSlice(rawBytes);
           if (validDisk != null && validDisk.isNotEmpty) {
             _thumbCache[cacheKey] = validDisk;
@@ -253,6 +274,7 @@ class GalleryScreenState extends State<GalleryScreen> {
       } catch (_) {}
 
       final fetched = await widget.driver.getThumbnail(file.handle);
+      if (epoch != _cacheEpoch) return Uint8List(0);
       final validBytes = NikonDriver.extractValidJpegSlice(fetched) ?? fetched;
       if (validBytes.isNotEmpty &&
           NikonDriver.extractValidJpegSlice(validBytes) != null) {
@@ -274,7 +296,11 @@ class GalleryScreenState extends State<GalleryScreen> {
     }();
 
     _thumbFutures[cacheKey] = future;
-    future.whenComplete(() => _thumbFutures.remove(cacheKey));
+    future.whenComplete(() {
+      if (identical(_thumbFutures[cacheKey], future)) {
+        _thumbFutures.remove(cacheKey);
+      }
+    });
     return future;
   }
 
@@ -308,7 +334,8 @@ class GalleryScreenState extends State<GalleryScreen> {
       }
       if (!mounted || !widget.driver.isConnected) return;
       if (item.isFolder ||
-          _thumbCache.containsKey(cameraCacheKey(item.storageId, item.handle))) {
+          _thumbCache
+              .containsKey(cameraCacheKey(item.storageId, item.handle))) {
         continue;
       }
       try {
@@ -356,6 +383,8 @@ class GalleryScreenState extends State<GalleryScreen> {
       final isSynced = _historyManager.isExported(g.baseName);
       return switch (_activeFilter) {
         _GalleryFilter.all => true,
+        _GalleryFilter.unviewed =>
+          !isSynced && !CameraViewedTracker.instance.isViewed(g.baseName),
         _GalleryFilter.unsynced => !isSynced,
         _GalleryFilter.synced => isSynced,
         _GalleryFilter.jpg => g.isJpegOnly,
@@ -670,9 +699,12 @@ class GalleryScreenState extends State<GalleryScreen> {
     });
   }
 
-  Future<void> _openFullScreenPreview(int index) async {
-    if (index < 0 || index >= _groups.length) return;
-    final item = _groups[index].primaryItem;
+  Future<void> _openFullScreenPreview(
+    List<CameraMediaGroup> groups,
+    int index,
+  ) async {
+    if (index < 0 || index >= groups.length) return;
+    final item = groups[index].primaryItem;
     final cachedThumb =
         _thumbCache[cameraCacheKey(item.storageId, item.handle)];
     if (cachedThumb != null && cachedThumb.isNotEmpty) {
@@ -683,7 +715,7 @@ class GalleryScreenState extends State<GalleryScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => FullScreenPhotoViewer(
-          groups: _groups,
+          groups: groups,
           initialIndex: index,
           thumbCache: _thumbCache,
           fullCache: _fullCache,
@@ -691,13 +723,114 @@ class GalleryScreenState extends State<GalleryScreen> {
           resolveThumb: _resolveThumb,
           onExportSingle: _handleExportSingle,
           onOpenWatermark: widget.onOpenWatermark,
+          onOpenProfessionalRaw: _handleOpenProfessionalRaw,
         ),
       ),
     );
     _backgroundPrefetchHold = false;
   }
 
+  /// RAW 调色：把相机 NEF 落到临时文件，再交给水印/调色工作室走原生全质量渲染。
+  Future<void> _handleOpenProfessionalRaw(CameraMediaGroup group) async {
+    final raw =
+        group.rawItem ?? (group.primaryItem.isRaw ? group.primaryItem : null);
+    if (raw == null) return;
+    final l10n = context.l10n;
+
+    final nefBytes = await fetchFullPhotoBytesWithDialog(
+      context,
+      widget.driver,
+      _fullCache,
+      raw,
+      rawOriginal: true,
+    );
+    if (!mounted || nefBytes == null || nefBytes.isEmpty) return;
+
+    final rawPath = await _writeRawTempFile(raw, nefBytes);
+    if (rawPath == null) {
+      if (mounted) {
+        showZToast(context, l10n.galleryRawDecodeFailedToast, isError: true);
+      }
+      return;
+    }
+
+    var preview = await RawPreviewExtractor.extractEmbeddedJpeg(nefBytes);
+    if (preview == null || preview.isEmpty) {
+      final thumb = await widget.driver.getThumbnail(raw.handle);
+      preview = thumb.isNotEmpty ? thumb : null;
+    }
+    if (!mounted) return;
+    if (preview == null || preview.isEmpty) {
+      showZToast(context, l10n.galleryRawDecodeFailedToast, isError: true);
+      return;
+    }
+
+    widget.onOpenWatermark?.call(
+      raw,
+      preview,
+      openFilter: true,
+      rawPath: rawPath,
+    );
+  }
+
+  Future<String?> _writeRawTempFile(
+    CameraFileItem raw,
+    Uint8List bytes,
+  ) async {
+    try {
+      final dir = await getTemporaryDirectory();
+      final name =
+          raw.fileName.isNotEmpty ? raw.fileName : 'raw_${raw.handle}.nef';
+      final safe = name.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+      final file =
+          File('${dir.path}/zync_raw_${raw.storageId}_${raw.size}_$safe');
+      if (await file.exists() && await file.length() == bytes.length) {
+        return file.path;
+      }
+      await file.writeAsBytes(bytes, flush: true);
+      _pruneRawTempFiles(dir);
+      return file.path;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void _pruneRawTempFiles(Directory dir) {
+    try {
+      final files = dir
+          .listSync()
+          .whereType<File>()
+          .where((f) => f.path.contains('zync_raw_'))
+          .toList()
+        ..sort(
+          (a, b) => b.statSync().modified.compareTo(a.statSync().modified),
+        );
+      for (final stale in files.skip(8)) {
+        try {
+          stale.deleteSync();
+        } catch (_) {}
+      }
+    } catch (_) {}
+  }
+
   void _openFullScreenLocalPreview(int initialIndex) {
+    final items = _historyManager.items;
+    if (initialIndex >= 0 && initialIndex < items.length) {
+      final target = items[initialIndex];
+      if (target.isVideo) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => FullScreenExportedVideoViewer(
+              item: target,
+              onDelete: (it) => _historyManager.deleteItem(it),
+            ),
+          ),
+        );
+        return;
+      }
+    }
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -1530,17 +1663,63 @@ class GalleryScreenState extends State<GalleryScreen> {
                                       Text(
                                         _groups.isEmpty
                                             ? l10n.galleryEmptyCameraPhotos
-                                            : l10n.galleryEmptyFilterPhotos(
-                                                _filterLabel(
-                                                  context,
-                                                  _activeFilter,
-                                                ),
-                                              ),
+                                            : (_activeFilter ==
+                                                    _GalleryFilter.unviewed
+                                                ? l10n.galleryAllViewedTip
+                                                : l10n.galleryEmptyFilterPhotos(
+                                                    _filterLabel(
+                                                      context,
+                                                      _activeFilter,
+                                                    ),
+                                                  )),
                                         style: TextStyle(
                                           color: zc.textSecondary,
                                           fontSize: 13,
                                         ),
                                       ),
+                                      if (_groups.isNotEmpty &&
+                                          _activeFilter ==
+                                              _GalleryFilter.unviewed) ...[
+                                        const SizedBox(height: 14),
+                                        OutlinedButton.icon(
+                                          onPressed: () {
+                                            setState(() {
+                                              _activeFilter =
+                                                  _GalleryFilter.all;
+                                              AppSettings.instance
+                                                  .setGalleryFilter(
+                                                      _GalleryFilter.all.name);
+                                            });
+                                          },
+                                          icon: Icon(
+                                            Icons.photo_library_outlined,
+                                            size: 16,
+                                            color: zc.accent,
+                                          ),
+                                          label: Text(
+                                            l10n.galleryViewAllPhotos,
+                                            style: TextStyle(
+                                              color: zc.accent,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                          style: OutlinedButton.styleFrom(
+                                            side: BorderSide(
+                                              color: zc.outline,
+                                              width: 0.8,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(
+                                                      ZRadius.pill),
+                                            ),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 8,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ],
                                   ),
                                 ),
@@ -1576,6 +1755,7 @@ class GalleryScreenState extends State<GalleryScreen> {
                                         group,
                                         isSelected,
                                         index,
+                                        displayGroups,
                                       );
                                     },
                                   ),

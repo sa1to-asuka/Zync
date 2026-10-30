@@ -1,11 +1,14 @@
 package com.zync.app
 
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import org.json.JSONObject
 import java.io.File
+import java.util.concurrent.Executors
 
 /**
  * LibRaw-backed RAW processor channel. The native implementation is deliberately
@@ -134,9 +137,26 @@ class RawProcessorBridge(
     }
 
     private val channel = MethodChannel(messenger, CHANNEL)
+    private val executor = Executors.newSingleThreadExecutor()
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     init {
         channel.setMethodCallHandler(this)
+    }
+
+    /** LibRaw 解码是阻塞重活，必须离开主线程；异常统一转成 MethodChannel 错误。 */
+    private fun runRawAsync(result: MethodChannel.Result, block: () -> Any?) {
+        executor.execute {
+            try {
+                val payload = block()
+                mainHandler.post { result.success(payload) }
+            } catch (t: Throwable) {
+                Log.e(TAG, "RAW native call failed", t)
+                mainHandler.post {
+                    result.error("RAW_RENDER_FAILED", t.message ?: t.toString(), null)
+                }
+            }
+        }
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
@@ -150,7 +170,7 @@ class RawProcessorBridge(
                         "reason" to "当前构建未包含 LibRaw RAW 解码器，已回退到内嵌 JPEG",
                     ))
                 } else {
-                    result.success(nativeProbe(path))
+                    runRawAsync(result) { nativeProbe(path) }
                 }
             }
             "renderPreview" -> {
@@ -160,13 +180,15 @@ class RawProcessorBridge(
                 if (!ensureNative()) {
                     result.error("RAW_UNAVAILABLE", "当前构建未包含 LibRaw RAW 解码器", null)
                 } else {
-                    result.success(nativeRenderPreview(
-                        path,
-                        maxEdge,
-                        grade.params,
-                        grade.lutPath,
-                        grade.lutStrength,
-                    ))
+                    runRawAsync(result) {
+                        nativeRenderPreview(
+                            path,
+                            maxEdge,
+                            grade.params,
+                            grade.lutPath,
+                            grade.lutStrength,
+                        )
+                    }
                 }
             }
             "renderFull" -> {
@@ -177,21 +199,23 @@ class RawProcessorBridge(
                 if (!ensureNative()) {
                     result.error("RAW_UNAVAILABLE", "当前构建未包含 LibRaw RAW 解码器", null)
                 } else {
-                    val map = nativeRenderFull(
-                        path,
-                        outputPath,
-                        quality,
-                        grade.params,
-                        grade.lutPath,
-                        grade.lutStrength,
-                    )
-                    if (map != null && outputPath.isNotBlank()) {
-                        val bytes = map["bytes"] as? ByteArray
-                        if (bytes != null && bytes.isNotEmpty()) {
-                            runCatching { File(outputPath).writeBytes(bytes) }
+                    runRawAsync(result) {
+                        val map = nativeRenderFull(
+                            path,
+                            outputPath,
+                            quality,
+                            grade.params,
+                            grade.lutPath,
+                            grade.lutStrength,
+                        )
+                        if (map != null && outputPath.isNotBlank()) {
+                            val bytes = map["bytes"] as? ByteArray
+                            if (bytes != null && bytes.isNotEmpty()) {
+                                runCatching { File(outputPath).writeBytes(bytes) }
+                            }
                         }
+                        map
                     }
-                    result.success(map)
                 }
             }
             "cancel" -> {

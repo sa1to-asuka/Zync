@@ -504,6 +504,50 @@ abstract final class EngineL10n {
       ja: 'プラットフォーム標準ディレクトリの取得',
     ),
     '视频播放支持': (en: 'Flutter video playback plugin', ja: '動画再生プラグイン'),
+    '尼康 Z30 PTP/IP (0x90CC/0x90CD/0xD200) 机内优化校准读写与 NP3/NCP 解析参考': (
+      en: 'Nikon Z30 PTP/IP (0x90CC/0x90CD/0xD200) Picture Control read/write & NP3/NCP codec reference',
+      ja: 'ニコン Z30 PTP/IP (0x90CC/0x90CD/0xD200) ピクチャーコントロール読み書き・NP3/NCP 解析リファレンス',
+    ),
+    '尼康 NP3 创意色彩灵感库配方合集与分类标签参考': (
+      en: 'Nikon NP3 Creative Picture Control recipe collection & category tag reference',
+      ja: 'ニコン NP3 クリエイティブ色彩レシピ集およびカテゴリタグリファレンス',
+    ),
+    '社区共享': (
+      en: 'Community Shared',
+      ja: 'コミュニティ共有',
+    ),
+    '尼康 Flexible Color NP3 (0310) 二进制偏移与色彩混合器结构解析参考': (
+      en: 'Nikon Flexible Color NP3 (0310) binary layout & Color Blender parser reference',
+      ja: 'ニコン Flexible Color NP3 (0310) バイナリ構造およびカラーブレンダー解析リファレンス',
+    ),
+    '色彩优化近似效果预览内置免费人像、街景、花朵与生活样片素材': (
+      en: 'Free portrait, street, floral & lifestyle sample photos for Picture Control preview',
+      ja: 'ピクチャーコントロール近似プレビュー用ポートレート・街並み・花・日常フリー素材',
+    ),
+    'Pakutaso 免费素材许可': (
+      en: 'Pakutaso Free Stock License',
+      ja: 'ぱくたそ無料写真素材ライセンス',
+    ),
+    '色彩优化近似效果预览内置风光与自然样片素材致谢': (
+      en: 'Free landscape & nature sample photo credits for Picture Control preview',
+      ja: 'ピクチャーコントロール近似プレビュー用風景・自然サンプル素材クレジット',
+    ),
+    '免费样片素材许可': (
+      en: 'Free Sample Media License',
+      ja: '無料サンプル素材ライセンス',
+    ),
+    '街景': (en: 'Street', ja: 'ストリート'),
+    '风景': (en: 'Landscape', ja: '風景'),
+    '樱花': (en: 'Sakura', ja: '桜'),
+    '夜景': (en: 'Night', ja: '夜景'),
+    '大海': (en: 'Ocean', ja: '海'),
+    '猫咪': (en: 'Cat', ja: '猫'),
+    '美食': (en: 'Food', ja: 'グルメ'),
+    '自然': (en: 'Neutral', ja: 'ニュートラル'),
+    '鲜艳': (en: 'Vivid', ja: 'ビビッド'),
+    '单色': (en: 'Monochrome', ja: 'モノクローム'),
+    '平淡': (en: 'Flat', ja: 'フラット'),
+    '灵活色彩': (en: 'Flexible Color', ja: 'フレキシブルカラー'),
   };
 
   static const Map<String,

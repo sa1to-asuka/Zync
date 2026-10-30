@@ -1066,6 +1066,12 @@ abstract class AppLocalizations {
   /// **'All'**
   String get galleryFilterAll;
 
+  /// No description provided for @galleryFilterNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get galleryFilterNew;
+
   /// No description provided for @galleryFilterUnsynced.
   ///
   /// In en, this message translates to:
@@ -1077,6 +1083,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Synced'**
   String get galleryFilterSynced;
+
+  /// No description provided for @galleryBadgeNew.
+  ///
+  /// In en, this message translates to:
+  /// **'NEW'**
+  String get galleryBadgeNew;
+
+  /// No description provided for @galleryBadgeViewed.
+  ///
+  /// In en, this message translates to:
+  /// **'Viewed'**
+  String get galleryBadgeViewed;
+
+  /// No description provided for @galleryMarkAllViewed.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark All Viewed'**
+  String get galleryMarkAllViewed;
+
+  /// No description provided for @galleryMarkAllViewedDone.
+  ///
+  /// In en, this message translates to:
+  /// **'All marked as viewed'**
+  String get galleryMarkAllViewedDone;
+
+  /// No description provided for @galleryAllViewedTip.
+  ///
+  /// In en, this message translates to:
+  /// **'No unviewed new photos'**
+  String get galleryAllViewedTip;
+
+  /// No description provided for @galleryViewAllPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'View All Photos'**
+  String get galleryViewAllPhotos;
 
   /// No description provided for @gallerySlotSelectTitle.
   ///
@@ -2279,6 +2321,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Global Grade'**
   String get videoGlobalGradeTitle;
+
+  /// No description provided for @videoMoreParamsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'More adjustments'**
+  String get videoMoreParamsTitle;
+
+  /// No description provided for @videoUnsavedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes?'**
+  String get videoUnsavedTitle;
+
+  /// No description provided for @videoUnsavedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your trim and grade changes will be lost if you leave without saving.'**
+  String get videoUnsavedMessage;
+
+  /// No description provided for @videoDiscardChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t save'**
+  String get videoDiscardChanges;
 
   /// No description provided for @videoGlobalGradeOnSub.
   ///
@@ -4835,6 +4901,505 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Choose Template'**
   String get wmTabletPureGradeAction;
+
+  /// No description provided for @navPictureControl.
+  ///
+  /// In en, this message translates to:
+  /// **'Color Recipes'**
+  String get navPictureControl;
+
+  /// No description provided for @pcStudioTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Picture Control'**
+  String get pcStudioTitle;
+
+  /// No description provided for @pcImportFilesAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Import NP3/ZIP'**
+  String get pcImportFilesAction;
+
+  /// No description provided for @pcBatchWriteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Batch Write'**
+  String get pcBatchWriteAction;
+
+  /// No description provided for @pcRestoreBuiltinTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Built-in Recipes'**
+  String get pcRestoreBuiltinTooltip;
+
+  /// No description provided for @pcTabLocalLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'Local Library ({count})'**
+  String pcTabLocalLibrary(Object count);
+
+  /// No description provided for @pcTabCameraSlots.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera Slots C1–C9'**
+  String get pcTabCameraSlots;
+
+  /// No description provided for @pcStatusDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera disconnected · Browse & manage local NP3/NCP recipes'**
+  String get pcStatusDisconnected;
+
+  /// No description provided for @pcStatusVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'{model} · Verified C1–C9 Direct Write (0x90CD)'**
+  String pcStatusVerified(Object model);
+
+  /// No description provided for @pcStatusExperimental.
+  ///
+  /// In en, this message translates to:
+  /// **'{model} · Experimental C1–C9 Direct Write (0x90CD)'**
+  String pcStatusExperimental(Object model);
+
+  /// No description provided for @pcStatusUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'{model} · Camera does not advertise 0x90CD write support'**
+  String pcStatusUnsupported(Object model);
+
+  /// No description provided for @pcApproxPreviewBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Approximate Preview'**
+  String get pcApproxPreviewBadge;
+
+  /// No description provided for @pcPickCustomSampleAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Photo'**
+  String get pcPickCustomSampleAction;
+
+  /// No description provided for @pcResetSampleAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Built-in Samples'**
+  String get pcResetSampleAction;
+
+  /// No description provided for @pcFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get pcFilterAll;
+
+  /// No description provided for @pcCurveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tone Curve (257-pt 15-bit LUT)'**
+  String get pcCurveTitle;
+
+  /// No description provided for @pcCurveLinearHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard linear tone response (no custom curve block)'**
+  String get pcCurveLinearHint;
+
+  /// No description provided for @pcParamsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Picture Control Parameters'**
+  String get pcParamsTitle;
+
+  /// No description provided for @pcParamBase.
+  ///
+  /// In en, this message translates to:
+  /// **'Base'**
+  String get pcParamBase;
+
+  /// No description provided for @pcParamSharpening.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharpening'**
+  String get pcParamSharpening;
+
+  /// No description provided for @pcParamMidSharpening.
+  ///
+  /// In en, this message translates to:
+  /// **'Mid-Range Sharp'**
+  String get pcParamMidSharpening;
+
+  /// No description provided for @pcParamClarity.
+  ///
+  /// In en, this message translates to:
+  /// **'Clarity'**
+  String get pcParamClarity;
+
+  /// No description provided for @pcParamContrast.
+  ///
+  /// In en, this message translates to:
+  /// **'Contrast'**
+  String get pcParamContrast;
+
+  /// No description provided for @pcParamBrightness.
+  ///
+  /// In en, this message translates to:
+  /// **'Brightness'**
+  String get pcParamBrightness;
+
+  /// No description provided for @pcParamSaturation.
+  ///
+  /// In en, this message translates to:
+  /// **'Saturation'**
+  String get pcParamSaturation;
+
+  /// No description provided for @pcParamHue.
+  ///
+  /// In en, this message translates to:
+  /// **'Hue'**
+  String get pcParamHue;
+
+  /// No description provided for @pcParamMonoFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get pcParamMonoFilter;
+
+  /// No description provided for @pcParamMonoToning.
+  ///
+  /// In en, this message translates to:
+  /// **'Toning'**
+  String get pcParamMonoToning;
+
+  /// No description provided for @pcFcSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Flexible Color (0310) Tone & Color Blender'**
+  String get pcFcSectionTitle;
+
+  /// No description provided for @pcFcConvertHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct C1–C9 write requires Standard NP3 (0300) or NCP (0100). Convert this Flexible Color recipe to a Standard NP3 to write to camera.'**
+  String get pcFcConvertHint;
+
+  /// No description provided for @pcFcConvertButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Convert to Std NP3'**
+  String get pcFcConvertButton;
+
+  /// No description provided for @pcFcConvertedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Created Standard NP3 \"{name}\" ready for C1–C9 write'**
+  String pcFcConvertedToast(Object name);
+
+  /// No description provided for @pcWriteToCameraButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Write to Camera C1–C9'**
+  String get pcWriteToCameraButton;
+
+  /// No description provided for @pcWriteDisabledFcTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Convert Flexible Color recipe to Standard NP3 first'**
+  String get pcWriteDisabledFcTooltip;
+
+  /// No description provided for @pcRenameAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get pcRenameAction;
+
+  /// No description provided for @pcShareAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Share / Export'**
+  String get pcShareAction;
+
+  /// No description provided for @pcRenameDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename Recipe'**
+  String get pcRenameDialogTitle;
+
+  /// No description provided for @pcRenameCameraField.
+  ///
+  /// In en, this message translates to:
+  /// **'In-Camera Name (ASCII, max 19 chars)'**
+  String get pcRenameCameraField;
+
+  /// No description provided for @pcRenameCameraHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Stored in binary tag 0x200 and displayed on camera C1–C9 menus'**
+  String get pcRenameCameraHelper;
+
+  /// No description provided for @pcRenameNoteField.
+  ///
+  /// In en, this message translates to:
+  /// **'Local Display Note (shown in Zync only)'**
+  String get pcRenameNoteField;
+
+  /// No description provided for @pcRenameSavedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Renamed recipe to \"{name}\"'**
+  String pcRenameSavedToast(Object name);
+
+  /// No description provided for @pcDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Local Recipe'**
+  String get pcDeleteConfirmTitle;
+
+  /// No description provided for @pcDeleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete \"{name}\" from your local library?'**
+  String pcDeleteConfirmBody(Object name);
+
+  /// No description provided for @pcImportReportToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported {imported} recipes ({duplicates} duplicates skipped, {invalid} invalid)'**
+  String pcImportReportToast(
+      Object duplicates, Object imported, Object invalid);
+
+  /// No description provided for @pcRefreshSlotsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh Camera C1–C9 Slots'**
+  String get pcRefreshSlotsTooltip;
+
+  /// No description provided for @pcSlotEmptyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty Slot · No custom Picture Control stored'**
+  String get pcSlotEmptyLabel;
+
+  /// No description provided for @pcSlotActiveBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Active (0xD200)'**
+  String get pcSlotActiveBadge;
+
+  /// No description provided for @pcSlotSetActiveButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Active'**
+  String get pcSlotSetActiveButton;
+
+  /// No description provided for @pcSlotActivatedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Switched active Picture Control to {slot}'**
+  String pcSlotActivatedToast(Object slot);
+
+  /// No description provided for @pcSlotActivateFailedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to switch active slot; ensure camera is in P/S/A/M mode'**
+  String get pcSlotActivateFailedToast;
+
+  /// No description provided for @pcSlotOverwriteButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Write Recipe'**
+  String get pcSlotOverwriteButton;
+
+  /// No description provided for @pcSlotBackupToLocalButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup to Phone'**
+  String get pcSlotBackupToLocalButton;
+
+  /// No description provided for @pcSlotBackupSuccessToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Backed up {slot} \"{name}\" to local .NP3 library'**
+  String pcSlotBackupSuccessToast(Object name, Object slot);
+
+  /// No description provided for @pcWriteDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Write to Camera Slot C1–C9'**
+  String get pcWriteDialogTitle;
+
+  /// No description provided for @pcWriteDialogSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose target custom Picture Control slot for \"{name}\" (overwrites selected slot):'**
+  String pcWriteDialogSubtitle(Object name);
+
+  /// No description provided for @pcWriteSetActiveCheckbox.
+  ///
+  /// In en, this message translates to:
+  /// **'Set as active Picture Control (0xD200) immediately after writing'**
+  String get pcWriteSetActiveCheckbox;
+
+  /// No description provided for @pcWriteConfirmButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Write & Verify'**
+  String get pcWriteConfirmButton;
+
+  /// No description provided for @pcWriteSuccessToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrote {slot} ({name}); camera slots refreshed to confirm'**
+  String pcWriteSuccessToast(Object name, Object slot);
+
+  /// No description provided for @pcWriteFailedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Write failed: {error} (Ensure camera is in P/S/A/M mode)'**
+  String pcWriteFailedToast(Object error);
+
+  /// No description provided for @pcWriteVerifyFailedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not find the recipe in {slot} after writing. Check the camera state and try again.'**
+  String pcWriteVerifyFailedToast(Object slot);
+
+  /// No description provided for @pcBatchDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Batch Write to C1–C9'**
+  String get pcBatchDialogTitle;
+
+  /// No description provided for @pcBatchDialogSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign Standard NP3/NCP recipes to slots C1–C9 (unassigned slots remain unchanged):'**
+  String get pcBatchDialogSubtitle;
+
+  /// No description provided for @pcBatchSlotKeepUnchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep unchanged (skip)'**
+  String get pcBatchSlotKeepUnchanged;
+
+  /// No description provided for @pcBatchStartWriteButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Batch Write ({count})'**
+  String pcBatchStartWriteButton(Object count);
+
+  /// No description provided for @pcBatchSummaryToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Batch write complete: {success} succeeded, {failed} failed'**
+  String pcBatchSummaryToast(Object failed, Object success);
+
+  /// No description provided for @pcDisconnectedEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera Not Connected'**
+  String get pcDisconnectedEmptyTitle;
+
+  /// No description provided for @pcDisconnectedEmptySub.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect your Nikon camera via Wi-Fi or USB OTG (in P/S/A/M mode) to read, write, and activate custom Picture Control slots C1–C9.'**
+  String get pcDisconnectedEmptySub;
+
+  /// No description provided for @videoEnterEditor.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Video'**
+  String get videoEnterEditor;
+
+  /// No description provided for @videoPlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Play'**
+  String get videoPlay;
+
+  /// No description provided for @videoPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get videoPause;
+
+  /// No description provided for @videoLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading video...'**
+  String get videoLoading;
+
+  /// No description provided for @pcCategoryPortrait.
+  ///
+  /// In en, this message translates to:
+  /// **'Portrait'**
+  String get pcCategoryPortrait;
+
+  /// No description provided for @pcCategoryLandscape.
+  ///
+  /// In en, this message translates to:
+  /// **'Landscape'**
+  String get pcCategoryLandscape;
+
+  /// No description provided for @pcCategoryStreet.
+  ///
+  /// In en, this message translates to:
+  /// **'Street'**
+  String get pcCategoryStreet;
+
+  /// No description provided for @pcCategoryFilm.
+  ///
+  /// In en, this message translates to:
+  /// **'Film'**
+  String get pcCategoryFilm;
+
+  /// No description provided for @pcCategoryCinematic.
+  ///
+  /// In en, this message translates to:
+  /// **'Cinematic'**
+  String get pcCategoryCinematic;
+
+  /// No description provided for @pcCategoryAiry.
+  ///
+  /// In en, this message translates to:
+  /// **'Airy Pastel'**
+  String get pcCategoryAiry;
+
+  /// No description provided for @pcCategoryNight.
+  ///
+  /// In en, this message translates to:
+  /// **'Night'**
+  String get pcCategoryNight;
+
+  /// No description provided for @pcCategoryMono.
+  ///
+  /// In en, this message translates to:
+  /// **'Monochrome'**
+  String get pcCategoryMono;
+
+  /// No description provided for @pcApproxBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Approx Fit'**
+  String get pcApproxBadge;
+
+  /// No description provided for @pcCompareSplitHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag divider to compare'**
+  String get pcCompareSplitHint;
+
+  /// No description provided for @pcCompareOriginalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Original'**
+  String get pcCompareOriginalLabel;
+
+  /// No description provided for @pcCompareEffectLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Effect'**
+  String get pcCompareEffectLabel;
 }
 
 class _AppLocalizationsDelegate

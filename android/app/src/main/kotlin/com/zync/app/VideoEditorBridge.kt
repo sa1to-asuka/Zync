@@ -45,6 +45,9 @@ class VideoEditorBridge(
         private const val CHANNEL = "com.zync.app/video_editor"
         private const val TAG = "ZyncVideo"
 
+        /** 调色代理预览的输出高度上限；先缩放再跑 GL 效果，避免 4K 全分辨率失败。 */
+        private const val PREVIEW_MAX_HEIGHT = 1080
+
         // MediaFormat 在 SDK 36 中没有暴露 KEY_COLOR_PRIMARIES / COLOR_PRIMARIES_* 常量，
         // 这里按 ISO/IEC 23091-2 与 Android CodecCapabilities 的取值直接定义。
         private const val KEY_COLOR_PRIMARIES = "color-primaries"
@@ -82,7 +85,8 @@ class VideoEditorBridge(
             "renderPreview" -> {
                 val projectJson = call.argument<String>("project").orEmpty()
                 val clipId = call.argument<String>("clipId").orEmpty()
-                renderPreview(projectJson, clipId, result)
+                val sourcePath = call.argument<String>("sourcePath").orEmpty()
+                renderPreview(projectJson, clipId, sourcePath, result)
             }
             "export" -> {
                 val projectJson = call.argument<String>("project").orEmpty()
@@ -364,7 +368,12 @@ class VideoEditorBridge(
         }
     }
 
-    private fun renderPreview(projectJson: String, clipId: String, result: MethodChannel.Result) {
+    private fun renderPreview(
+        projectJson: String,
+        clipId: String,
+        sourcePath: String,
+        result: MethodChannel.Result,
+    ) {
         if (pendingResult != null) {
             result.error("VIDEO_BUSY", "已有视频任务正在执行", null)
             return
@@ -390,7 +399,12 @@ class VideoEditorBridge(
             result.error("VIDEO_EMPTY", "时间线没有可预览片段", null)
             return
         }
-        val path = selectedClip.optString("path")
+        // 预览优先使用 Dart 侧已生成的 proxy（H.264/720p-1080p），
+        // 避免 4K 源直接跑 GL 效果导致解码/纹理失败。
+        val clipPath = selectedClip.optString("path")
+        val path =
+            if (sourcePath.isNotBlank() && File(sourcePath).exists()) sourcePath
+            else clipPath
         if (path.isBlank() || !File(path).exists()) {
             result.error("VIDEO_NOT_FOUND", "视频文件不存在", null)
             return
@@ -430,8 +444,14 @@ class VideoEditorBridge(
         if (lutPath.isNotBlank()) {
             CubeLutLoader.load(lutPath, lutStrength)?.let { effects += it }
         }
+        // 与导出保持一致：先把画面限制到预览尺寸，再跑 LUT/空间效果，
+        // 避免 4K 源在全分辨率下做 GL 处理导致失败。
+        val itemEffects = mutableListOf<Effect>(
+            Presentation.createForHeight(PREVIEW_MAX_HEIGHT),
+        )
+        itemEffects += effects
         val item = EditedMediaItem.Builder(mediaItem)
-            .setEffects(Effects(emptyList(), effects))
+            .setEffects(Effects(emptyList(), itemEffects))
             .build()
         val sequence = EditedMediaItemSequence.withVideoFrom(listOf(item))
         val composition = Composition.Builder(sequence)
@@ -480,6 +500,9 @@ class VideoEditorBridge(
     ): String {
         val digest = MessageDigest.getInstance("SHA-256")
         val input = buildString {
+            append("v2|")
+            append(PREVIEW_MAX_HEIGHT)
+            append('|')
             append(clip.toString())
             append('|').append(globalGrade?.toString().orEmpty())
             append('|').append(source.absolutePath)

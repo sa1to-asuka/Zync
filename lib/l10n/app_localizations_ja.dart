@@ -531,10 +531,31 @@ class AppLocalizationsJa extends AppLocalizations {
   String get galleryFilterAll => 'すべて';
 
   @override
+  String get galleryFilterNew => '新着写真';
+
+  @override
   String get galleryFilterUnsynced => '未同期';
 
   @override
   String get galleryFilterSynced => '同期済み';
+
+  @override
+  String get galleryBadgeNew => '新';
+
+  @override
+  String get galleryBadgeViewed => '閲覧済';
+
+  @override
+  String get galleryMarkAllViewed => 'すべて閲覧済みにする';
+
+  @override
+  String get galleryMarkAllViewedDone => 'すべて閲覧済みに設定しました';
+
+  @override
+  String get galleryAllViewedTip => '未閲覧の新着写真はありません';
+
+  @override
+  String get galleryViewAllPhotos => 'すべての写真を表示';
 
   @override
   String get gallerySlotSelectTitle => 'カードスロット選択';
@@ -1218,6 +1239,18 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get videoGlobalGradeTitle => '全体カラー調整';
+
+  @override
+  String get videoMoreParamsTitle => 'その他の調整';
+
+  @override
+  String get videoUnsavedTitle => '変更を保存しますか？';
+
+  @override
+  String get videoUnsavedMessage => '保存せずに終了すると、今回の編集とカラー調整は失われます。';
+
+  @override
+  String get videoDiscardChanges => '保存しない';
 
   @override
   String get videoGlobalGradeOnSub => 'タイムライン上の全クリップに適用';
@@ -2569,4 +2602,292 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get wmTabletPureGradeAction => '透かし形式を選択';
+
+  @override
+  String get navPictureControl => 'ピクチャーコントロール';
+
+  @override
+  String get pcStudioTitle => 'ピクチャーコントロール';
+
+  @override
+  String get pcImportFilesAction => 'レシピ読込';
+
+  @override
+  String get pcBatchWriteAction => '一括書込';
+
+  @override
+  String get pcRestoreBuiltinTooltip => '内蔵レシピを復元';
+
+  @override
+  String pcTabLocalLibrary(Object count) {
+    return 'ローカルライブラリ ($count)';
+  }
+
+  @override
+  String get pcTabCameraSlots => 'カメラスロット C1–C9';
+
+  @override
+  String get pcStatusDisconnected => 'カメラ未接続・ローカル NP3/NCP レシピの閲覧と管理が可能';
+
+  @override
+  String pcStatusVerified(Object model) {
+    return '$model・C1–C9 直接書込 検証済み (0x90CD)';
+  }
+
+  @override
+  String pcStatusExperimental(Object model) {
+    return '$model・C1–C9 直接書込 実験的対応 (0x90CD)';
+  }
+
+  @override
+  String pcStatusUnsupported(Object model) {
+    return '$model・0x90CD ピクチャーコントロール書込非対応';
+  }
+
+  @override
+  String get pcApproxPreviewBadge => '近似プレビュー';
+
+  @override
+  String get pcPickCustomSampleAction => '写真を選択';
+
+  @override
+  String get pcResetSampleAction => '内蔵サンプル';
+
+  @override
+  String get pcFilterAll => 'すべて';
+
+  @override
+  String get pcCurveTitle => 'トーンカーブ (257点 15-bit LUT)';
+
+  @override
+  String get pcCurveLinearHint => '標準リニア階調（カスタムカーブなし）';
+
+  @override
+  String get pcParamsTitle => 'ピクチャーコントロール設定値';
+
+  @override
+  String get pcParamBase => 'ベース';
+
+  @override
+  String get pcParamSharpening => '輪郭強調';
+
+  @override
+  String get pcParamMidSharpening => 'ミドルレンジシャープ';
+
+  @override
+  String get pcParamClarity => '明瞭度';
+
+  @override
+  String get pcParamContrast => 'コントラスト';
+
+  @override
+  String get pcParamBrightness => '明るさ';
+
+  @override
+  String get pcParamSaturation => '彩度';
+
+  @override
+  String get pcParamHue => '色相';
+
+  @override
+  String get pcParamMonoFilter => 'フィルター効果';
+
+  @override
+  String get pcParamMonoToning => '調色';
+
+  @override
+  String get pcFcSectionTitle => 'フレキシブルカラー (0310) 階調＆カラーブレンダー';
+
+  @override
+  String get pcFcConvertHint =>
+      'C1–C9 直接書込は標準 NP3 (0300) / NCP (0100) に対応しています。右のボタンで標準 NP3 に変換して書き込めます。';
+
+  @override
+  String get pcFcConvertButton => '標準 NP3 に変換';
+
+  @override
+  String pcFcConvertedToast(Object name) {
+    return '標準互換レシピ「$name」を生成しました（C1–C9 書込可能）';
+  }
+
+  @override
+  String get pcWriteToCameraButton => 'カメラ C1–C9 に書込';
+
+  @override
+  String get pcWriteDisabledFcTooltip => 'フレキシブルカラーは先に標準 NP3 へ変換してください';
+
+  @override
+  String get pcRenameAction => '名前変更';
+
+  @override
+  String get pcShareAction => '共有・書き出し';
+
+  @override
+  String get pcRenameDialogTitle => 'レシピ名の変更';
+
+  @override
+  String get pcRenameCameraField => 'カメラ内表示名 (ASCII 最大19文字)';
+
+  @override
+  String get pcRenameCameraHelper =>
+      '.NP3/.NCP 内の 0x200 フィールドに書き込まれ、カメラの C1–C9 メニューに表示されます';
+
+  @override
+  String get pcRenameNoteField => 'ローカル備考名（Zync 内のみ表示）';
+
+  @override
+  String pcRenameSavedToast(Object name) {
+    return 'レシピ名を「$name」に更新しました';
+  }
+
+  @override
+  String get pcDeleteConfirmTitle => 'ローカルレシピの削除';
+
+  @override
+  String pcDeleteConfirmBody(Object name) {
+    return 'ローカルライブラリから「$name」を削除しますか？';
+  }
+
+  @override
+  String pcImportReportToast(
+      Object duplicates, Object imported, Object invalid) {
+    return '$imported 件のレシピを読み込みました（重複スキップ $duplicates 件、無効 $invalid 件）';
+  }
+
+  @override
+  String get pcRefreshSlotsTooltip => 'カメラ C1–C9 スロットを更新';
+
+  @override
+  String get pcSlotEmptyLabel => '空きスロット・カスタムピクチャーコントロール未登録';
+
+  @override
+  String get pcSlotActiveBadge => '現在有効 (0xD200)';
+
+  @override
+  String get pcSlotSetActiveButton => '現在有効にする';
+
+  @override
+  String pcSlotActivatedToast(Object slot) {
+    return 'カメラのピクチャーコントロールを $slot に切り替えました';
+  }
+
+  @override
+  String get pcSlotActivateFailedToast =>
+      '切り替えに失敗しました。カメラが P/S/A/M モードか確認してください';
+
+  @override
+  String get pcSlotOverwriteButton => 'レシピを選んで書込';
+
+  @override
+  String get pcSlotBackupToLocalButton => 'スマホへバックアップ';
+
+  @override
+  String pcSlotBackupSuccessToast(Object name, Object slot) {
+    return '$slot「$name」を読み出しローカル .NP3 として保存しました';
+  }
+
+  @override
+  String get pcWriteDialogTitle => 'カメラスロット C1–C9 へ書込';
+
+  @override
+  String pcWriteDialogSubtitle(Object name) {
+    return '「$name」を書き込むカスタムスロットを選択してください（既存データは上書きされます）：';
+  }
+
+  @override
+  String get pcWriteSetActiveCheckbox =>
+      '書き込み完了後、ただちに現在のピクチャーコントロール (0xD200) に設定する';
+
+  @override
+  String get pcWriteConfirmButton => '書き込み＆照合';
+
+  @override
+  String pcWriteSuccessToast(Object name, Object slot) {
+    return '$slot（$name）へ書き込み、カメラスロットを更新して確認しました';
+  }
+
+  @override
+  String pcWriteFailedToast(Object error) {
+    return '書き込み失敗：$error（P/S/A/M モードか確認してください）';
+  }
+
+  @override
+  String pcWriteVerifyFailedToast(Object slot) {
+    return '$slot に書き込んだレシピが見つかりません。カメラの状態を確認して再試行してください';
+  }
+
+  @override
+  String get pcBatchDialogTitle => 'C1–C9 一括割り当て書込';
+
+  @override
+  String get pcBatchDialogSubtitle =>
+      'スロット C1–C9 に書き込む標準 NP3/NCP レシピを選択してください（未選択スロットは変更されません）：';
+
+  @override
+  String get pcBatchSlotKeepUnchanged => '変更しない（スキップ）';
+
+  @override
+  String pcBatchStartWriteButton(Object count) {
+    return '一括書込を開始 ($count)';
+  }
+
+  @override
+  String pcBatchSummaryToast(Object failed, Object success) {
+    return '一括書込完了：成功 $success 件、失敗 $failed 件';
+  }
+
+  @override
+  String get pcDisconnectedEmptyTitle => 'カメラが接続されていません';
+
+  @override
+  String get pcDisconnectedEmptySub =>
+      'Wi-Fi または USB OTG でニコンカメラ（P/S/A/M モード）に接続すると、C1–C9 スロットの読み取り・書き込み・有効化が行えます。';
+
+  @override
+  String get videoEnterEditor => '編集へ';
+
+  @override
+  String get videoPlay => '再生';
+
+  @override
+  String get videoPause => '一時停止';
+
+  @override
+  String get videoLoading => '動画読み込み中…';
+
+  @override
+  String get pcCategoryPortrait => 'ポートレート';
+
+  @override
+  String get pcCategoryLandscape => '風景';
+
+  @override
+  String get pcCategoryStreet => 'スナップ';
+
+  @override
+  String get pcCategoryFilm => 'フィルム';
+
+  @override
+  String get pcCategoryCinematic => 'シネマティック';
+
+  @override
+  String get pcCategoryAiry => '透明感';
+
+  @override
+  String get pcCategoryNight => '夜景';
+
+  @override
+  String get pcCategoryMono => 'モノクローム';
+
+  @override
+  String get pcApproxBadge => '近似再現';
+
+  @override
+  String get pcCompareSplitHint => '左右にドラッグして比較';
+
+  @override
+  String get pcCompareOriginalLabel => '元画像';
+
+  @override
+  String get pcCompareEffectLabel => '効果';
 }

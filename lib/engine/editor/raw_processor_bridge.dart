@@ -68,18 +68,25 @@ class RawRenderResult {
   final int height;
   final bool isProxy;
 
+  /// 原生返回或 Dart 侧捕获的失败原因；成功时为空。
+  final String error;
+
   const RawRenderResult({
     required this.bytes,
     required this.width,
     required this.height,
     this.isProxy = false,
+    this.error = '',
   });
+
+  bool get failed => bytes.isEmpty;
 
   factory RawRenderResult.fromMap(Map<dynamic, dynamic> map) => RawRenderResult(
         bytes: map['bytes'] as Uint8List? ?? Uint8List(0),
         width: (map['width'] as num?)?.toInt() ?? 0,
         height: (map['height'] as num?)?.toInt() ?? 0,
         isProxy: map['isProxy'] as bool? ?? false,
+        error: map['error'] as String? ?? '',
       );
 }
 
@@ -123,13 +130,30 @@ class RawProcessorBridge {
       filterIntensity: filterIntensity,
       grade: grade ?? ColorGrade(base: adjustments),
     );
-    final map =
-        await _channel.invokeMethod<Map<dynamic, dynamic>>('renderPreview', {
-      'path': path,
-      'maxEdge': maxEdge,
-      'recipe': recipe.toJsonString(),
-    });
+    final map = await _invokeRender(
+      'renderPreview',
+      {
+        'path': path,
+        'maxEdge': maxEdge,
+        'recipe': recipe.toJsonString(),
+      },
+      timeout: const Duration(seconds: 30),
+    );
     return RawRenderResult.fromMap(map ?? const {});
+  }
+
+  static Future<Map<dynamic, dynamic>?> _invokeRender(
+    String method,
+    Map<String, Object?> arguments, {
+    required Duration timeout,
+  }) async {
+    try {
+      return await _channel
+          .invokeMethod<Map<dynamic, dynamic>>(method, arguments)
+          .timeout(timeout);
+    } catch (e) {
+      return <dynamic, dynamic>{'error': e.toString()};
+    }
   }
 
   static Future<RawRenderResult> renderFull({
@@ -147,13 +171,16 @@ class RawProcessorBridge {
       filterIntensity: filterIntensity,
       grade: grade ?? ColorGrade(base: adjustments),
     );
-    final map =
-        await _channel.invokeMethod<Map<dynamic, dynamic>>('renderFull', {
-      'path': path,
-      'outputPath': outputPath,
-      'jpegQuality': jpegQuality,
-      'recipe': recipe.toJsonString(),
-    });
+    final map = await _invokeRender(
+      'renderFull',
+      {
+        'path': path,
+        'outputPath': outputPath,
+        'jpegQuality': jpegQuality,
+        'recipe': recipe.toJsonString(),
+      },
+      timeout: const Duration(seconds: 120),
+    );
     return RawRenderResult.fromMap(map ?? const {});
   }
 

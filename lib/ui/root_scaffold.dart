@@ -5,10 +5,12 @@ import '../../engine/transfer/download_manager.dart';
 import '../../engine/transfer/shoot_and_transfer.dart';
 import '../../engine/update/app_update_manager.dart';
 import '../../l10n/l10n.dart';
+import '../../protocol/camera_native_bridge.dart';
 import '../../protocol/nikon_driver.dart';
 import 'design/design.dart';
 import 'screens/connect_screen.dart';
 import 'screens/gallery_screen.dart';
+import 'screens/picture_control_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/transfer_center_screen.dart';
 import 'screens/watermark_screen.dart';
@@ -34,7 +36,7 @@ class RootScaffold extends StatefulWidget {
 }
 
 class _RootScaffoldState extends State<RootScaffold>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   int _currentIndex = 0;
   bool? _manualSidebarExpanded;
 
@@ -47,6 +49,8 @@ class _RootScaffoldState extends State<RootScaffold>
 
   final GlobalKey<GalleryScreenState> _galleryKey =
       GlobalKey<GalleryScreenState>();
+  final GlobalKey<PictureControlScreenState> _pictureControlKey =
+      GlobalKey<PictureControlScreenState>();
   final GlobalKey<WatermarkScreenState> _watermarkKey =
       GlobalKey<WatermarkScreenState>();
   final GlobalKey<ConnectScreenState> _connectKey =
@@ -56,6 +60,7 @@ class _RootScaffoldState extends State<RootScaffold>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _driver = NikonDriver();
     _downloadManager = DownloadManager(driver: _driver);
     _shootAndTransferController = ShootAndTransferController(
@@ -79,16 +84,34 @@ class _RootScaffoldState extends State<RootScaffold>
       ),
     );
 
-    // 应用启动静默检测是否有远程新版本
+    // 应用启动静默检测是否有远程新版本，以及是否从系统收到外部打开的 .NP3/.NCP/.ZIP 文件
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         AppUpdateManager.checkOnStartup(context);
+        _checkIncomingExternalFiles();
       }
     });
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkIncomingExternalFiles();
+    }
+  }
+
+  Future<void> _checkIncomingExternalFiles() async {
+    final paths = await CameraNativeBridge.consumeIncomingFiles();
+    if (!mounted || paths.isEmpty) return;
+    _onTabSelected(2);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _pictureControlKey.currentState?.importExternalFiles(paths);
+    });
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _tabFadeController.dispose();
     _shootAndTransferController.dispose();
     _driver.dispose();
@@ -101,6 +124,7 @@ class _RootScaffoldState extends State<RootScaffold>
       _NavTab(Icons.wifi_tethering, Icons.wifi_tethering, l10n.navConnect),
       _NavTab(
           Icons.photo_library_outlined, Icons.photo_library, l10n.navGallery),
+      _NavTab(Icons.palette_outlined, Icons.palette, l10n.navPictureControl),
       _NavTab(Icons.branding_watermark_outlined, Icons.branding_watermark,
           l10n.navWatermark),
       _NavTab(Icons.tune_outlined, Icons.tune, l10n.navSettings),
@@ -112,6 +136,8 @@ class _RootScaffoldState extends State<RootScaffold>
     if (index == _currentIndex) return;
     if (index == 1 && _driver.isConnected) {
       _galleryKey.currentState?.reloadFilesIfEmpty();
+    } else if (index == 2 && _driver.isConnected) {
+      _pictureControlKey.currentState?.refreshCameraSlots();
     }
 
     final duration = ZMotion.of(context, ZMotion.medium);
@@ -144,12 +170,11 @@ class _RootScaffoldState extends State<RootScaffold>
     _lastExitHintAt = now;
     if (confirmed) return false;
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(
-        content: Text(context.l10n.exitConfirmHint),
-        duration: const Duration(seconds: 2),
-      ));
+    showZToast(
+      context,
+      context.l10n.exitConfirmHint,
+      duration: const Duration(seconds: 2),
+    );
     return true;
   }
 
@@ -180,6 +205,7 @@ class _RootScaffoldState extends State<RootScaffold>
         shootAndTransferController: _shootAndTransferController,
         onConnected: () {
           _galleryKey.currentState?.reloadFiles();
+          _pictureControlKey.currentState?.refreshCameraSlots();
           if (mounted) setState(() {});
         },
         onNavigateToGallery: (
@@ -198,10 +224,11 @@ class _RootScaffoldState extends State<RootScaffold>
           PhotoMetadata? meta,
           bool openFilter = false,
         }) {
-          _onTabSelected(2);
+          _onTabSelected(3);
           if (initialBytes != null && initialBytes.isNotEmpty) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              _watermarkKey.currentState?.loadImageBytes(initialBytes, meta);
+              _watermarkKey.currentState?.loadImageBytes(initialBytes,
+                  metadata: meta);
               if (openFilter) _watermarkKey.currentState?.showFilterTab();
             });
           }
@@ -223,7 +250,7 @@ class _RootScaffoldState extends State<RootScaffold>
         onOpenWatermark: (file, cachedBytes,
             {bool openFilter = false, String? rawPath}) async {
           if (cachedBytes == null || cachedBytes.isEmpty) return;
-          _onTabSelected(2);
+          _onTabSelected(3);
           if (openFilter) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               _watermarkKey.currentState?.showFilterTab();
@@ -237,18 +264,28 @@ class _RootScaffoldState extends State<RootScaffold>
               capturedDate: file.captureDate.isNotEmpty ? file.captureDate : '',
             );
             if (_watermarkKey.currentState != null) {
-              _watermarkKey.currentState!.setRawSourcePath(rawPath);
-              _watermarkKey.currentState!.loadImageBytes(b, fallbackMeta);
+              _watermarkKey.currentState!.loadImageBytes(
+                b,
+                metadata: fallbackMeta,
+                rawPath: rawPath,
+              );
             } else {
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                _watermarkKey.currentState?.setRawSourcePath(rawPath);
-                _watermarkKey.currentState?.loadImageBytes(b, fallbackMeta);
+                _watermarkKey.currentState?.loadImageBytes(
+                  b,
+                  metadata: fallbackMeta,
+                  rawPath: rawPath,
+                );
               });
             }
           }
 
           inject(cachedBytes);
         },
+      ),
+      PictureControlScreen(
+        key: _pictureControlKey,
+        driver: _driver,
       ),
       WatermarkScreen(key: _watermarkKey),
       const SettingsScreen(),

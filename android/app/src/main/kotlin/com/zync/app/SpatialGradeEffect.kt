@@ -22,12 +22,14 @@ class SpatialGradeEffect private constructor(
     private val vignette: Float,
     private val grain: Float,
     private val sharpening: Float,
+    private val clarity: Float,
+    private val texture: Float,
 ) : GlEffect {
     override fun toGlShaderProgram(context: Context, useHdr: Boolean): GlShaderProgram =
-        SpatialGradeShaderProgram(vignette, grain, sharpening)
+        SpatialGradeShaderProgram(vignette, grain, sharpening, clarity, texture)
 
     override fun isNoOp(inputWidth: Int, inputHeight: Int): Boolean =
-        abs(vignette) + abs(grain) + abs(sharpening) < 1e-4f
+        abs(vignette) + abs(grain) + abs(sharpening) + abs(clarity) + abs(texture) < 1e-4f
 
     companion object {
         fun fromGrade(grade: JSONObject?): SpatialGradeEffect? {
@@ -36,8 +38,12 @@ class SpatialGradeEffect private constructor(
             val vignette = base.optDouble("vignette", 0.0).toFloat() / 100f * 0.65f
             val grain = base.optDouble("grain", 0.0).toFloat() / 100f * 0.12f
             val sharpening = grade.optDouble("sharpening", 0.0).toFloat() / 100f * 1.2f
-            if (abs(vignette) + abs(grain) + abs(sharpening) < 1e-4f) return null
-            return SpatialGradeEffect(vignette, grain, sharpening)
+            val clarity = base.optDouble("clarity", 0.0).toFloat() / 100f * 0.9f
+            val texture = base.optDouble("texture", 0.0).toFloat() / 100f * 0.7f
+            if (abs(vignette) + abs(grain) + abs(sharpening) + abs(clarity) + abs(texture) < 1e-4f) {
+                return null
+            }
+            return SpatialGradeEffect(vignette, grain, sharpening, clarity, texture)
         }
     }
 }
@@ -47,6 +53,8 @@ private class SpatialGradeShaderProgram(
     private val vignette: Float,
     private val grain: Float,
     private val sharpening: Float,
+    private val clarity: Float,
+    private val texture: Float,
 ) : BaseGlShaderProgram(false, 1) {
     private var program: GlProgram? = null
     private var width = 1
@@ -77,6 +85,8 @@ private class SpatialGradeShaderProgram(
             glProgram.setFloatUniform("uVignette", vignette)
             glProgram.setFloatUniform("uGrain", grain)
             glProgram.setFloatUniform("uSharpening", sharpening)
+            glProgram.setFloatUniform("uClarity", clarity)
+            glProgram.setFloatUniform("uTexture", texture)
             glProgram.setFloatUniform("uTime", presentationTimeUs / 1_000_000f)
             glProgram.setBufferAttribute("aFramePosition", VERTEX_BUFFER, 4)
             glProgram.bindAttributesAndUniforms()
@@ -124,6 +134,8 @@ private class SpatialGradeShaderProgram(
             uniform float uVignette;
             uniform float uGrain;
             uniform float uSharpening;
+            uniform float uClarity;
+            uniform float uTexture;
             uniform float uTime;
             varying vec2 vTexSamplingCoord;
 
@@ -142,6 +154,29 @@ private class SpatialGradeShaderProgram(
                 vec3 down = texture2D(uTexSampler, uv + vec2(0.0, uTexelSize.y)).rgb;
                 vec3 blur = (left + right + up + down) * 0.25;
                 color += (color - blur) * uSharpening;
+              }
+
+              if (abs(uTexture) > 0.001) {
+                vec3 left = texture2D(uTexSampler, uv - vec2(uTexelSize.x, 0.0)).rgb;
+                vec3 right = texture2D(uTexSampler, uv + vec2(uTexelSize.x, 0.0)).rgb;
+                vec3 up = texture2D(uTexSampler, uv - vec2(0.0, uTexelSize.y)).rgb;
+                vec3 down = texture2D(uTexSampler, uv + vec2(0.0, uTexelSize.y)).rgb;
+                vec3 blur = (left + right + up + down) * 0.25;
+                color += (color - blur) * uTexture;
+              }
+
+              if (abs(uClarity) > 0.001) {
+                vec2 d = uTexelSize * 2.0;
+                vec3 blur = texture2D(uTexSampler, uv + vec2(-d.x, -d.y)).rgb;
+                blur += texture2D(uTexSampler, uv + vec2(0.0, -d.y)).rgb;
+                blur += texture2D(uTexSampler, uv + vec2(d.x, -d.y)).rgb;
+                blur += texture2D(uTexSampler, uv + vec2(-d.x, 0.0)).rgb;
+                blur += texture2D(uTexSampler, uv + vec2(d.x, 0.0)).rgb;
+                blur += texture2D(uTexSampler, uv + vec2(-d.x, d.y)).rgb;
+                blur += texture2D(uTexSampler, uv + vec2(0.0, d.y)).rgb;
+                blur += texture2D(uTexSampler, uv + vec2(d.x, d.y)).rgb;
+                blur /= 8.0;
+                color += (color - blur) * uClarity;
               }
 
               if (abs(uVignette) > 0.001) {

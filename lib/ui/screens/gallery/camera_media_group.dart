@@ -74,6 +74,7 @@ enum _DeleteScope { localOnly, localAndCamera }
 /// 相册筛选枚举（避免将本地化文案作为状态值对比）。
 enum _GalleryFilter {
   all,
+  unviewed,
   unsynced,
   synced,
   jpg,

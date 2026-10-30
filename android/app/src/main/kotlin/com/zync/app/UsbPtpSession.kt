@@ -51,6 +51,7 @@ class UsbPtpSession(
         const val CONTAINER_COMMAND = 1
         const val CONTAINER_DATA = 2
         const val CONTAINER_RESPONSE = 3
+        const val CONTAINER_EVENT = 4
         const val CONTAINER_HEADER_SIZE = 12
 
         const val OP_OPEN_SESSION = 0x1002
@@ -61,7 +62,7 @@ class UsbPtpSession(
 
         const val OPEN_SESSION_TIMEOUT_MS = 2_000
         const val IO_TIMEOUT_MS = 15_000
-        const val EVENT_DRAIN_TIMEOUT_MS = 2_000
+        const val EVENT_DRAIN_TIMEOUT_MS = 4_000
 
         /** Android 8.0 及以下 usbfs 对单次请求缓冲区有 16 KiB 限制。 */
         const val LEGACY_REQUEST_MAX_BYTES = 16_384
@@ -92,6 +93,10 @@ class UsbPtpSession(
     private fun log(message: String) {
         onLog?.invoke(message)
     }
+
+    /** 会话是否仍然可用（未关闭、传输层未失效且传输泵仍在工作）。 */
+    val isAlive: Boolean
+        get() = !closed.get() && !transportFailed.get() && pump?.isAlive == true
 
     // ============================================================
     // 会话生命周期
@@ -226,7 +231,7 @@ class UsbPtpSession(
     private fun sendCloseSession() {
         val tx = nextTransactionId()
         sendCommandContainer(OP_CLOSE_SESSION, tx, IntArray(0))
-        val header = readContainerHeader(IO_TIMEOUT_MS)
+        val header = readNextContainer(IO_TIMEOUT_MS)
         requireType(header.type, CONTAINER_RESPONSE, OP_CLOSE_SESSION)
         skipPayload(header.length, IO_TIMEOUT_MS)
     }
@@ -248,11 +253,11 @@ class UsbPtpSession(
         val tx = nextTransactionId()
         sendCommandContainer(opCode, tx, params)
 
-        var header = readContainerHeader(readTimeoutMs)
+        var header = readNextContainer(readTimeoutMs)
         if (header.type == CONTAINER_DATA) {
             // 少数相机在无数据阶段仍返回 Data 容器，先消费再读 Response。
             skipPayload(header.length, readTimeoutMs)
-            header = readContainerHeader(readTimeoutMs)
+            header = readNextContainer(readTimeoutMs)
         }
         requireType(header.type, CONTAINER_RESPONSE, opCode)
         skipPayload(header.length, readTimeoutMs)
@@ -272,7 +277,7 @@ class UsbPtpSession(
         val tx = nextTransactionId()
         sendCommandContainer(opCode, tx, params)
 
-        val first = readContainerHeader(readTimeoutMs)
+        val first = readNextContainer(readTimeoutMs)
         if (first.type == CONTAINER_RESPONSE) {
             skipPayload(first.length, readTimeoutMs)
             checkResponse(opCode, first.code)
@@ -290,7 +295,7 @@ class UsbPtpSession(
             readInto(out, payloadLength.toLong(), readTimeoutMs)
         }
 
-        val response = readContainerHeader(readTimeoutMs)
+        val response = readNextContainer(readTimeoutMs)
         requireType(response.type, CONTAINER_RESPONSE, opCode)
         skipPayload(response.length, readTimeoutMs)
         checkResponse(opCode, response.code)
@@ -307,10 +312,10 @@ class UsbPtpSession(
         sendCommandContainer(opCode, tx, params)
         sendDataContainer(tx, data)
 
-        var header = readContainerHeader(IO_TIMEOUT_MS)
+        var header = readNextContainer(IO_TIMEOUT_MS)
         if (header.type == CONTAINER_DATA) {
             skipPayload(header.length, IO_TIMEOUT_MS)
-            header = readContainerHeader(IO_TIMEOUT_MS)
+            header = readNextContainer(IO_TIMEOUT_MS)
         }
         requireType(header.type, CONTAINER_RESPONSE, opCode)
         skipPayload(header.length, IO_TIMEOUT_MS)
@@ -325,6 +330,7 @@ class UsbPtpSession(
         val length: Int,
         val type: Int,
         val code: Int,
+        val raw: ByteArray,
     )
 
     private fun nextTransactionId(): Int = transactionCounter.incrementAndGet()
@@ -363,7 +369,32 @@ class UsbPtpSession(
             transportFailed.set(true)
             throw IOException("PTP 容器长度非法: $length")
         }
-        return ContainerHeader(length, type, code)
+        return ContainerHeader(length, type, code, raw)
+    }
+
+    /**
+     * 读取下一个非事件容器。
+     *
+     * 相机可能在等待 Data/Response 期间通过 Bulk IN 先送事件容器（type=4）。
+     * 这类容器不能当成协议错误，读取负载后交给事件回调并继续等待目标容器。
+     */
+    private fun readNextContainer(timeoutMs: Int): ContainerHeader {
+        while (true) {
+            val header = readContainerHeader(timeoutMs)
+            if (header.type != CONTAINER_EVENT) return header
+            val payloadLength = header.length - CONTAINER_HEADER_SIZE
+            if (payloadLength > MAX_DATA_CONTAINER_BYTES) {
+                transportFailed.set(true)
+                throw IOException("PTP 事件容器长度异常: $payloadLength")
+            }
+            val payload =
+                if (payloadLength > 0) readExact(payloadLength, timeoutMs) else ByteArray(0)
+            val full = ByteArray(header.raw.size + payload.size)
+            System.arraycopy(header.raw, 0, full, 0, header.raw.size)
+            System.arraycopy(payload, 0, full, header.raw.size, payload.size)
+            log("PTP 事件容器穿插 code=0x${header.code.toString(16)} bytes=${full.size}")
+            onEventBytes(full)
+        }
     }
 
     private fun skipPayload(containerLength: Int, timeoutMs: Int) =
@@ -571,6 +602,9 @@ class UsbPtpSession(
 
         @Volatile
         private var failure: Throwable? = null
+
+        val isAlive: Boolean
+            get() = !isClosed && failure == null
 
         private var interruptTransfer: Transfer? = null
 

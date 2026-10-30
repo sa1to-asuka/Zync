@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zync/engine/transfer/camera_viewed_tracker.dart';
 import 'package:zync/protocol/camera_driver.dart';
 
 void main() {
@@ -70,5 +71,27 @@ void main() {
     expect(restored.pixelWidth, equals(4000));
     expect(restored.pixelHeight, equals(6000));
     expect(restored.isPortrait, isTrue, reason: '宽高必须随列表缓存一起持久化');
+  });
+
+  test('CameraViewedTracker 标记与防重复查看判定', () async {
+    final tracker = CameraViewedTracker.instance;
+    await tracker.clearViewed();
+
+    expect(tracker.isViewed('DSC_0001'), isFalse);
+    expect(tracker.isViewed('dsc_0001'), isFalse);
+
+    await tracker.markViewed('DSC_0001');
+    expect(tracker.isViewed('DSC_0001'), isTrue);
+    expect(tracker.isViewed('dsc_0001'), isTrue, reason: '大小写不敏感');
+    expect(tracker.isViewed('DSC_0002'), isFalse);
+
+    await tracker.markAllViewed(['DSC_0002', 'DSC_0003']);
+    expect(tracker.isViewed('DSC_0002'), isTrue);
+    expect(tracker.isViewed('DSC_0003'), isTrue);
+    expect(tracker.viewedBaseNames.length, equals(3));
+
+    await tracker.clearViewed();
+    expect(tracker.isViewed('DSC_0001'), isFalse);
+    expect(tracker.viewedBaseNames.isEmpty, isTrue);
   });
 }

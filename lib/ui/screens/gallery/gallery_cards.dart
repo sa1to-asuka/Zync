@@ -136,6 +136,7 @@ extension _GalleryCards on GalleryScreenState {
     final l10n = context.l10n;
     return switch (f) {
       _GalleryFilter.all => l10n.galleryFilterAll,
+      _GalleryFilter.unviewed => l10n.galleryFilterNew,
       _GalleryFilter.unsynced => l10n.galleryFilterUnsynced,
       _GalleryFilter.synced => l10n.galleryFilterSynced,
       _GalleryFilter.jpg => 'JPG',
@@ -164,7 +165,10 @@ extension _GalleryCards on GalleryScreenState {
                     padding: const EdgeInsets.only(right: 8),
                     child: InkWell(
                       onTap: () {
-                        _refresh(() => _activeFilter = f);
+                        _refresh(() {
+                          _activeFilter = f;
+                          AppSettings.instance.setGalleryFilter(f.name);
+                        });
                       },
                       borderRadius: BorderRadius.circular(ZRadius.pill),
                       child: Container(
@@ -173,9 +177,7 @@ extension _GalleryCards on GalleryScreenState {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: isSelected
-                              ? zc.accentMuted
-                              : zc.surfaceHigh,
+                          color: isSelected ? zc.accentMuted : zc.surfaceHigh,
                           borderRadius: BorderRadius.circular(ZRadius.pill),
                           border: Border.all(
                             color: isSelected ? zc.accent : zc.outline,
@@ -192,9 +194,8 @@ extension _GalleryCards on GalleryScreenState {
                             Text(
                               label,
                               style: TextStyle(
-                                color: isSelected
-                                    ? zc.accent
-                                    : zc.textSecondary,
+                                color:
+                                    isSelected ? zc.accent : zc.textSecondary,
                                 fontSize: 12,
                                 fontWeight: isSelected
                                     ? FontWeight.bold
@@ -207,6 +208,34 @@ extension _GalleryCards on GalleryScreenState {
                     ),
                   );
                 }).toList(),
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Tooltip(
+            message: context.l10n.galleryMarkAllViewed,
+            child: GestureDetector(
+              onTap: () async {
+                final l10n = context.l10n;
+                await CameraViewedTracker.instance
+                    .markAllViewed(_groups.map((g) => g.baseName));
+                if (mounted) {
+                  showZToast(
+                    this.context,
+                    l10n.galleryMarkAllViewedDone,
+                    tone: ZStatusTone.success,
+                  );
+                }
+              },
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: zc.surfaceHigh,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: zc.outline, width: 0.8),
+                ),
+                child: Icon(Icons.done_all, size: 16, color: zc.textPrimary),
               ),
             ),
           ),
@@ -236,7 +265,8 @@ extension _GalleryCards on GalleryScreenState {
         final wide = constraints.maxWidth >= kAdaptiveRailBreakpoint;
         final selectedCount = _selectedBaseNames.length;
         final totalSizeText = _getSelectedTotalSize();
-        final allSelected = _groups.isNotEmpty && selectedCount == _groups.length;
+        final allSelected =
+            _groups.isNotEmpty && selectedCount == _groups.length;
 
         final summary = Row(
           children: [
@@ -246,7 +276,9 @@ extension _GalleryCards on GalleryScreenState {
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                 icon: Icon(
-                  allSelected ? Icons.deselect_outlined : Icons.select_all_rounded,
+                  allSelected
+                      ? Icons.deselect_outlined
+                      : Icons.select_all_rounded,
                   size: 18,
                   color: zc.accent,
                 ),
@@ -302,8 +334,7 @@ extension _GalleryCards on GalleryScreenState {
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
-                onPressed:
-                    selectedCount > 0 ? _handleCollageFromCamera : null,
+                onPressed: selectedCount > 0 ? _handleCollageFromCamera : null,
                 icon: const Icon(Icons.auto_awesome_mosaic_outlined, size: 14),
                 label: Text(
                   l10n.galleryCollageButton,
@@ -342,7 +373,8 @@ extension _GalleryCards on GalleryScreenState {
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                icon: Icon(Icons.close_rounded, size: 18, color: zc.textSecondary),
+                icon: Icon(Icons.close_rounded,
+                    size: 18, color: zc.textSecondary),
                 tooltip: l10n.commonCancel,
                 onPressed: () {
                   _refresh(() {
@@ -453,7 +485,9 @@ extension _GalleryCards on GalleryScreenState {
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
               icon: Icon(
-                allSelected ? Icons.deselect_outlined : Icons.select_all_rounded,
+                allSelected
+                    ? Icons.deselect_outlined
+                    : Icons.select_all_rounded,
                 size: 18,
                 color: zc.accent,
               ),
@@ -732,7 +766,8 @@ extension _GalleryCards on GalleryScreenState {
           _refresh(() {
             if (isSelected) {
               _selectedLocalFileNames.remove(item.fileName);
-              if (_selectedLocalFileNames.isEmpty) _isLocalSelectionMode = false;
+              if (_selectedLocalFileNames.isEmpty)
+                _isLocalSelectionMode = false;
             } else {
               _selectedLocalFileNames.add(item.fileName);
             }
@@ -919,6 +954,7 @@ extension _GalleryCards on GalleryScreenState {
     CameraMediaGroup group,
     bool isSelected,
     int index,
+    List<CameraMediaGroup> visibleGroups,
   ) {
     final zc = context.zc;
     final l10n = context.l10n;
@@ -927,6 +963,7 @@ extension _GalleryCards on GalleryScreenState {
         group.isRawAndJpeg &&
         (_historyManager.isExported('${group.baseName}.JPG') ||
             _historyManager.isExported('${group.baseName}.NEF'));
+    final isViewed = CameraViewedTracker.instance.isViewed(group.baseName);
 
     return RepaintBoundary(
       child: GestureDetector(
@@ -935,9 +972,11 @@ extension _GalleryCards on GalleryScreenState {
           if (_isSelectionMode) {
             _toggleSelectGroup(group.baseName);
           } else if (group.isVideo) {
+            CameraViewedTracker.instance.markViewed(group.baseName);
             _openVideoEditor(group);
           } else {
-            _openFullScreenPreview(index);
+            // viewer initState 会按初始 group 标记已查看，这里不再提前标记。
+            _openFullScreenPreview(visibleGroups, index);
           }
         },
         onLongPressStart: (_) => _beginDragSelect(index),
@@ -983,6 +1022,31 @@ extension _GalleryCards on GalleryScreenState {
                   ),
                 ),
               ),
+
+              // 右上角新照片提示角标：未多选且未查看未导出时呈现
+              if (!_isSelectionMode && !isViewed && !isExported)
+                Positioned(
+                  top: 5,
+                  right: 5,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: zc.accent,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      l10n.galleryBadgeNew,
+                      style: TextStyle(
+                        color: zc.onAccent,
+                        fontSize: 8.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
 
               // 右上角圆形复选圈：仅多选模式下出现
               if (_isSelectionMode)
@@ -1117,7 +1181,6 @@ extension _GalleryCards on GalleryScreenState {
       },
     );
   }
-
 
   Widget _buildFallbackIcon(CameraFileItem file) {
     final zc = context.zc;

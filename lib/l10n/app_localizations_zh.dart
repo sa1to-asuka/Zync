@@ -526,10 +526,31 @@ class AppLocalizationsZh extends AppLocalizations {
   String get galleryFilterAll => '全部';
 
   @override
+  String get galleryFilterNew => '新照片';
+
+  @override
   String get galleryFilterUnsynced => '未同步';
 
   @override
   String get galleryFilterSynced => '已同步';
+
+  @override
+  String get galleryBadgeNew => '新';
+
+  @override
+  String get galleryBadgeViewed => '已看';
+
+  @override
+  String get galleryMarkAllViewed => '全部标为已看';
+
+  @override
+  String get galleryMarkAllViewedDone => '已全部标为已看';
+
+  @override
+  String get galleryAllViewedTip => '没有未查看的新照片';
+
+  @override
+  String get galleryViewAllPhotos => '查看全部照片';
 
   @override
   String get gallerySlotSelectTitle => '选择卡槽';
@@ -1205,6 +1226,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get videoGlobalGradeTitle => '整体调色';
+
+  @override
+  String get videoMoreParamsTitle => '更多参数';
+
+  @override
+  String get videoUnsavedTitle => '保存修改？';
+
+  @override
+  String get videoUnsavedMessage => '退出后本次剪辑与调色修改将丢失。';
+
+  @override
+  String get videoDiscardChanges => '不保存';
 
   @override
   String get videoGlobalGradeOnSub => '作用于时间线所有片段';
@@ -2551,4 +2584,290 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get wmTabletPureGradeAction => '选择水印版式';
+
+  @override
+  String get navPictureControl => '色彩优化';
+
+  @override
+  String get pcStudioTitle => '色彩优化';
+
+  @override
+  String get pcImportFilesAction => '导入配方';
+
+  @override
+  String get pcBatchWriteAction => '批量写入';
+
+  @override
+  String get pcRestoreBuiltinTooltip => '恢复内置配方';
+
+  @override
+  String pcTabLocalLibrary(Object count) {
+    return '本地配方库 ($count)';
+  }
+
+  @override
+  String get pcTabCameraSlots => '相机槽位 C1–C9';
+
+  @override
+  String get pcStatusDisconnected => '未连接相机 · 可浏览与管理本地 NP3/NCP 配方';
+
+  @override
+  String pcStatusVerified(Object model) {
+    return '$model · 已验证 C1–C9 直写 (0x90CD)';
+  }
+
+  @override
+  String pcStatusExperimental(Object model) {
+    return '$model · 实验性 C1–C9 直写 (0x90CD)';
+  }
+
+  @override
+  String pcStatusUnsupported(Object model) {
+    return '$model · 当前机身未声明 0x90CD 优化校准写入支持';
+  }
+
+  @override
+  String get pcApproxPreviewBadge => '近似效果预览';
+
+  @override
+  String get pcPickCustomSampleAction => '自选样片';
+
+  @override
+  String get pcResetSampleAction => '内置样片';
+
+  @override
+  String get pcFilterAll => '全部';
+
+  @override
+  String get pcCurveTitle => '阶调曲线 (257点 15-bit LUT)';
+
+  @override
+  String get pcCurveLinearHint => '标准线性阶调（无自定义曲线块）';
+
+  @override
+  String get pcParamsTitle => '优化校准参数';
+
+  @override
+  String get pcParamBase => '基底';
+
+  @override
+  String get pcParamSharpening => '锐化';
+
+  @override
+  String get pcParamMidSharpening => '中锐化';
+
+  @override
+  String get pcParamClarity => '清晰度';
+
+  @override
+  String get pcParamContrast => '对比度';
+
+  @override
+  String get pcParamBrightness => '亮度';
+
+  @override
+  String get pcParamSaturation => '饱和度';
+
+  @override
+  String get pcParamHue => '色相';
+
+  @override
+  String get pcParamMonoFilter => '滤镜';
+
+  @override
+  String get pcParamMonoToning => '调色';
+
+  @override
+  String get pcFcSectionTitle => 'Flexible Color (0310) 扩展色阶与色彩混合器';
+
+  @override
+  String get pcFcConvertHint =>
+      'C1–C9 机内直写仅支持标准 NP3 (0300) 与 NCP (0100)。点击右侧可将该云创配方一键拟合转换为标准 NP3 后写入相机。';
+
+  @override
+  String get pcFcConvertButton => '转为标准 NP3';
+
+  @override
+  String pcFcConvertedToast(Object name) {
+    return '已生成标准适配版「$name」，可直接写入相机 C1–C9';
+  }
+
+  @override
+  String get pcWriteToCameraButton => '写入相机 C1–C9';
+
+  @override
+  String get pcWriteDisabledFcTooltip => 'Flexible Color 配方请先转为标准 NP3';
+
+  @override
+  String get pcRenameAction => '重命名';
+
+  @override
+  String get pcShareAction => '分享导出';
+
+  @override
+  String get pcRenameDialogTitle => '重命名配方';
+
+  @override
+  String get pcRenameCameraField => '机内显示名称 (ASCII，最多 19 字符)';
+
+  @override
+  String get pcRenameCameraHelper =>
+      '写入 .NP3/.NCP 内部 0x200 字段，将在尼康相机 C1–C9 菜单中直接显示';
+
+  @override
+  String get pcRenameNoteField => '本地中文备注名称（仅在 Zync 内显示）';
+
+  @override
+  String pcRenameSavedToast(Object name) {
+    return '已更新配方名称：「$name」';
+  }
+
+  @override
+  String get pcDeleteConfirmTitle => '删除本地配方';
+
+  @override
+  String pcDeleteConfirmBody(Object name) {
+    return '确定从本地配方库删除「$name」吗？';
+  }
+
+  @override
+  String pcImportReportToast(
+      Object duplicates, Object imported, Object invalid) {
+    return '成功导入 $imported 款配方（跳过重复 $duplicates，忽略无效 $invalid）';
+  }
+
+  @override
+  String get pcRefreshSlotsTooltip => '刷新相机 C1–C9 槽位';
+
+  @override
+  String get pcSlotEmptyLabel => '空槽位 · 尚未写入自定义优化校准';
+
+  @override
+  String get pcSlotActiveBadge => '当前激活 (0xD200)';
+
+  @override
+  String get pcSlotSetActiveButton => '设为当前激活';
+
+  @override
+  String pcSlotActivatedToast(Object slot) {
+    return '已将相机当前优化校准切换为 $slot';
+  }
+
+  @override
+  String get pcSlotActivateFailedToast => '切换当前优化校准失败，请确认相机处于 P/S/A/M 拍摄档位';
+
+  @override
+  String get pcSlotOverwriteButton => '选择配方写入';
+
+  @override
+  String get pcSlotBackupToLocalButton => '读回备份到手机';
+
+  @override
+  String pcSlotBackupSuccessToast(Object name, Object slot) {
+    return '已将 $slot「$name」读回并保存为本地 .NP3 配方';
+  }
+
+  @override
+  String get pcWriteDialogTitle => '写入相机槽位 C1–C9';
+
+  @override
+  String pcWriteDialogSubtitle(Object name) {
+    return '选择要写入「$name」的相机自定义优化校准槽位（会覆盖所选槽位原有配方）：';
+  }
+
+  @override
+  String get pcWriteSetActiveCheckbox => '写入完成后立即将该槽位设为相机当前激活优化校准 (0xD200)';
+
+  @override
+  String get pcWriteConfirmButton => '写入并校验';
+
+  @override
+  String pcWriteSuccessToast(Object name, Object slot) {
+    return '已写入 $slot（$name），已刷新相机槽位确认';
+  }
+
+  @override
+  String pcWriteFailedToast(Object error) {
+    return '写入失败：$error（请确认相机处于 P/S/A/M 档且未锁屏）';
+  }
+
+  @override
+  String pcWriteVerifyFailedToast(Object slot) {
+    return '未在 $slot 检测到刚写入的配方，请确认相机状态后重试';
+  }
+
+  @override
+  String get pcBatchDialogTitle => '批量分配写入 C1–C9';
+
+  @override
+  String get pcBatchDialogSubtitle =>
+      '为 C1–C9 槽位指派要写入的标准 NP3/NCP 配方，未指派的槽位将保持原样：';
+
+  @override
+  String get pcBatchSlotKeepUnchanged => '保持不变（不写入）';
+
+  @override
+  String pcBatchStartWriteButton(Object count) {
+    return '开始批量写入 ($count)';
+  }
+
+  @override
+  String pcBatchSummaryToast(Object failed, Object success) {
+    return '批量写入完成：成功 $success 个，失败 $failed 个';
+  }
+
+  @override
+  String get pcDisconnectedEmptyTitle => '尚未连接尼康相机';
+
+  @override
+  String get pcDisconnectedEmptySub =>
+      '请先通过 Wi-Fi 热点或 USB OTG 连接相机（置于 P/S/A/M 档），即可直接读取、写入和激活 C1–C9 自定义优化校准槽位。';
+
+  @override
+  String get videoEnterEditor => '进入剪辑';
+
+  @override
+  String get videoPlay => '播放';
+
+  @override
+  String get videoPause => '暂停';
+
+  @override
+  String get videoLoading => '视频加载中…';
+
+  @override
+  String get pcCategoryPortrait => '人像写真';
+
+  @override
+  String get pcCategoryLandscape => '风光自然';
+
+  @override
+  String get pcCategoryStreet => '街拍纪实';
+
+  @override
+  String get pcCategoryFilm => '胶片复古';
+
+  @override
+  String get pcCategoryCinematic => '电影感';
+
+  @override
+  String get pcCategoryAiry => '日系清新';
+
+  @override
+  String get pcCategoryNight => '城市夜景';
+
+  @override
+  String get pcCategoryMono => '经典黑白';
+
+  @override
+  String get pcApproxBadge => '近似还原';
+
+  @override
+  String get pcCompareSplitHint => '左右拖动手柄对比';
+
+  @override
+  String get pcCompareOriginalLabel => '原图';
+
+  @override
+  String get pcCompareEffectLabel => '效果';
 }

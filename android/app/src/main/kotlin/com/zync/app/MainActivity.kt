@@ -11,6 +11,8 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.net.wifi.WifiManager
 import android.media.MediaScannerConnection
+import android.media.MediaMetadataRetriever
+import android.graphics.Bitmap
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Environment
@@ -61,6 +63,12 @@ import androidx.core.content.FileProvider
 /** 相机侧残留 PTP 会话关闭后，重新 OpenSession 前的等待时间。 */
 private const val USB_PTP_FRESH_SESSION_DELAY_MS = 700L
 
+/** 建立 USB PTP 会话的最大尝试次数（含首次）。 */
+private const val USB_PTP_MAX_OPEN_ATTEMPTS = 3
+
+/** 建立会话因传输错误重试前的基准退避时间，按尝试次数线性递增。 */
+private const val USB_PTP_RETRY_DELAY_MS = 250L
+
 private val USB_CAMERA_VENDOR_NAMES = mapOf(
     0x04B0 to "Nikon",
     0x04A9 to "Canon",
@@ -82,10 +90,14 @@ class MainActivity: FlutterActivity() {
     private val TAG = "ZyncNative"
     private val REQUEST_PICK_IMAGE = 1001
     private val REQUEST_PICK_FILE = 1003
+    private val REQUEST_PICK_MULTI_FILES = 1004
     private val REQUEST_NOTIFICATION_PERMISSION = 1002
     private val ACTION_USB_PERMISSION = "com.zync.app.USB_PERMISSION"
     private var pendingPickResult: MethodChannel.Result? = null
     private var pendingPickFileResult: MethodChannel.Result? = null
+    private var pendingPickMultiFilesResult: MethodChannel.Result? = null
+    private val pendingIncomingFilePaths = mutableListOf<String>()
+    private var methodChannel: MethodChannel? = null
 
     private var wifiLock: WifiManager.WifiLock? = null
     private var wakeLock: PowerManager.WakeLock? = null
@@ -291,6 +303,55 @@ class MainActivity: FlutterActivity() {
                         result.error("PICK_FILE_ERROR", e.localizedMessage, null)
                     }
                 }
+                "pickMultipleFiles" -> {
+                    pendingPickMultiFilesResult = result
+                    try {
+                        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                            addCategory(Intent.CATEGORY_OPENABLE)
+                            type = "*/*"
+                            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+                        }
+                        startActivityForResult(intent, REQUEST_PICK_MULTI_FILES)
+                    } catch (e: Exception) {
+                        pendingPickMultiFilesResult = null
+                        result.error("PICK_MULTI_FILE_ERROR", e.localizedMessage, null)
+                    }
+                }
+                "shareFile" -> {
+                    val filePath = call.argument<String>("filePath")
+                    val title = call.argument<String>("title") ?: "Share"
+                    if (filePath.isNullOrBlank()) {
+                        result.success(false)
+                    } else {
+                        try {
+                            val file = File(filePath)
+                            if (!file.exists()) {
+                                result.success(false)
+                            } else {
+                                val uri = FileProvider.getUriForFile(
+                                    this,
+                                    "$packageName.fileprovider",
+                                    file
+                                )
+                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "application/octet-stream"
+                                    putExtra(Intent.EXTRA_STREAM, uri)
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                }
+                                startActivity(Intent.createChooser(shareIntent, title))
+                                result.success(true)
+                            }
+                        } catch (e: Exception) {
+                            result.success(false)
+                        }
+                    }
+                }
+                "consumeIncomingFiles" -> {
+                    captureIntentFiles(intent)
+                    val out = ArrayList(pendingIncomingFilePaths)
+                    pendingIncomingFilePaths.clear()
+                    result.success(out)
+                }
                 "pickImage" -> {
                     if (pendingPickResult != null) {
                         result.error("ALREADY_ACTIVE", "Pick operation in progress", null)
@@ -358,6 +419,16 @@ class MainActivity: FlutterActivity() {
                         } else {
                             mediaTask(result) { saveMediaToPublic(file, fileName ?: file.name) ?: throw java.io.IOException("MediaStore 保存失败") }
                         }
+                    }
+                }
+                "getVideoThumbnail" -> {
+                    val path = call.argument<String>("path")
+                    val width = call.argument<Int>("width") ?: 360
+                    val height = call.argument<Int>("height") ?: 360
+                    if (path.isNullOrBlank()) {
+                        result.error("INVALID_PATH", "Path is empty", null)
+                    } else {
+                        mediaTask(result) { extractVideoThumbnail(path, width, height) }
                     }
                 }
                 "installApk" -> {
@@ -539,9 +610,16 @@ class MainActivity: FlutterActivity() {
             override fun onReceive(context: Context, intent: Intent) {
                 when (intent.action) {
                     ACTION_USB_PERMISSION -> {
-                        val granted = intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)
                         val res = pendingUsbPermissionResult
+                        val deviceName = pendingUsbPermissionDeviceName
                         pendingUsbPermissionResult = null
+                        pendingUsbPermissionDeviceName = null
+                        val fromIntent =
+                            intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)
+                        // 部分 ROM 不回填 EXTRA_PERMISSION_GRANTED，以实际权限为准再判定。
+                        val granted = fromIntent || deviceName?.let { name ->
+                            findUsbDeviceByName(name)?.let { usbManager?.hasPermission(it) }
+                        } == true
                         res?.success(granted)
                     }
                     UsbManager.ACTION_USB_DEVICE_DETACHED -> {
@@ -720,7 +798,12 @@ class MainActivity: FlutterActivity() {
      */
     private fun openUsbSession(deviceName: String?): String {
         if (deviceName.isNullOrBlank()) throw IllegalArgumentException("deviceName 不能为空")
-        usbSessions.keys.firstOrNull { it.endsWith(":$deviceName") }?.let { return it }
+        // 命中缓存时先确认会话仍然可用，避免返回半死会话。
+        usbSessions.entries.firstOrNull { it.key.endsWith(":$deviceName") }?.let { (id, session) ->
+            if (session.isAlive) return id
+            usbSessions.remove(id)
+            runCatching { session.close() }
+        }
         val mgr = usbManager ?: throw IllegalStateException("UsbManager 不可用")
         val device = findUsbDeviceByName(deviceName) ?: throw IllegalStateException("未找到设备: $deviceName")
         if (!mgr.hasPermission(device)) throw IllegalStateException("缺少 USB 权限，请先授权")
@@ -736,48 +819,53 @@ class MainActivity: FlutterActivity() {
 
         val trace = mutableListOf<String>()
         var lastError: Exception? = null
-        // 先释放旧会话，最多尝试 2 次全新会话；
-        // 若相机侧残留会话（0x201E）被关闭，则等待 700ms 后再重开一次。
-        for (attempt in 1..2) {
-            val connection: UsbDeviceConnection = mgr.openDevice(device)
-                ?: throw IllegalStateException("openDevice 失败")
-            val session = UsbPtpSession(
-                device = device,
-                connection = connection,
-                iface = selected.iface,
-                epIn = selected.epIn,
-                epOut = selected.epOut,
-                epEvent = selected.epEvent,
-                onEvent = { bytes -> emitUsbEvent(device.deviceName, bytes) },
-                onLog = { message ->
-                    trace.add(message)
-                    Log.d(TAG, "[USB] $message")
-                },
-            )
+        // 相机冷启动时首次 OpenSession/事件清空可能超时，或残留会话需要先关闭；
+        // 这里对传输类错误做有限次整会话重试（每次重新 openDevice + claim + OpenSession）。
+        for (attempt in 1..USB_PTP_MAX_OPEN_ATTEMPTS) {
+            var session: UsbPtpSession? = null
             try {
-                session.open()
-                if (session.openFreshSession()) {
-                    val id = session.deviceId
-                    usbSessions[id] = session
+                val connection: UsbDeviceConnection = mgr.openDevice(device)
+                    ?: throw IllegalStateException("openDevice 失败")
+                val created = UsbPtpSession(
+                    device = device,
+                    connection = connection,
+                    iface = selected.iface,
+                    epIn = selected.epIn,
+                    epOut = selected.epOut,
+                    epEvent = selected.epEvent,
+                    onEvent = { bytes -> emitUsbEvent(device.deviceName, bytes) },
+                    onLog = { message ->
+                        trace.add(message)
+                        Log.d(TAG, "[USB] $message")
+                    },
+                )
+                session = created
+                created.open()
+                if (created.openFreshSession()) {
+                    val id = created.deviceId
+                    usbSessions[id] = created
                     Log.d(TAG, "[USB] PTP 会话已建立 id=$id attempt=$attempt")
                     return id
                 }
                 Log.d(TAG, "[USB] 相机侧残留 PTP 会话已清理，attempt=$attempt")
-                runCatching { session.close() }
-                if (attempt == 1) Thread.sleep(USB_PTP_FRESH_SESSION_DELAY_MS)
+                created.close()
+                session = null
+                if (attempt < USB_PTP_MAX_OPEN_ATTEMPTS) {
+                    Thread.sleep(USB_PTP_FRESH_SESSION_DELAY_MS)
+                }
             } catch (e: Exception) {
                 lastError = e
-                runCatching { session.close() }
-                val detail = if (trace.isEmpty()) "" else "；步骤: ${trace.joinToString(" | ")}"
-                throw IllegalStateException(
-                    "${e.message ?: e.toString()}$detail；${session.describe()}；${describeUsbDevice(device)}",
-                    e
-                )
+                runCatching { session?.close() }
+                Log.d(TAG, "[USB] 建立会话失败 attempt=$attempt: ${e.message}")
+                if (attempt < USB_PTP_MAX_OPEN_ATTEMPTS) {
+                    Thread.sleep(USB_PTP_RETRY_DELAY_MS * attempt)
+                }
             }
         }
+        val detail = if (trace.isEmpty()) "" else "；步骤: ${trace.joinToString(" | ")}"
         throw IllegalStateException(
-            "USB PTP 会话建立失败（残留会话恢复后仍失败）：${lastError?.message ?: "unknown"}" +
-                "；${describeUsbDevice(device)}",
+            "USB PTP 会话建立失败（已重试 $USB_PTP_MAX_OPEN_ATTEMPTS 次）：" +
+                "${lastError?.message ?: "unknown"}$detail；${describeUsbDevice(device)}",
             lastError
         )
     }
@@ -1393,8 +1481,88 @@ class MainActivity: FlutterActivity() {
         }
     }
 
+    private fun copyUriToCache(uri: Uri, fallbackName: String = "recipe.NP3"): String? {
+        return try {
+            val name = contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                val idx = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                if (idx >= 0 && cursor.moveToFirst()) cursor.getString(idx) else null
+            } ?: uri.lastPathSegment ?: fallbackName
+            val safe = name.replace(Regex("[^A-Za-z0-9._\\u4e00-\\u9fa5-]"), "_")
+            val temp = File(cacheDir, "picked_${System.nanoTime()}_$safe")
+            contentResolver.openInputStream(uri)?.use { input ->
+                FileOutputStream(temp).use { output -> input.copyTo(output) }
+            }
+            if (temp.exists() && temp.length() > 0L) temp.absolutePath else null
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun captureIntentFiles(srcIntent: Intent?) {
+        if (srcIntent == null) return
+        val action = srcIntent.action ?: return
+        val uris = mutableListOf<Uri>()
+        when (action) {
+            Intent.ACTION_VIEW -> {
+                srcIntent.data?.let { uris.add(it) }
+            }
+            Intent.ACTION_SEND -> {
+                @Suppress("DEPRECATION")
+                val streamUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    srcIntent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+                } else {
+                    srcIntent.getParcelableExtra(Intent.EXTRA_STREAM) as? Uri
+                }
+                if (streamUri != null) uris.add(streamUri)
+            }
+            Intent.ACTION_SEND_MULTIPLE -> {
+                @Suppress("DEPRECATION")
+                val list = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    srcIntent.getParcelableArrayListExtra(Intent.EXTRA_STREAM, Uri::class.java)
+                } else {
+                    srcIntent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)
+                }
+                if (list != null) uris.addAll(list)
+            }
+        }
+        for (u in uris) {
+            val path = copyUriToCache(u)
+            if (path != null && !pendingIncomingFilePaths.contains(path)) {
+                pendingIncomingFilePaths.add(path)
+            }
+        }
+        srcIntent.action = null
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        captureIntentFiles(intent)
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_PICK_MULTI_FILES) {
+            val res = pendingPickMultiFilesResult
+            pendingPickMultiFilesResult = null
+            if (resultCode == Activity.RESULT_OK && data != null) {
+                val paths = mutableListOf<String>()
+                val clip = data.clipData
+                if (clip != null) {
+                    for (i in 0 until clip.itemCount) {
+                        val u = clip.getItemAt(i)?.uri ?: continue
+                        copyUriToCache(u)?.let { paths.add(it) }
+                    }
+                } else {
+                    data.data?.let { u ->
+                        copyUriToCache(u)?.let { paths.add(it) }
+                    }
+                }
+                res?.success(paths)
+            } else {
+                res?.success(emptyList<String>())
+            }
+        }
         if (requestCode == REQUEST_PICK_FILE) {
             val res = pendingPickFileResult
             pendingPickFileResult = null
@@ -1649,7 +1817,8 @@ class MainActivity: FlutterActivity() {
         val isRaw = lower.endsWith(".nef") || lower.endsWith(".nrw")
         return when {
             isVideo -> Triple(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, "DCIM/Zync/", mime)
-            isRaw -> Triple(MediaStore.Files.getContentUri("external"), "DCIM/Zync/", mime)
+            // Android 10+ 分区存储：DCIM 仅允许 Images 与 Video 集合，NEF/NRW 属于原生 Raw 图片，归属 MediaStore.Images
+            isRaw -> Triple(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "DCIM/Zync/", mime)
             else -> Triple(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "DCIM/Zync/", mime)
         }
     }
@@ -1678,8 +1847,13 @@ class MainActivity: FlutterActivity() {
                     put(MediaStore.MediaColumns.RELATIVE_PATH, relativePath)
                     put(MediaStore.MediaColumns.IS_PENDING, 1)
                 }
-                val uri = contentResolver.insert(collection, values)
-                    ?: return null
+                var uri = contentResolver.insert(collection, values)
+                if (uri == null && (fileName.lowercase().endsWith(".nef") || fileName.lowercase().endsWith(".nrw"))) {
+                    // 兼容少数对自定义 RAW MIME 过滤严格的 ROM，先尝试以通用 image/* 插入
+                    values.put(MediaStore.MediaColumns.MIME_TYPE, "image/*")
+                    uri = contentResolver.insert(collection, values)
+                }
+                if (uri == null) return null
                 try {
                     contentResolver.openOutputStream(uri)?.use { out ->
                         FileInputStream(srcFile).use { input -> input.copyTo(out) }
@@ -1752,6 +1926,44 @@ class MainActivity: FlutterActivity() {
             }
         } catch (e: Exception) {
             false
+        }
+    }
+
+    /** 提取视频首帧缩略图并缓存为 JPEG 文件，返回缩略图本地文件绝对路径。 */
+    private fun extractVideoThumbnail(videoPath: String, width: Int, height: Int): String? {
+        val thumbDir = File(cacheDir, "video_thumbs")
+        if (!thumbDir.exists()) thumbDir.mkdirs()
+        val hash = (videoPath + "_" + width + "_" + height).hashCode().toString()
+        val target = File(thumbDir, "thumb_$hash.jpg")
+        if (target.exists() && target.length() > 0) return target.absolutePath
+
+        val retriever = MediaMetadataRetriever()
+        return try {
+            if (videoPath.startsWith("content://")) {
+                retriever.setDataSource(applicationContext, Uri.parse(videoPath))
+            } else {
+                retriever.setDataSource(videoPath)
+            }
+            val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+                retriever.getScaledFrameAtTime(
+                    100000L, // 0.1s
+                    MediaMetadataRetriever.OPTION_CLOSEST_SYNC,
+                    width,
+                    height
+                ) ?: retriever.frameAtTime
+            } else {
+                retriever.frameAtTime
+            } ?: return null
+
+            FileOutputStream(target).use { out ->
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 85, out)
+            }
+            target.absolutePath
+        } catch (e: Exception) {
+            Log.w(TAG, "extractVideoThumbnail failed: ${e.message}")
+            null
+        } finally {
+            try { retriever.release() } catch (_: Exception) {}
         }
     }
 

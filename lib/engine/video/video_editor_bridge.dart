@@ -89,6 +89,9 @@ class VideoEditorBridge {
       StreamController<double>.broadcast();
   static bool _handlerInstalled = false;
 
+  /// 最近一次原生视频任务失败的原因（供 UI 显示，成功时清空）。
+  static String? lastError;
+
   static Stream<double> get progressStream => _progressController.stream;
 
   static void _installHandler() {
@@ -161,17 +164,23 @@ class VideoEditorBridge {
   }
 
   static Future<VideoExportResult?> renderPreview(VideoProject project,
-      {String? clipId}) async {
+      {String? clipId, String? sourcePath}) async {
     _installHandler();
+    lastError = null;
     try {
       final map =
           await _channel.invokeMethod<Map<dynamic, dynamic>>('renderPreview', {
         'project': project.toJsonString(),
         'clipId': clipId ?? '',
+        'sourcePath': sourcePath ?? '',
       });
       if (map == null) return null;
       return VideoExportResult.fromMap(map);
-    } catch (_) {
+    } on PlatformException catch (e) {
+      lastError = e.message ?? e.code;
+      return null;
+    } catch (e) {
+      lastError = e.toString();
       return null;
     }
   }

@@ -50,6 +50,11 @@ class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
     super.initState();
     _currentIndex = widget.initialIndex;
     _pageController = PageController(initialPage: widget.initialIndex);
+    if (widget.initialIndex >= 0 &&
+        widget.initialIndex < widget.groups.length) {
+      CameraViewedTracker.instance
+          .markViewed(widget.groups[widget.initialIndex].baseName);
+    }
     _preloadMetaForCurrent();
   }
 
@@ -418,6 +423,10 @@ class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
               onPageChanged: (idx) {
                 setState(() => _currentIndex = idx);
                 _preloadMetaForCurrent();
+                if (idx >= 0 && idx < widget.groups.length) {
+                  CameraViewedTracker.instance
+                      .markViewed(widget.groups[idx].baseName);
+                }
               },
               itemBuilder: (context, index) {
                 final file = widget.groups[index].primaryItem;

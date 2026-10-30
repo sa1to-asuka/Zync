@@ -24,14 +24,21 @@ object GradeLutFactory {
         val whites = base.optDouble("whites", 0.0).toFloat()
         val blacks = base.optDouble("blacks", 0.0).toFloat()
         val vibrance = base.optDouble("vibrance", 0.0).toFloat()
+        val dehaze = base.optDouble("dehaze", 0.0).toFloat()
+        val highlightHue = base.optDouble("highlightHue", 40.0).toFloat()
+        val highlightSat = base.optDouble("highlightSat", 0.0).toFloat()
+        val shadowHue = base.optDouble("shadowHue", 215.0).toFloat()
+        val shadowSat = base.optDouble("shadowSat", 0.0).toFloat()
+        val hasSplitTone = abs(highlightSat) + abs(shadowSat) > 1e-6f
         val curve = parseCurve(grade.optJSONObject("toneCurve"))
         val bands = parseBands(grade.optJSONObject("hsl"))
         val wheels = parseWheels(grade.optJSONObject("colorGrading"))
         val hasCurve = curve.size >= 2 && curve.any { abs(it.first - it.second) > 1e-6f }
         val hasBands = bands.any { abs(it[0]) + abs(it[1]) + abs(it[2]) > 1e-6f }
         val hasWheels = wheels.any { abs(it[0]) + abs(it[1]) + abs(it[2]) > 1e-6f }
-        if (abs(highlights) + abs(shadows) + abs(whites) + abs(blacks) + abs(vibrance) < 1e-6f &&
-            !hasCurve && !hasBands && !hasWheels
+        if (abs(highlights) + abs(shadows) + abs(whites) + abs(blacks) + abs(vibrance) +
+            abs(dehaze) < 1e-6f &&
+            !hasCurve && !hasBands && !hasWheels && !hasSplitTone
         ) {
             return null
         }
@@ -46,7 +53,10 @@ object GradeLutFactory {
                     var red = rf
                     var green = gf
                     var blue = bf
-                    val baseAdjusted = applyBase(red, green, blue, highlights, shadows, whites, blacks, vibrance)
+                    val baseAdjusted = applyBase(
+                        red, green, blue,
+                        highlights, shadows, whites, blacks, vibrance, dehaze,
+                    )
                     red = baseAdjusted[0]
                     green = baseAdjusted[1]
                     blue = baseAdjusted[2]
@@ -54,7 +64,10 @@ object GradeLutFactory {
                     red = curveAdjusted[0]
                     green = curveAdjusted[1]
                     blue = curveAdjusted[2]
-                    val hslAdjusted = applyHslAndWheels(bands, wheels, red, green, blue)
+                    val hslAdjusted = applyHslAndWheels(
+                        bands, wheels, red, green, blue,
+                        highlightHue, highlightSat, shadowHue, shadowSat,
+                    )
                     red = hslAdjusted[0]
                     green = hslAdjusted[1]
                     blue = hslAdjusted[2]
@@ -113,6 +126,7 @@ object GradeLutFactory {
         whites: Float,
         blacks: Float,
         vibrance: Float,
+        dehaze: Float,
     ): FloatArray {
         var r = red
         var g = green
@@ -141,6 +155,18 @@ object GradeLutFactory {
             r = (pixelLuma + (r - pixelLuma) * boost).coerceIn(0f, 1f)
             g = (pixelLuma + (g - pixelLuma) * boost).coerceIn(0f, 1f)
             b = (pixelLuma + (b - pixelLuma) * boost).coerceIn(0f, 1f)
+        }
+        if (abs(dehaze) > 1e-6f) {
+            val amount = dehaze / 100f
+            val pixelLuma = 0.299f * r + 0.587f * g + 0.114f * b
+            val contrast = 1f + amount * 0.35f
+            r = ((r - 0.5f) * contrast + 0.5f).coerceIn(0f, 1f)
+            g = ((g - 0.5f) * contrast + 0.5f).coerceIn(0f, 1f)
+            b = ((b - 0.5f) * contrast + 0.5f).coerceIn(0f, 1f)
+            val satBoost = 1f + amount * 0.18f
+            r = (pixelLuma + (r - pixelLuma) * satBoost).coerceIn(0f, 1f)
+            g = (pixelLuma + (g - pixelLuma) * satBoost).coerceIn(0f, 1f)
+            b = (pixelLuma + (b - pixelLuma) * satBoost).coerceIn(0f, 1f)
         }
         return floatArrayOf(r, g, b)
     }
@@ -173,6 +199,10 @@ object GradeLutFactory {
         red: Float,
         green: Float,
         blue: Float,
+        highlightHue: Float,
+        highlightSat: Float,
+        shadowHue: Float,
+        shadowSat: Float,
     ): FloatArray {
         var r = red
         var g = green
@@ -206,6 +236,19 @@ object GradeLutFactory {
         hue += hueShift
         sat = (sat * (1f + satShift / 100f)).coerceIn(0f, 1f)
         lum = (lum + lumShift / 100f * 0.18f).coerceIn(0f, 1f)
+
+        // 照片面板的高光/阴影分离色调：按亮度权重把色相拉向目标色相并提升饱和度。
+        fun applySplitTone(targetHue: Float, strength: Float, weight: Float) {
+            if (strength <= 1e-3f || weight <= 1e-4f) return
+            val target = ((targetHue % 360f) + 360f) % 360f
+            val delta = ((target - hue + 540f) % 360f) - 180f
+            val amount = (strength / 100f) * weight
+            hue += delta * amount * 0.6f
+            sat = (sat + (1f - sat) * amount * 0.5f).coerceIn(0f, 1f)
+        }
+        applySplitTone(highlightHue, highlightSat, highlightWeight)
+        applySplitTone(shadowHue, shadowSat, shadowWeight)
+
         return hslToRgb(hue, sat, lum)
     }
 

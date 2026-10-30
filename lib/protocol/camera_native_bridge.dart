@@ -292,6 +292,43 @@ class CameraNativeBridge {
     }
   }
 
+  /// 打开系统文件选择器一次多选多个文件（.NP3 / .NCP / .ZIP 等），返回本地缓存路径列表。
+  static Future<List<String>> pickMultipleFiles() async {
+    try {
+      final res =
+          await _channel.invokeMethod<List<dynamic>>('pickMultipleFiles');
+      if (res == null) return const [];
+      return res.whereType<String>().where((p) => p.isNotEmpty).toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// 调用系统分享面板分享本地文件（如导出的 .NP3 配方文件）。
+  static Future<bool> shareFile(String filePath, {String title = 'NP3'}) async {
+    try {
+      final ok = await _channel.invokeMethod<bool>(
+        'shareFile',
+        <String, dynamic>{'filePath': filePath, 'title': title},
+      );
+      return ok ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// 提取从外部应用（「用其他应用打开」或「分享到 Zync」）传入的待导入文件缓存路径列表。
+  static Future<List<String>> consumeIncomingFiles() async {
+    try {
+      final res =
+          await _channel.invokeMethod<List<dynamic>>('consumeIncomingFiles');
+      if (res == null) return const [];
+      return res.whereType<String>().where((p) => p.isNotEmpty).toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
   /// 从手机本地相册选择一张图片，返回该图片的本地缓存路径
   static Future<String?> pickImageFromGallery() async {
     try {
@@ -321,6 +358,24 @@ class CameraNativeBridge {
       final res = await _channel.invokeMethod<String>('saveMediaToGallery', {
         'srcPath': srcPath,
         'fileName': fileName,
+      });
+      return res;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// 获取视频首帧缩略图本地文件路径
+  static Future<String?> getVideoThumbnail(
+    String path, {
+    int width = 360,
+    int height = 360,
+  }) async {
+    try {
+      final res = await _channel.invokeMethod<String>('getVideoThumbnail', {
+        'path': path,
+        'width': width,
+        'height': height,
       });
       return res;
     } catch (_) {

@@ -175,6 +175,17 @@ extension _GalleryModals on GalleryScreenState {
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       if (Navigator.canPop(dialogCtx)) {
                         Navigator.pop(dialogCtx);
+                        if (completedInBatch > 0) {
+                          final completedNames = dm.tasks
+                              .where(
+                                (t) =>
+                                    fileHandles.contains(t.fileItem.handle) &&
+                                    t.status == DownloadTaskStatus.completed,
+                              )
+                              .map((t) => t.fileItem.fileName.split('.').first);
+                          CameraViewedTracker.instance
+                              .markAllViewed(completedNames);
+                        }
                         if (onCompleted != null) onCompleted(completedInBatch);
                         if (this.context.mounted) {
                           showZToast(

@@ -15,7 +15,7 @@ void main() {
     final nav = tester.widget<BottomNavigationBar>(
       find.byType(BottomNavigationBar),
     );
-    expect(nav.items.length, equals(4));
+    expect(nav.items.length, equals(5));
     expect(find.text('监看取景'), findsNothing);
     expect(find.byType(NavigationRail), findsNothing);
   });

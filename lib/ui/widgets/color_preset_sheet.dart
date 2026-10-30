@@ -143,8 +143,10 @@ class _ColorPresetSheetState extends State<ColorPresetSheet> {
       _userPresets = presets;
       _category = _kMineCategory;
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.presetSavedToast)),
+    showZToast(
+      context,
+      l10n.presetSavedToast,
+      tone: ZStatusTone.success,
     );
   }
 
@@ -162,13 +164,17 @@ class _ColorPresetSheetState extends State<ColorPresetSheet> {
         _userPresets = presets;
         _category = _kMineCategory;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.presetImportedToast(presets.length))),
+      showZToast(
+        context,
+        l10n.presetImportedToast(presets.length),
+        tone: ZStatusTone.success,
       );
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.presetImportFailedToast)),
+      showZToast(
+        context,
+        l10n.presetImportFailedToast,
+        isError: true,
       );
     }
   }
@@ -180,12 +186,11 @@ class _ColorPresetSheetState extends State<ColorPresetSheet> {
     final path = await CameraNativeBridge.writeTextFile(text,
         fileName: 'zync_presets_$stamp.json');
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          path == null ? l10n.presetExportFailedToast : l10n.presetExportedToast,
-        ),
-      ),
+    showZToast(
+      context,
+      path == null ? l10n.presetExportFailedToast : l10n.presetExportedToast,
+      isError: path == null,
+      tone: path == null ? null : ZStatusTone.success,
     );
   }
 
@@ -338,11 +343,13 @@ class _ColorPresetSheetState extends State<ColorPresetSheet> {
                           ),
                           title: Text(
                             preset.trName,
-                            style: TextStyle(fontSize: 13, color: zc.textPrimary),
+                            style:
+                                TextStyle(fontSize: 13, color: zc.textPrimary),
                           ),
                           subtitle: Text(
                             preset.trDescription,
-                            style: TextStyle(fontSize: 10, color: zc.textSecondary),
+                            style: TextStyle(
+                                fontSize: 10, color: zc.textSecondary),
                           ),
                           trailing: IconButton(
                             tooltip: l10n.presetApplyAction,
@@ -378,11 +385,13 @@ class _ColorPresetSheetState extends State<ColorPresetSheet> {
                           ),
                           title: Text(
                             preset.name,
-                            style: TextStyle(fontSize: 13, color: zc.textPrimary),
+                            style:
+                                TextStyle(fontSize: 13, color: zc.textPrimary),
                           ),
                           subtitle: Text(
                             preset.summary,
-                            style: TextStyle(fontSize: 10, color: zc.textSecondary),
+                            style: TextStyle(
+                                fontSize: 10, color: zc.textSecondary),
                           ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -418,7 +427,8 @@ class _ColorPresetSheetState extends State<ColorPresetSheet> {
                         padding: const EdgeInsets.symmetric(vertical: 20),
                         child: Text(
                           l10n.presetEmptyMatch,
-                          style: TextStyle(fontSize: 12, color: zc.textSecondary),
+                          style:
+                              TextStyle(fontSize: 12, color: zc.textSecondary),
                         ),
                       ),
                   ],

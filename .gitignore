@@ -35,3 +35,8 @@ key.properties
 
 # 本地生成的协议测试向量（不提交/不分发）
 test_vectors/
+
+# Local scripts & tokens
+scripts/
+*.token
+.env*

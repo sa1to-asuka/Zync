@@ -122,12 +122,10 @@ class _CollageScreenState extends State<CollageScreen> {
       }
       if (mounted) {
         final l10n = context.l10n;
-        final zc = context.zc;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.collageInsufficientPhotos),
-            backgroundColor: zc.danger,
-          ),
+        showZToast(
+          context,
+          l10n.collageInsufficientPhotos,
+          isError: true,
         );
         Navigator.of(context).pop();
       }
@@ -165,11 +163,10 @@ class _CollageScreenState extends State<CollageScreen> {
 
     if (skipped.isNotEmpty && mounted) {
       final l10n = context.l10n;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l10n.collageSkippedUnreadableToast(skipped.length)),
-          duration: const Duration(seconds: 2),
-        ),
+      showZToast(
+        context,
+        l10n.collageSkippedUnreadableToast(skipped.length),
+        duration: const Duration(seconds: 2),
       );
     }
     _rebuildPreview();
@@ -312,13 +309,11 @@ class _CollageScreenState extends State<CollageScreen> {
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       if (mounted) {
-        final zc = context.zc;
         final l10n = context.l10n;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.wmExportFailedToast(e.toString())),
-            backgroundColor: zc.danger,
-          ),
+        showZToast(
+          context,
+          l10n.wmExportFailedToast(e.toString()),
+          isError: true,
         );
       }
     } finally {
@@ -532,13 +527,13 @@ class _CollageScreenState extends State<CollageScreen> {
                     cardColorOverride:
                         AppSettings.instance.watermarkCardColorValue == null
                             ? null
-                            : ZSwatch.fromArgb32(AppSettings
-                                .instance.watermarkCardColorValue!),
+                            : ZSwatch.fromArgb32(
+                                AppSettings.instance.watermarkCardColorValue!),
                     textColorOverride:
                         AppSettings.instance.watermarkTextColorValue == null
                             ? null
-                            : ZSwatch.fromArgb32(AppSettings
-                                .instance.watermarkTextColorValue!),
+                            : ZSwatch.fromArgb32(
+                                AppSettings.instance.watermarkTextColorValue!),
                     titleTextScale:
                         AppSettings.instance.watermarkTitleTextScale,
                     metaTextScale: AppSettings.instance.watermarkMetaTextScale,
@@ -546,8 +541,8 @@ class _CollageScreenState extends State<CollageScreen> {
                         AppSettings.instance.watermarkLetterSpacingScale,
                     lineSpacingScale:
                         AppSettings.instance.watermarkLineSpacingScale,
-                    fontWeight: WatermarkFontWeight.values[
-                        AppSettings.instance.watermarkFontWeightIndex],
+                    fontWeight: WatermarkFontWeight
+                        .values[AppSettings.instance.watermarkFontWeightIndex],
                     borderThicknessScale:
                         AppSettings.instance.watermarkBorderThicknessScale,
                     accentColor: ZSwatch.fromArgb32(
@@ -742,11 +737,10 @@ class _CollageScreenState extends State<CollageScreen> {
                 ),
                 TextButton.icon(
                   onPressed: _resetTransforms,
-                  icon:
-                      Icon(Icons.restart_alt, size: 15, color: zc.textSecondary),
+                  icon: Icon(Icons.restart_alt,
+                      size: 15, color: zc.textSecondary),
                   label: Text(l10n.commonReset,
-                      style:
-                          TextStyle(color: zc.textSecondary, fontSize: 12)),
+                      style: TextStyle(color: zc.textSecondary, fontSize: 12)),
                   style: TextButton.styleFrom(
                     visualDensity: VisualDensity.compact,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -1057,9 +1051,8 @@ class _CollageScreenState extends State<CollageScreen> {
       visualDensity: VisualDensity.compact,
       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       backgroundColor: WidgetStateProperty.resolveWith(
-        (states) => states.contains(WidgetState.selected)
-            ? zc.accent
-            : zc.surfaceMid,
+        (states) =>
+            states.contains(WidgetState.selected) ? zc.accent : zc.surfaceMid,
       ),
       foregroundColor: WidgetStateProperty.resolveWith(
         (states) => states.contains(WidgetState.selected)

@@ -19,6 +19,17 @@ void main() {
       expect(AppSettings.instance.cameraPort, equals(15740));
       expect(AppSettings.instance.themeMode, equals(AppThemeMode.system));
       expect(AppSettings.instance.confirmDelete, isTrue);
+      expect(AppSettings.instance.galleryFilter, equals('unviewed'));
+    });
+
+    test('相册筛选记忆切换', () {
+      AppSettings.instance.setGalleryFilter('all');
+      expect(AppSettings.instance.galleryFilter, equals('all'));
+      AppSettings.instance.setGalleryFilter('synced');
+      expect(AppSettings.instance.galleryFilter, equals('synced'));
+      AppSettings.instance.setGalleryFilter('   ');
+      expect(AppSettings.instance.galleryFilter, equals('synced'),
+          reason: '空白值被安全忽略');
     });
 
     test('删除确认开关可切换', () {

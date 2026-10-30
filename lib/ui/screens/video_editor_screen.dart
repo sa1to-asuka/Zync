@@ -16,6 +16,7 @@ import '../../protocol/camera_native_bridge.dart';
 import '../design/design.dart';
 import '../widgets/adaptive_layout.dart';
 import '../widgets/color_preset_sheet.dart';
+import '../widgets/grade_thumbnail.dart';
 import '../widgets/video_frame_strip.dart';
 import '../widgets/video_scope_view.dart';
 import '../widgets/video_timeline.dart';
@@ -46,12 +47,18 @@ class _VideoEditorScreenState extends State<VideoEditorScreen> {
   bool _buildingGradedPreview = false;
   bool _showingGradedPreview = false;
   String? _gradedPlayerPath;
+  String? _proxyPath;
+  GradeSample? _frameSample;
+  String? _frameSampleKey;
+  VideoProject? _initialProject;
+  bool _hadSavedProject = false;
+  bool _allowPop = false;
+  bool _exitDialogOpen = false;
   StreamSubscription<double>? _progressSubscription;
   final List<VideoProject> _undoStack = [];
   final List<VideoProject> _redoStack = [];
   VideoProject? _gestureSnapshot;
   Completer<void>? _proxySkipCompleter;
-  Timer? _saveDebounce;
   VideoFrameStrip? _frameStrip;
   bool _frameStripLoading = false;
   ColorGrade? _gradeClipboard;
@@ -116,6 +123,8 @@ class _VideoEditorScreenState extends State<VideoEditorScreen> {
               ],
             );
       _proxySkipCompleter = Completer<void>();
+      _initialProject = project;
+      _hadSavedProject = savedUsable;
       final proxyFuture = VideoEditorBridge.createProxy(
         widget.path,
         targetHeight: info.height >= 2160 ? 1080 : 720,
@@ -127,6 +136,7 @@ class _VideoEditorScreenState extends State<VideoEditorScreen> {
       _proxySkipCompleter = null;
       final playbackPath =
           proxy?.path.isNotEmpty == true ? proxy!.path : widget.path;
+      _proxyPath = playbackPath;
       final player = VideoPlayerController.file(File(playbackPath));
       await player.initialize();
       await player.setLooping(true);
@@ -156,12 +166,6 @@ class _VideoEditorScreenState extends State<VideoEditorScreen> {
 
   @override
   void dispose() {
-    _saveDebounce?.cancel();
-    final project = _project;
-    if (project != null) {
-      unawaited(VideoProjectStore.save(widget.path, project));
-      unawaited(_loadFrameStrip());
-    }
     _basePlayer?.dispose();
     if (!identical(_gradedPlayer, _basePlayer)) {
       _gradedPlayer?.dispose();
@@ -237,23 +241,15 @@ class _VideoEditorScreenState extends State<VideoEditorScreen> {
   }
 
   void _updateProject(VideoProject next, {bool affectsPreview = true}) {
-    setState(() {
-      _project =
-          next.copyWith(modifiedAtMs: DateTime.now().millisecondsSinceEpoch);
-      if (affectsPreview && _gradedPlayer != null) {
-        _gradedPreviewStale = true;
-      }
-    });
-    final project = _project;
-    if (project != null) _scheduleProjectSave(project);
-  }
-
-  void _scheduleProjectSave(VideoProject project) {
-    _saveDebounce?.cancel();
-    _saveDebounce = Timer(const Duration(milliseconds: 450), () {
-      unawaited(VideoProjectStore.save(widget.path, project));
-      unawaited(_loadFrameStrip());
-    });
+    if (mounted) {
+      setState(() {
+        _project =
+            next.copyWith(modifiedAtMs: DateTime.now().millisecondsSinceEpoch);
+        if (affectsPreview && _gradedPlayer != null) {
+          _gradedPreviewStale = true;
+        }
+      });
+    }
   }
 
   void _updateClip(VideoClip next) {
@@ -303,8 +299,10 @@ class _VideoEditorScreenState extends State<VideoEditorScreen> {
     final info = await VideoEditorBridge.importAsset(path);
     if (!mounted) return;
     if (info == null || info.durationUs <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.videoUnsupportedCodec)),
+      showZToast(
+        context,
+        context.l10n.videoUnsupportedCodec,
+        isError: true,
       );
       return;
     }
@@ -362,19 +360,40 @@ class _VideoEditorScreenState extends State<VideoEditorScreen> {
         ),
       ),
     );
-    final result =
-        await VideoEditorBridge.renderPreview(project, clipId: _clip?.id);
+    final result = await VideoEditorBridge.renderPreview(
+      project,
+      clipId: _clip?.id,
+      sourcePath: _proxyPath,
+    );
     if (mounted) Navigator.of(context, rootNavigator: true).pop();
     if (!mounted) return;
     if (result == null || result.path.isEmpty) {
       setState(() => _buildingGradedPreview = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.videoProxyFailedToast)),
+      final detail = VideoEditorBridge.lastError;
+      showZToast(
+        context,
+        detail == null || detail.isEmpty
+            ? l10n.videoProxyFailedToast
+            : '${l10n.videoProxyFailedToast}\n$detail',
+        isError: true,
       );
       return;
     }
     final graded = VideoPlayerController.file(File(result.path));
-    await graded.initialize();
+    try {
+      await graded.initialize();
+    } catch (e) {
+      graded.dispose();
+      if (mounted) {
+        setState(() => _buildingGradedPreview = false);
+        showZToast(
+          context,
+          '${l10n.videoProxyFailedToast}\n$e',
+          isError: true,
+        );
+      }
+      return;
+    }
     await graded.setLooping(true);
     if (!mounted) {
       graded.dispose();
@@ -389,8 +408,10 @@ class _VideoEditorScreenState extends State<VideoEditorScreen> {
       _gradedPreviewStale = false;
       _buildingGradedPreview = false;
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.videoProxyReadyToast)),
+    showZToast(
+      context,
+      l10n.videoProxyReadyToast,
+      tone: ZStatusTone.success,
     );
   }
 
@@ -423,24 +444,28 @@ class _VideoEditorScreenState extends State<VideoEditorScreen> {
     if (!mounted) return;
     if (result == null) {
       setState(() => _exporting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.videoExportFailedToast)),
+      showZToast(
+        context,
+        l10n.videoExportFailedToast,
+        isError: true,
       );
       return;
     }
     final name = 'Zync_${DateTime.now().millisecondsSinceEpoch}.mp4';
     unawaited(VideoProjectStore.save(widget.path, project));
+    _initialProject = project;
+    _hadSavedProject = true;
     final uri = await CameraNativeBridge.saveMediaToGallery(result.path, name);
     if (!mounted) return;
     setState(() => _exporting = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          uri == null || uri.isEmpty
-              ? l10n.videoExportSaveAlbumFailedToast
-              : l10n.videoExportSuccessToast,
-        ),
-      ),
+    final saveFailed = uri == null || uri.isEmpty;
+    showZToast(
+      context,
+      saveFailed
+          ? l10n.videoExportSaveAlbumFailedToast
+          : l10n.videoExportSuccessToast,
+      isError: saveFailed,
+      tone: saveFailed ? null : ZStatusTone.success,
     );
   }
 
@@ -449,80 +474,141 @@ class _VideoEditorScreenState extends State<VideoEditorScreen> {
     final zc = context.zc;
     final l10n = context.l10n;
     if (_fullscreenPreview) return _buildFullscreenPreview();
-    return Scaffold(
-      backgroundColor: zc.bg,
-      appBar: AppBar(
-        backgroundColor: zc.surface,
-        title:
-            Text(widget.fileName, maxLines: 1, overflow: TextOverflow.ellipsis),
-        actions: [
-          IconButton(
-            tooltip: l10n.commonUndo,
-            onPressed: _undoStack.isEmpty ? null : _undo,
-            icon: const Icon(Icons.undo),
-          ),
-          IconButton(
-            tooltip: l10n.commonRedo,
-            onPressed: _redoStack.isEmpty ? null : _redo,
-            icon: const Icon(Icons.redo),
-          ),
-          if (isAdaptiveWide(context)) ...[
+    return PopScope(
+      canPop: _allowPop,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop || _allowPop) return;
+        _handleBack();
+      },
+      child: Scaffold(
+        backgroundColor: zc.bg,
+        appBar: AppBar(
+          backgroundColor: zc.surface,
+          title: Text(widget.fileName,
+              maxLines: 1, overflow: TextOverflow.ellipsis),
+          actions: [
             IconButton(
-              tooltip: l10n.videoGeneratePreviewTooltip,
-              onPressed: _loading || _buildingGradedPreview
-                  ? null
-                  : _buildGradedPreview,
-              icon: _buildingGradedPreview
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.auto_awesome_outlined),
+              tooltip: l10n.commonUndo,
+              onPressed: _undoStack.isEmpty ? null : _undo,
+              icon: const Icon(Icons.undo),
             ),
             IconButton(
-              tooltip: l10n.commonExport,
-              onPressed: _loading || _exporting ? null : _export,
-              icon: _exporting
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.file_upload_outlined),
+              tooltip: l10n.commonRedo,
+              onPressed: _redoStack.isEmpty ? null : _redo,
+              icon: const Icon(Icons.redo),
             ),
-          ] else
-            PopupMenuButton<String>(
-              tooltip: l10n.commonMore,
-              onSelected: (value) {
-                if (value == 'preview') _buildGradedPreview();
-                if (value == 'export') _export();
-              },
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: 'preview',
-                  enabled: !_loading && !_buildingGradedPreview,
-                  child: Text(l10n.videoRefreshGeneratePreview),
-                ),
-                PopupMenuItem(
-                  value: 'export',
-                  enabled: !_loading && !_exporting,
-                  child: Text(l10n.videoExportVideoAction),
-                ),
-              ],
-            ),
-        ],
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding:
-              EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-          child: _loading
-              ? _buildLoading(l10n)
-              : _error != null
-                  ? _buildError(zc)
-                  : _buildEditorBody(),
+            if (isAdaptiveWide(context)) ...[
+              IconButton(
+                tooltip: l10n.videoGeneratePreviewTooltip,
+                onPressed: _loading || _buildingGradedPreview
+                    ? null
+                    : _buildGradedPreview,
+                icon: _buildingGradedPreview
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.auto_awesome_outlined),
+              ),
+              IconButton(
+                tooltip: l10n.commonExport,
+                onPressed: _loading || _exporting ? null : _export,
+                icon: _exporting
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.file_upload_outlined),
+              ),
+            ] else
+              PopupMenuButton<String>(
+                tooltip: l10n.commonMore,
+                onSelected: (value) {
+                  if (value == 'preview') _buildGradedPreview();
+                  if (value == 'export') _export();
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'preview',
+                    enabled: !_loading && !_buildingGradedPreview,
+                    child: Text(l10n.videoRefreshGeneratePreview),
+                  ),
+                  PopupMenuItem(
+                    value: 'export',
+                    enabled: !_loading && !_exporting,
+                    child: Text(l10n.videoExportVideoAction),
+                  ),
+                ],
+              ),
+          ],
+        ),
+        body: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+                bottom: MediaQuery.viewInsetsOf(context).bottom),
+            child: _loading
+                ? _buildLoading(l10n)
+                : _error != null
+                    ? _buildError(zc)
+                    : _buildEditorBody(),
+          ),
         ),
       ),
     );
+  }
+
+  /// 退出前确认是否保存本次剪辑/调色修改。
+  Future<void> _handleBack() async {
+    if (_exitDialogOpen) return;
+    final project = _project;
+    final initial = _initialProject;
+    if (project == null ||
+        initial == null ||
+        project.toJsonString() == initial.toJsonString()) {
+      _allowPop = true;
+      if (mounted) Navigator.of(context).pop();
+      return;
+    }
+
+    _exitDialogOpen = true;
+    final l10n = context.l10n;
+    final action = await showZDialog<String>(
+      context: context,
+      builder: (ctx) => ZDialog(
+        title: l10n.videoUnsavedTitle,
+        message: l10n.videoUnsavedMessage,
+        actions: [
+          ZButton(
+            label: l10n.commonCancel,
+            variant: ZButtonVariant.ghost,
+            onTap: () => Navigator.pop(ctx, 'cancel'),
+          ),
+          ZButton(
+            label: l10n.videoDiscardChanges,
+            variant: ZButtonVariant.danger,
+            onTap: () => Navigator.pop(ctx, 'discard'),
+          ),
+          ZButton(
+            label: l10n.commonSave,
+            onTap: () => Navigator.pop(ctx, 'save'),
+          ),
+        ],
+      ),
+    );
+    _exitDialogOpen = false;
+    if (!mounted || action == null || action == 'cancel') return;
+
+    if (action == 'save') {
+      await VideoProjectStore.save(widget.path, project);
+    } else if (action == 'discard') {
+      if (_hadSavedProject) {
+        await VideoProjectStore.save(widget.path, initial);
+      } else {
+        await VideoProjectStore.clear(widget.path);
+      }
+    }
+    _allowPop = true;
+    if (mounted) Navigator.of(context).pop();
   }
 
   Widget _buildFullscreenPreview() {
@@ -843,9 +929,7 @@ class _VideoEditorScreenState extends State<VideoEditorScreen> {
                     decoration: BoxDecoration(
                       border: Border(
                         bottom: BorderSide(
-                          color: _tab == i
-                              ? zc.accent
-                              : ZSwatch.transparent,
+                          color: _tab == i ? zc.accent : ZSwatch.transparent,
                           width: 2,
                         ),
                       ),
@@ -863,7 +947,8 @@ class _VideoEditorScreenState extends State<VideoEditorScreen> {
                           labels[i],
                           style: TextStyle(
                             fontSize: 11,
-                            color: _tab == i ? zc.textPrimary : zc.textSecondary,
+                            color:
+                                _tab == i ? zc.textPrimary : zc.textSecondary,
                             fontWeight:
                                 _tab == i ? FontWeight.bold : FontWeight.normal,
                           ),
@@ -1065,6 +1150,47 @@ class _VideoEditorScreenState extends State<VideoEditorScreen> {
     );
   }
 
+  /// 用当前播放帧给预设面板做缩略图采样；失败时传 null，面板显示占位图。
+  Future<GradeSample?> _sampleCurrentFrame() async {
+    final path =
+        _showingGradedPreview ? _gradedPlayerPath : (_proxyPath ?? widget.path);
+    if (path == null || path.isEmpty) return null;
+    final position = _player?.value.position ?? Duration.zero;
+    final key = '$path|${position.inSeconds}';
+    if (_frameSampleKey == key) return _frameSample;
+    try {
+      final bytes = await VideoEditorBridge.captureFrame(
+        path,
+        timeUs: position.inMicroseconds,
+        maxEdge: 96,
+      );
+      final sample =
+          bytes == null ? null : await sampleGradePixelsFromJpeg(bytes);
+      _frameSampleKey = key;
+      _frameSample = sample;
+      return sample;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _openPresetSheet(ColorGrade grade, bool isGlobal) async {
+    final sample = await _sampleCurrentFrame();
+    if (!mounted) return;
+    await ColorPresetSheet.show(
+      context,
+      grade: grade,
+      isGlobal: isGlobal,
+      sampledR: sample?.r,
+      sampledG: sample?.g,
+      sampledB: sample?.b,
+      onApply: (applied) {
+        _snapshotProject();
+        _updateCurrentGrade(applied);
+      },
+    );
+  }
+
   Widget _buildColorPanel() {
     final clip = _clip;
     final project = _project;
@@ -1081,7 +1207,9 @@ class _VideoEditorScreenState extends State<VideoEditorScreen> {
             contentPadding: EdgeInsets.zero,
             title: Text(l10n.videoGlobalGradeTitle),
             subtitle: Text(
-              isGlobal ? l10n.videoGlobalGradeOnSub : l10n.videoGlobalGradeOffSub,
+              isGlobal
+                  ? l10n.videoGlobalGradeOnSub
+                  : l10n.videoGlobalGradeOffSub,
             ),
             value: isGlobal,
             onChanged: (value) => setState(() => _editingGlobalGrade = value),
@@ -1157,6 +1285,53 @@ class _VideoEditorScreenState extends State<VideoEditorScreen> {
               100,
               (v) => _updateCurrentGrade(
                   grade.copyWith(base: base.copyWith(vibrance: v)))),
+          ExpansionTile(
+            tilePadding: EdgeInsets.zero,
+            childrenPadding: const EdgeInsets.only(bottom: 6),
+            title: Text(
+              l10n.videoMoreParamsTitle,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+            ),
+            children: [
+              _slider(
+                  l10n.adjTexture,
+                  base.texture,
+                  -100,
+                  100,
+                  (v) => _updateCurrentGrade(
+                      grade.copyWith(base: base.copyWith(texture: v)))),
+              _slider(
+                  l10n.adjClarity,
+                  base.clarity,
+                  -100,
+                  100,
+                  (v) => _updateCurrentGrade(
+                      grade.copyWith(base: base.copyWith(clarity: v)))),
+              _slider(
+                  l10n.adjDehaze,
+                  base.dehaze,
+                  -100,
+                  100,
+                  (v) => _updateCurrentGrade(
+                      grade.copyWith(base: base.copyWith(dehaze: v)))),
+              _slider(
+                  l10n.adjLensVignette,
+                  base.vignette,
+                  -100,
+                  100,
+                  (v) => _updateCurrentGrade(
+                      grade.copyWith(base: base.copyWith(vignette: v)))),
+              _slider(
+                  l10n.adjFilmGrain,
+                  base.grain,
+                  0,
+                  100,
+                  (v) => _updateCurrentGrade(
+                      grade.copyWith(base: base.copyWith(grain: v)))),
+              _slider(l10n.adjSharpening, grade.sharpening, 0, 100,
+                  (v) => _updateCurrentGrade(grade.copyWith(sharpening: v))),
+            ],
+          ),
           ExpansionTile(
             tilePadding: EdgeInsets.zero,
             childrenPadding: const EdgeInsets.only(bottom: 6),
@@ -1269,15 +1444,7 @@ class _VideoEditorScreenState extends State<VideoEditorScreen> {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () => ColorPresetSheet.show(
-                context,
-                grade: grade,
-                isGlobal: isGlobal,
-                onApply: (applied) {
-                  _snapshotProject();
-                  _updateCurrentGrade(applied);
-                },
-              ),
+              onPressed: () => _openPresetSheet(grade, isGlobal),
               icon: const Icon(Icons.bookmark_add_outlined, size: 16),
               label: Text(
                 l10n.videoPresetEntryTitle,
@@ -1292,14 +1459,12 @@ class _VideoEditorScreenState extends State<VideoEditorScreen> {
                 child: OutlinedButton.icon(
                   onPressed: () {
                     _gradeClipboard = grade;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          isGlobal
-                              ? l10n.videoCopiedGlobalGradeToast
-                              : l10n.videoCopiedClipGradeToast,
-                        ),
-                      ),
+                    showZToast(
+                      context,
+                      isGlobal
+                          ? l10n.videoCopiedGlobalGradeToast
+                          : l10n.videoCopiedClipGradeToast,
+                      tone: ZStatusTone.success,
                     );
                   },
                   icon: const Icon(Icons.copy, size: 15),
@@ -1361,10 +1526,11 @@ class _VideoEditorScreenState extends State<VideoEditorScreen> {
             alignment: Alignment.centerLeft,
             child: Text(
               isGlobal
-                  ? l10n.videoGlobalGradeStatusChip(
-                      grade.isDefault ? l10n.commonDefault : l10n.videoStatusEnabled)
-                  : l10n.videoKeyframeCountChip(
-                      clip.keyframes.fold<int>(0, (sum, e) => sum + e.keys.length)),
+                  ? l10n.videoGlobalGradeStatusChip(grade.isDefault
+                      ? l10n.commonDefault
+                      : l10n.videoStatusEnabled)
+                  : l10n.videoKeyframeCountChip(clip.keyframes
+                      .fold<int>(0, (sum, e) => sum + e.keys.length)),
               style: const TextStyle(fontSize: 11),
             ),
           ),
@@ -1383,23 +1549,11 @@ class _VideoEditorScreenState extends State<VideoEditorScreen> {
           label,
           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
         ),
-        _slider(
-            l10n.videoWheelHue(label),
-            wheel.hue,
-            -180,
-            180,
+        _slider(l10n.videoWheelHue(label), wheel.hue, -180, 180,
             (v) => _updateCurrentGrade(update(wheel.copyWith(hue: v)))),
-        _slider(
-            l10n.videoWheelSaturation(label),
-            wheel.saturation,
-            -100,
-            100,
+        _slider(l10n.videoWheelSaturation(label), wheel.saturation, -100, 100,
             (v) => _updateCurrentGrade(update(wheel.copyWith(saturation: v)))),
-        _slider(
-            l10n.videoWheelLuma(label),
-            wheel.luminance,
-            -100,
-            100,
+        _slider(l10n.videoWheelLuma(label), wheel.luminance, -100, 100,
             (v) => _updateCurrentGrade(update(wheel.copyWith(luminance: v)))),
       ],
     );
@@ -1645,9 +1799,7 @@ class _VideoEditorScreenState extends State<VideoEditorScreen> {
         color: isHdrSource ? zc.warning.withAlpha(28) : zc.surface,
         borderRadius: BorderRadius.circular(ZRadius.sm),
         border: Border.all(
-          color: isHdrSource
-              ? zc.warning.withAlpha(120)
-              : ZSwatch.transparent,
+          color: isHdrSource ? zc.warning.withAlpha(120) : ZSwatch.transparent,
           width: ZStroke.hairline,
         ),
       ),
@@ -1664,8 +1816,8 @@ class _VideoEditorScreenState extends State<VideoEditorScreen> {
               const SizedBox(width: 6),
               Text(
                 l10n.videoSourceColorLabel(label),
-                style: const TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
               ),
               const Spacer(),
               Text(

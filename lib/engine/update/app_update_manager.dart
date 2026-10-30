@@ -39,8 +39,7 @@ class AppReleaseInfo {
     final tag = (json['tag_name'] as String? ?? '').trim();
     final cleanVer = tag.replaceFirst(RegExp(r'^[vV]'), '');
     final name = (json['name'] as String? ?? 'v$cleanVer').trim();
-    final body =
-        (json['body'] as String? ?? L10n.tr('修复已知问题，优化使用体验。')).trim();
+    final body = (json['body'] as String? ?? L10n.tr('修复已知问题，优化使用体验。')).trim();
 
     String apkUrl = '';
     int? size;
@@ -79,8 +78,8 @@ class AppReleaseInfo {
 class AppUpdateManager {
   AppUpdateManager._();
 
-  static String currentVersion = '2.1.0';
-  static int currentVersionCode = 3;
+  static String currentVersion = '2.2.0';
+  static int currentVersionCode = 4;
 
   static const String githubApiUrl =
       'https://api.github.com/repos/sa1to-asuka/Zync/releases/latest';
@@ -457,8 +456,8 @@ class AppUpdateManager {
           ),
           content: Text(
             message,
-            style: TextStyle(
-                color: zc.textSecondary, fontSize: 14, height: 1.5),
+            style:
+                TextStyle(color: zc.textSecondary, fontSize: 14, height: 1.5),
           ),
           actions: [
             if (showBrowserButton && webUrl != null)
@@ -616,16 +615,15 @@ class _AppUpdateDialogState extends State<AppUpdateDialog> {
     if (!success && mounted) {
       final zc = context.zc;
       final l10n = context.l10n;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l10n.updateInstallerFailedToast),
-          backgroundColor: zc.danger,
-          action: SnackBarAction(
-            label: l10n.updateBrowserDownload,
-            textColor: zc.textPrimary,
-            onPressed: () => CameraNativeBridge.openUrlInBrowser(
-                widget.releaseInfo.downloadUrl),
-          ),
+      showZToast(
+        context,
+        l10n.updateInstallerFailedToast,
+        isError: true,
+        action: SnackBarAction(
+          label: l10n.updateBrowserDownload,
+          textColor: zc.textPrimary,
+          onPressed: () => CameraNativeBridge.openUrlInBrowser(
+              widget.releaseInfo.downloadUrl),
         ),
       );
     }
@@ -634,18 +632,14 @@ class _AppUpdateDialogState extends State<AppUpdateDialog> {
   void _skipThisVersion() async {
     await AppUpdateManager.setSkippedVersion(widget.releaseInfo.versionName);
     if (!mounted) return;
-    final zc = context.zc;
     final l10n = context.l10n;
-    Navigator.of(context).pop();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(l10n.updateSkippedVersionToast(
-          widget.releaseInfo.versionName,
-        )),
-        backgroundColor: zc.surfaceMid,
-        duration: const Duration(seconds: 2),
-      ),
+    // 先展示轻提示再关闭对话框，避免在失活的 context 上查找 ScaffoldMessenger。
+    showZToast(
+      context,
+      l10n.updateSkippedVersionToast(widget.releaseInfo.versionName),
+      duration: const Duration(seconds: 2),
     );
+    Navigator.of(context).pop();
   }
 
   @override
@@ -837,8 +831,7 @@ class _AppUpdateDialogState extends State<AppUpdateDialog> {
                       Text(
                         l10n.updatePackageSizeLabel(
                             AppUpdateManager.formatBytes(info.fileSize!)),
-                        style: TextStyle(
-                            color: zc.textSecondary, fontSize: 12),
+                        style: TextStyle(color: zc.textSecondary, fontSize: 12),
                       ),
                     ],
                   ],
@@ -914,8 +907,8 @@ class _AppUpdateDialogState extends State<AppUpdateDialog> {
                                     horizontal: 4, vertical: 2),
                                 child: Text(
                                   l10n.commonCancel,
-                                  style: TextStyle(
-                                      color: zc.danger, fontSize: 12),
+                                  style:
+                                      TextStyle(color: zc.danger, fontSize: 12),
                                 ),
                               ),
                             ),

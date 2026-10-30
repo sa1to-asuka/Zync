@@ -545,10 +545,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get galleryFilterAll => 'All';
 
   @override
+  String get galleryFilterNew => 'New';
+
+  @override
   String get galleryFilterUnsynced => 'Unsynced';
 
   @override
   String get galleryFilterSynced => 'Synced';
+
+  @override
+  String get galleryBadgeNew => 'NEW';
+
+  @override
+  String get galleryBadgeViewed => 'Viewed';
+
+  @override
+  String get galleryMarkAllViewed => 'Mark All Viewed';
+
+  @override
+  String get galleryMarkAllViewedDone => 'All marked as viewed';
+
+  @override
+  String get galleryAllViewedTip => 'No unviewed new photos';
+
+  @override
+  String get galleryViewAllPhotos => 'View All Photos';
 
   @override
   String get gallerySlotSelectTitle => 'Select Card Slot';
@@ -1257,6 +1278,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get videoGlobalGradeTitle => 'Global Grade';
+
+  @override
+  String get videoMoreParamsTitle => 'More adjustments';
+
+  @override
+  String get videoUnsavedTitle => 'Save changes?';
+
+  @override
+  String get videoUnsavedMessage =>
+      'Your trim and grade changes will be lost if you leave without saving.';
+
+  @override
+  String get videoDiscardChanges => 'Don\'t save';
 
   @override
   String get videoGlobalGradeOnSub => 'Applied across all timeline clips';
@@ -2649,4 +2683,296 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get wmTabletPureGradeAction => 'Choose Template';
+
+  @override
+  String get navPictureControl => 'Color Recipes';
+
+  @override
+  String get pcStudioTitle => 'Picture Control';
+
+  @override
+  String get pcImportFilesAction => 'Import NP3/ZIP';
+
+  @override
+  String get pcBatchWriteAction => 'Batch Write';
+
+  @override
+  String get pcRestoreBuiltinTooltip => 'Restore Built-in Recipes';
+
+  @override
+  String pcTabLocalLibrary(Object count) {
+    return 'Local Library ($count)';
+  }
+
+  @override
+  String get pcTabCameraSlots => 'Camera Slots C1–C9';
+
+  @override
+  String get pcStatusDisconnected =>
+      'Camera disconnected · Browse & manage local NP3/NCP recipes';
+
+  @override
+  String pcStatusVerified(Object model) {
+    return '$model · Verified C1–C9 Direct Write (0x90CD)';
+  }
+
+  @override
+  String pcStatusExperimental(Object model) {
+    return '$model · Experimental C1–C9 Direct Write (0x90CD)';
+  }
+
+  @override
+  String pcStatusUnsupported(Object model) {
+    return '$model · Camera does not advertise 0x90CD write support';
+  }
+
+  @override
+  String get pcApproxPreviewBadge => 'Approximate Preview';
+
+  @override
+  String get pcPickCustomSampleAction => 'Custom Photo';
+
+  @override
+  String get pcResetSampleAction => 'Built-in Samples';
+
+  @override
+  String get pcFilterAll => 'All';
+
+  @override
+  String get pcCurveTitle => 'Tone Curve (257-pt 15-bit LUT)';
+
+  @override
+  String get pcCurveLinearHint =>
+      'Standard linear tone response (no custom curve block)';
+
+  @override
+  String get pcParamsTitle => 'Picture Control Parameters';
+
+  @override
+  String get pcParamBase => 'Base';
+
+  @override
+  String get pcParamSharpening => 'Sharpening';
+
+  @override
+  String get pcParamMidSharpening => 'Mid-Range Sharp';
+
+  @override
+  String get pcParamClarity => 'Clarity';
+
+  @override
+  String get pcParamContrast => 'Contrast';
+
+  @override
+  String get pcParamBrightness => 'Brightness';
+
+  @override
+  String get pcParamSaturation => 'Saturation';
+
+  @override
+  String get pcParamHue => 'Hue';
+
+  @override
+  String get pcParamMonoFilter => 'Filter';
+
+  @override
+  String get pcParamMonoToning => 'Toning';
+
+  @override
+  String get pcFcSectionTitle => 'Flexible Color (0310) Tone & Color Blender';
+
+  @override
+  String get pcFcConvertHint =>
+      'Direct C1–C9 write requires Standard NP3 (0300) or NCP (0100). Convert this Flexible Color recipe to a Standard NP3 to write to camera.';
+
+  @override
+  String get pcFcConvertButton => 'Convert to Std NP3';
+
+  @override
+  String pcFcConvertedToast(Object name) {
+    return 'Created Standard NP3 \"$name\" ready for C1–C9 write';
+  }
+
+  @override
+  String get pcWriteToCameraButton => 'Write to Camera C1–C9';
+
+  @override
+  String get pcWriteDisabledFcTooltip =>
+      'Convert Flexible Color recipe to Standard NP3 first';
+
+  @override
+  String get pcRenameAction => 'Rename';
+
+  @override
+  String get pcShareAction => 'Share / Export';
+
+  @override
+  String get pcRenameDialogTitle => 'Rename Recipe';
+
+  @override
+  String get pcRenameCameraField => 'In-Camera Name (ASCII, max 19 chars)';
+
+  @override
+  String get pcRenameCameraHelper =>
+      'Stored in binary tag 0x200 and displayed on camera C1–C9 menus';
+
+  @override
+  String get pcRenameNoteField => 'Local Display Note (shown in Zync only)';
+
+  @override
+  String pcRenameSavedToast(Object name) {
+    return 'Renamed recipe to \"$name\"';
+  }
+
+  @override
+  String get pcDeleteConfirmTitle => 'Delete Local Recipe';
+
+  @override
+  String pcDeleteConfirmBody(Object name) {
+    return 'Delete \"$name\" from your local library?';
+  }
+
+  @override
+  String pcImportReportToast(
+      Object duplicates, Object imported, Object invalid) {
+    return 'Imported $imported recipes ($duplicates duplicates skipped, $invalid invalid)';
+  }
+
+  @override
+  String get pcRefreshSlotsTooltip => 'Refresh Camera C1–C9 Slots';
+
+  @override
+  String get pcSlotEmptyLabel =>
+      'Empty Slot · No custom Picture Control stored';
+
+  @override
+  String get pcSlotActiveBadge => 'Active (0xD200)';
+
+  @override
+  String get pcSlotSetActiveButton => 'Set Active';
+
+  @override
+  String pcSlotActivatedToast(Object slot) {
+    return 'Switched active Picture Control to $slot';
+  }
+
+  @override
+  String get pcSlotActivateFailedToast =>
+      'Failed to switch active slot; ensure camera is in P/S/A/M mode';
+
+  @override
+  String get pcSlotOverwriteButton => 'Write Recipe';
+
+  @override
+  String get pcSlotBackupToLocalButton => 'Backup to Phone';
+
+  @override
+  String pcSlotBackupSuccessToast(Object name, Object slot) {
+    return 'Backed up $slot \"$name\" to local .NP3 library';
+  }
+
+  @override
+  String get pcWriteDialogTitle => 'Write to Camera Slot C1–C9';
+
+  @override
+  String pcWriteDialogSubtitle(Object name) {
+    return 'Choose target custom Picture Control slot for \"$name\" (overwrites selected slot):';
+  }
+
+  @override
+  String get pcWriteSetActiveCheckbox =>
+      'Set as active Picture Control (0xD200) immediately after writing';
+
+  @override
+  String get pcWriteConfirmButton => 'Write & Verify';
+
+  @override
+  String pcWriteSuccessToast(Object name, Object slot) {
+    return 'Wrote $slot ($name); camera slots refreshed to confirm';
+  }
+
+  @override
+  String pcWriteFailedToast(Object error) {
+    return 'Write failed: $error (Ensure camera is in P/S/A/M mode)';
+  }
+
+  @override
+  String pcWriteVerifyFailedToast(Object slot) {
+    return 'Could not find the recipe in $slot after writing. Check the camera state and try again.';
+  }
+
+  @override
+  String get pcBatchDialogTitle => 'Batch Write to C1–C9';
+
+  @override
+  String get pcBatchDialogSubtitle =>
+      'Assign Standard NP3/NCP recipes to slots C1–C9 (unassigned slots remain unchanged):';
+
+  @override
+  String get pcBatchSlotKeepUnchanged => 'Keep unchanged (skip)';
+
+  @override
+  String pcBatchStartWriteButton(Object count) {
+    return 'Start Batch Write ($count)';
+  }
+
+  @override
+  String pcBatchSummaryToast(Object failed, Object success) {
+    return 'Batch write complete: $success succeeded, $failed failed';
+  }
+
+  @override
+  String get pcDisconnectedEmptyTitle => 'Camera Not Connected';
+
+  @override
+  String get pcDisconnectedEmptySub =>
+      'Connect your Nikon camera via Wi-Fi or USB OTG (in P/S/A/M mode) to read, write, and activate custom Picture Control slots C1–C9.';
+
+  @override
+  String get videoEnterEditor => 'Edit Video';
+
+  @override
+  String get videoPlay => 'Play';
+
+  @override
+  String get videoPause => 'Pause';
+
+  @override
+  String get videoLoading => 'Loading video...';
+
+  @override
+  String get pcCategoryPortrait => 'Portrait';
+
+  @override
+  String get pcCategoryLandscape => 'Landscape';
+
+  @override
+  String get pcCategoryStreet => 'Street';
+
+  @override
+  String get pcCategoryFilm => 'Film';
+
+  @override
+  String get pcCategoryCinematic => 'Cinematic';
+
+  @override
+  String get pcCategoryAiry => 'Airy Pastel';
+
+  @override
+  String get pcCategoryNight => 'Night';
+
+  @override
+  String get pcCategoryMono => 'Monochrome';
+
+  @override
+  String get pcApproxBadge => 'Approx Fit';
+
+  @override
+  String get pcCompareSplitHint => 'Drag divider to compare';
+
+  @override
+  String get pcCompareOriginalLabel => 'Original';
+
+  @override
+  String get pcCompareEffectLabel => 'Effect';
 }

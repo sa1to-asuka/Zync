@@ -11,6 +11,65 @@ import '../../engine/filter/lut_engine.dart';
 import '../../engine/filter/photo_filter.dart';
 import '../design/design.dart';
 
+/// 预设缩略图用的固定采样：严格 48×48，避免非方图导致 `_inferSide` 失败。
+class GradeSample {
+  final List<int> r;
+  final List<int> g;
+  final List<int> b;
+
+  const GradeSample(this.r, this.g, this.b);
+}
+
+const int kGradeSampleSide = 48;
+
+/// 从解码后的图片采样为固定 48×48 的 RGB 列表。
+Future<GradeSample?> sampleGradePixelsFromImage(ui.Image image) async {
+  try {
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+    if (byteData == null) return null;
+    final raw = byteData.buffer.asUint8List();
+    final width = image.width;
+    final height = image.height;
+    if (width <= 0 || height <= 0) return null;
+    final r = <int>[];
+    final g = <int>[];
+    final b = <int>[];
+    for (var y = 0; y < kGradeSampleSide; y++) {
+      final sy = (y * height ~/ kGradeSampleSide).clamp(0, height - 1);
+      for (var x = 0; x < kGradeSampleSide; x++) {
+        final sx = (x * width ~/ kGradeSampleSide).clamp(0, width - 1);
+        final idx = (sy * width + sx) * 4;
+        if (idx + 2 >= raw.length) continue;
+        r.add(raw[idx]);
+        g.add(raw[idx + 1]);
+        b.add(raw[idx + 2]);
+      }
+    }
+    if (r.length != kGradeSampleSide * kGradeSampleSide) return null;
+    return GradeSample(r, g, b);
+  } catch (_) {
+    return null;
+  }
+}
+
+/// 从 JPEG 字节解码并采样。
+Future<GradeSample?> sampleGradePixelsFromJpeg(Uint8List jpeg) async {
+  if (jpeg.isEmpty) return null;
+  ui.Codec? codec;
+  ui.Image? image;
+  try {
+    codec = await ui.instantiateImageCodec(jpeg);
+    final frame = await codec.getNextFrame();
+    image = frame.image;
+    return await sampleGradePixelsFromImage(image);
+  } catch (_) {
+    return null;
+  } finally {
+    image?.dispose();
+    codec?.dispose();
+  }
+}
+
 /// 预设缩略图渲染器。
 ///
 /// 复用照片加载时已采集的 48x48 采样像素与现有调色矩阵，
@@ -424,6 +483,7 @@ class GradeThumbnail extends StatefulWidget {
 class _GradeThumbnailState extends State<GradeThumbnail> {
   ui.Image? _image;
   int _renderToken = 0;
+  bool _settled = false;
 
   @override
   void initState() {
@@ -442,6 +502,7 @@ class _GradeThumbnailState extends State<GradeThumbnail> {
 
   Future<void> _render() async {
     final token = ++_renderToken;
+    if (mounted) setState(() => _settled = false);
     final image = await GradeThumbnailCache.render(
       widget.sampledR,
       widget.sampledG,
@@ -449,7 +510,10 @@ class _GradeThumbnailState extends State<GradeThumbnail> {
       widget.grade,
     );
     if (!mounted || token != _renderToken) return;
-    setState(() => _image = image);
+    setState(() {
+      _image = image;
+      _settled = true;
+    });
   }
 
   @override
@@ -463,19 +527,27 @@ class _GradeThumbnailState extends State<GradeThumbnail> {
         borderRadius: BorderRadius.circular(6),
         color: zc.surfaceHighest,
       ),
-      child: _image == null
-          ? const Center(
-              child: SizedBox(
-                width: 14,
-                height: 14,
-                child: CircularProgressIndicator(strokeWidth: 1.6),
-              ),
-            )
-          : RawImage(
+      child: _image != null
+          ? RawImage(
               image: _image!,
               fit: BoxFit.cover,
               filterQuality: FilterQuality.low,
-            ),
+            )
+          : _settled
+              ? Center(
+                  child: Icon(
+                    Icons.gradient_rounded,
+                    size: widget.size * 0.5,
+                    color: zc.textTertiary,
+                  ),
+                )
+              : const Center(
+                  child: SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 1.6),
+                  ),
+                ),
     );
   }
 }

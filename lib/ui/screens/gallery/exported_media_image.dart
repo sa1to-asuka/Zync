@@ -22,6 +22,7 @@ class ExportedMediaImage extends StatefulWidget {
 class _ExportedMediaImageState extends State<ExportedMediaImage> {
   late Future<File> _file;
   Future<Uint8List?>? _rawPreview;
+  Future<File?>? _videoThumb;
 
   Future<File> _load() async {
     final file = await ExportHistoryManager().ensureLocalFile(widget.item);
@@ -41,9 +42,30 @@ class _ExportedMediaImageState extends State<ExportedMediaImage> {
     }
   }
 
+  /// 视频文件提取首帧作为缩略图。
+  Future<File?> _loadVideoThumb() async {
+    try {
+      final file = await _file;
+      final targetPath = (widget.item.mediaUri?.isNotEmpty ?? false)
+          ? widget.item.mediaUri!
+          : file.path;
+      final thumbPath = await CameraNativeBridge.getVideoThumbnail(
+        targetPath,
+        width: widget.cacheWidth ?? 360,
+        height: widget.cacheWidth ?? 360,
+      );
+      if (thumbPath != null && thumbPath.isNotEmpty) {
+        final f = File(thumbPath);
+        if (f.existsSync()) return f;
+      }
+    } catch (_) {}
+    return null;
+  }
+
   void _reset() {
     _file = _load();
     _rawPreview = widget.item.isRaw ? _loadRawPreview() : null;
+    _videoThumb = widget.item.isVideo ? _loadVideoThumb() : null;
   }
 
   @override
@@ -68,6 +90,51 @@ class _ExportedMediaImageState extends State<ExportedMediaImage> {
 
   @override
   Widget build(BuildContext context) {
+    final zc = context.zc;
+
+    if (widget.item.isVideo) {
+      return FutureBuilder<File?>(
+        future: _videoThumb,
+        builder: (context, snapshot) {
+          final thumbFile = snapshot.data;
+          final base = (thumbFile != null && thumbFile.existsSync())
+              ? Image.file(
+                  thumbFile,
+                  fit: widget.fit,
+                  cacheWidth: widget.cacheWidth,
+                  errorBuilder: widget.errorBuilder,
+                )
+              : _placeholder(context);
+
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              base,
+              Center(
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: zc.scrim.withAlpha(140),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: zc.outline.withAlpha(120),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.play_arrow_rounded,
+                    color: zc.onAccent,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+    }
+
     if (widget.item.isRaw) {
       return FutureBuilder<Uint8List?>(
         future: _rawPreview,

@@ -33,6 +33,11 @@ class PtpOpCodes {
   // 2. Nikon 厂商专属私有操作码 (0x9000 - 0x94FF)
   // ==========================================
   static const int nikonGetLargeThumb = 0x90C4; // 37060 获取大尺寸预览缩略图 (640x480)
+  static const int nikonDeviceReady = 0x90C8; // 37064 设备就绪探测
+  static const int nikonGetPicCtrlData = 0x90CC; // 37068 读取优化校准数据 [profileId, mode]
+  static const int nikonSetPicCtrlData = 0x90CD; // 37069 写入自定义优化校准数据 [slotProfileId, 0]
+  static const int nikonDeleteCustomPicCtrl = 0x90CE; // 37070 删除自定义优化校准 [slotProfileId]
+  static const int nikonGetPicCtrlCapability = 0x90CF; // 37071 查询优化校准能力 [profileId]
   static const int nikonChangeAfArea = 0x9205; // 37381 修改对焦区域坐标
   static const int nikonCaptureToCard = 0x9207; // 37383 拍照并存入机身卡
   static const int nikonStartMovieRecInCard = 0x920A; // 37386 启动机内录像
@@ -47,6 +52,12 @@ class PtpOpCodes {
   static const int nikonChangeAppMode = 0x9435; // 37941 切换应用控制模式
   static const int nikonGetDevicePropDescEx = 0x943A; // 37946 扩展属性描述查询
   static const int nikonGetDevicePropValueEx = 0x943B; // 37947 扩展属性值查询
+
+  // ==========================================
+  // 2b. Nikon 优化校准专属设备属性 (Device Properties)
+  // ==========================================
+  static const int nikonPropActivePicCtrlItem = 0xD200; // 当前激活的优化校准项 (1..8, 101..120, 201..209)
+  static const int nikonPropChangePicCtrlItem = 0xD201; // 优化校准变更通知项
 
   // ==========================================
   // 3. PTP/IP 协议包类型编号 (PacketType)
@@ -76,4 +87,5 @@ class PtpOpCodes {
   static const int responseDeviceBusy = 0x2019; // 相机正忙
   static const int responseSessionAlreadyOpen = 0x201E; // 会话已开启 (可复用)
   static const int responseStoreFull = 0x200C; // 存储卡已满
+  static const int responseAccessDenied = 0x200F; // 拒绝访问/写入 (如相机未处于 P/S/A/M 档)
 }

@@ -159,7 +159,8 @@ class WatermarkScreenState extends State<WatermarkScreen>
     _tabController.addListener(_onTabChanged);
 
     if (widget.initialImageBytes != null) {
-      loadImageBytes(widget.initialImageBytes!, widget.initialMetadata);
+      loadImageBytes(widget.initialImageBytes!,
+          metadata: widget.initialMetadata);
     }
   }
 
@@ -234,9 +235,12 @@ class WatermarkScreenState extends State<WatermarkScreen>
   }
 
   Future<void> loadImageBytes(
-    Uint8List bytes, [
+    Uint8List bytes, {
     PhotoMetadata? metadata,
-  ]) async {
+    String? rawPath,
+  }) async {
+    // 每次载入图片都原子地重置 RAW 源路径，避免用上一张 NEF 导出新图。
+    _rawSourcePath = rawPath;
     _editController.reset();
     setState(() => _isLoadingImage = true);
     GradeThumbnailCache.clear();
@@ -296,36 +300,11 @@ class WatermarkScreenState extends State<WatermarkScreen>
               );
       }
 
-      List<int>? rList;
-      List<int>? gList;
-      List<int>? bList;
-      try {
-        final byteData =
-            await decoded.toByteData(format: ui.ImageByteFormat.rawRgba);
-        if (byteData != null) {
-          final w = decoded.width;
-          final h = decoded.height;
-          final stepX = math.max(1, w ~/ 48);
-          final stepY = math.max(1, h ~/ 48);
-          final rBuf = <int>[];
-          final gBuf = <int>[];
-          final bBuf = <int>[];
-          final raw = byteData.buffer.asUint8List();
-          for (int y = 0; y < h; y += stepY) {
-            for (int x = 0; x < w; x += stepX) {
-              final idx = (y * w + x) * 4;
-              if (idx + 2 < raw.length) {
-                rBuf.add(raw[idx]);
-                gBuf.add(raw[idx + 1]);
-                bBuf.add(raw[idx + 2]);
-              }
-            }
-          }
-          rList = rBuf;
-          gList = gBuf;
-          bList = bBuf;
-        }
-      } catch (_) {}
+      // 固定 48×48 采样，供预设缩略图渲染（非方图也不会失效）。
+      final sample = await sampleGradePixelsFromImage(decoded);
+      final rList = sample?.r;
+      final gList = sample?.g;
+      final bList = sample?.b;
 
       if (!mounted) return;
       setState(() {
@@ -405,8 +384,11 @@ class WatermarkScreenState extends State<WatermarkScreen>
           jpegQuality: AppSettings.instance.exportQuality,
         );
         if (raw.bytes.isEmpty) {
+          final detail = raw.error.isNotEmpty ? '：${raw.error}' : '';
           throw StateError(
-            mounted ? context.l10n.wmRawFullDecodeFailed : 'RAW decode failed',
+            mounted
+                ? '${context.l10n.wmRawFullDecodeFailed}$detail'
+                : 'RAW decode failed$detail',
           );
         }
         bytes = raw.bytes;
@@ -517,47 +499,53 @@ class WatermarkScreenState extends State<WatermarkScreen>
     return Scaffold(
       backgroundColor: zc.bg,
       appBar: AppBar(
-        titleSpacing: 0,
-        title: _decodedImage == null
-            ? Text(l10n.wmStudioTitle)
-            : InkWell(
-                onTap: _showMetadataEditSheet,
-                borderRadius: BorderRadius.circular(ZRadius.pill),
-                child: Container(
-                  margin: const EdgeInsets.only(left: 8),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: zc.surface,
-                    borderRadius: BorderRadius.circular(ZRadius.pill),
-                    border: Border.all(color: zc.outline),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.camera_alt_outlined,
-                          size: 14, color: zc.accent),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          '${_metadata.titleText} · ${_metadata.exposureSummary}',
-                          style: TextStyle(
-                            color: zc.textPrimary,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: 'monospace',
+        title: Row(
+          children: [
+            Text(l10n.wmStudioTitle),
+            if (_decodedImage != null) ...[
+              const SizedBox(width: ZSpace.sm),
+              Flexible(
+                child: InkWell(
+                  onTap: _showMetadataEditSheet,
+                  borderRadius: BorderRadius.circular(ZRadius.pill),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: zc.surface,
+                      borderRadius: BorderRadius.circular(ZRadius.pill),
+                      border: Border.all(color: zc.outline),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.camera_alt_outlined,
+                            size: 14, color: zc.accent),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            '${_metadata.titleText} · ${_metadata.exposureSummary}',
+                            style: TextStyle(
+                              color: zc.textPrimary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'monospace',
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(Icons.edit_outlined,
-                          size: 12, color: zc.textTertiary),
-                    ],
+                        const SizedBox(width: 4),
+                        Icon(Icons.edit_outlined,
+                            size: 12, color: zc.textTertiary),
+                      ],
+                    ),
                   ),
                 ),
               ),
+            ],
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.add_photo_alternate_outlined),
@@ -789,8 +777,8 @@ class WatermarkScreenState extends State<WatermarkScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             InkWell(
-                              onTap: () => setState(() =>
-                                  _showHistogramHud = !_showHistogramHud),
+                              onTap: () => setState(
+                                  () => _showHistogramHud = !_showHistogramHud),
                               borderRadius: BorderRadius.circular(16),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
@@ -1518,8 +1506,7 @@ class WatermarkScreenState extends State<WatermarkScreen>
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                     child: GridView.builder(
                       physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate:
-                          SliverGridDelegateWithFixedCrossAxisCount(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: cols,
                         crossAxisSpacing: spacing,
                         mainAxisSpacing: spacing,
@@ -1689,8 +1676,7 @@ class WatermarkScreenState extends State<WatermarkScreen>
               onTap: () => onToggle(false),
               borderRadius: BorderRadius.circular(ZRadius.pill),
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: !isPaged ? zc.accent : ZSwatch.transparent,
                   borderRadius: BorderRadius.circular(ZRadius.pill),
@@ -1709,8 +1695,7 @@ class WatermarkScreenState extends State<WatermarkScreen>
               onTap: () => onToggle(true),
               borderRadius: BorderRadius.circular(ZRadius.pill),
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: isPaged ? zc.accent : ZSwatch.transparent,
                   borderRadius: BorderRadius.circular(ZRadius.pill),
@@ -1742,8 +1727,8 @@ class WatermarkScreenState extends State<WatermarkScreen>
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         color: zc.surface,
-        border: Border(
-            top: BorderSide(color: zc.outline, width: ZStroke.hairline)),
+        border:
+            Border(top: BorderSide(color: zc.outline, width: ZStroke.hairline)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
