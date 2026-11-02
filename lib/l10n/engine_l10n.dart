@@ -194,6 +194,14 @@ abstract final class EngineL10n {
       en: 'Inspired by Copicseal · Classic glowing orange quartz film date stamp · Bottom-left minimal model & GPS',
       ja: 'Copicseal 着想・クラシックな暖色発光フィルム日付スタンプ・左下に機材名とGPS座標',
     ),
+    '胶片齿孔 · 卷式边框': (
+      en: 'Film Sprocket · Negative Strip',
+      ja: 'フィルムパーフォレーション・ネガストリップ',
+    ),
+    '35mm 卷式负片外观 · 上下齿孔与片边编码 · 自动使用当前底片名与拍摄日期': (
+      en: '35mm negative strip look · Top/bottom sprocket holes & edge codes · Uses the selected film stock and capture date',
+      ja: '35mmネガストリップ調・上下パーフォレーションとエッジコード・選択フィルム名と撮影日を自動表示',
+    ),
     '地理坐标 · 经纬度展签': (
       en: 'Geo Coordinates · Lat/Lon Editorial',
       ja: '地理座標・緯度経度プレート',
@@ -215,7 +223,8 @@ abstract final class EngineL10n {
       en: 'Shooting Coordinates & BLE Location Sync',
       ja: '撮影緯度経度パラメータと BLE 位置情報同期',
     ),
-    '基于 furble / nsg 协议构造 41 字节 WGS-84 定位负载 (0x2007)，支持写入尼康相机 BLE 定位特征并自动注入照片 EXIF 与水印。': (
+    '基于 furble / nsg 协议构造 41 字节 WGS-84 定位负载 (0x2007)，支持写入尼康相机 BLE 定位特征并自动注入照片 EXIF 与水印。':
+        (
       en: 'Builds 41-byte WGS-84 location payload (0x2007) per furble / nsg protocol for Nikon BLE LSS and EXIF/watermark.',
       ja: 'furble / nsg プロトコルに基づき 41 バイト WGS-84 位置ペイロード (0x2007) を生成し、ニコン BLE および EXIF・透かしに反映します。',
     ),
@@ -393,6 +402,76 @@ abstract final class EngineL10n {
     '经典精选': (en: 'Curated Looks', ja: '厳選ルック'),
     '原片与精选': (en: 'Original & Curated', ja: 'オリジナル＆厳選'),
 
+    // ==================== Spektrafilm 底片与印相纸 ====================
+    '柔和肤色与细腻高光的经典负片，宽容度极高，适合人像与日常': (
+      en: 'Classic negative stock with soft skin tones and delicate highlights, extremely forgiving for portraits and daily life',
+      ja: '柔らかな肌色と繊細なハイライトを持つ定番ネガ。ラチチュードが広く、ポートレートや日常に最適',
+    ),
+    '温暖的黄金色调，饱和适中，带有浓郁的九十年代日常气息': (
+      en: 'Warm golden tones with moderate saturation and a strong 1990s everyday feel',
+      ja: '暖かなゴールドトーンと程よい彩度。90年代の日常的な雰囲気を漂わせる',
+    ),
+    '日光型电影底片，中性白平衡、极细颗粒与柔顺的高光过渡': (
+      en: 'Daylight cinema stock: neutral white balance, extremely fine grain and gentle highlight roll-off',
+      ja: 'デイライトタイプの映画用フィルム。ニュートラルな色温度、極細粒子、滑らかなハイライト',
+    ),
+    '灯光型电影底片，冷调阴影与温暖高光形成迷人电影感': (
+      en: 'Tungsten cinema stock: cool shadows and warm highlights create a captivating cinematic look',
+      ja: 'タングステンタイプの映画用フィルム。冷たい影と暖かなハイライトが映画的な雰囲気を生む',
+    ),
+    '世界最细腻的彩色负片之一，色彩干净浓烈，风光利器': (
+      en: 'One of the finest color negatives, with clean vivid color — a landscape favorite',
+      ja: '世界でもっとも繊細なカラーネガの一つ。クリーンで濃密な色は風景撮影の定番',
+    ),
+    '经典新闻黑白底片，粗犷颗粒与扎实黑位，街头纪实首选': (
+      en: 'Classic press black-and-white stock with rugged grain and solid blacks — a street documentary staple',
+      ja: '定番の報道用モノクロフィルム。粗い粒子と力強い黒はストリートスナップの定番',
+    ),
+    '轻盈通透的日系负片，青绿色阴影与柔和肤色，空气感十足': (
+      en: 'Airy Japanese negative with teal shadows and soft skin tones — full of light',
+      ja: '軽やかで透明感のある国産ネガ。青緑の影と柔らかな肌色で空気感が漂う',
+    ),
+    '高饱和的消费级负片，翠绿与洋红浓郁，随手拍出鲜活气息': (
+      en: 'High-saturation consumer negative with lush greens and magentas — vivid in every snap',
+      ja: '高彩度のコンシューマー向けネガ。鮮やかな緑とマゼンタが日常を生き生きと描く',
+    ),
+    '风光反转片之王，极高饱和与浓郁红绿，色彩一触即发': (
+      en: 'The king of landscape slide film: ultra-saturated reds and greens that leap off the frame',
+      ja: '風景リバーサルの王様。極めて高い彩度と濃厚な赤緑が飛び込んでくる',
+    ),
+    '去除防光晕层的灯光型电影底片，霓虹与光源周围泛起标志性红光晕': (
+      en: 'Tungsten cinema stock with the anti-halation layer removed — signature red halation around neon and light sources',
+      ja: 'ハレーション防止層を除去したタングステン映画用フィルム。ネオンや光源の周囲に象徴的な赤いハレーション',
+    ),
+    '英式经典黑白底片，宽容度与颗粒平衡，扫街与暗光表现从容': (
+      en: 'Classic British black-and-white stock balancing latitude and grain — at home in low light and on the street',
+      ja: '英国定番のモノクロフィルム。ラチチュードと粒子のバランスが良く、暗所やスナップに強い',
+    ),
+    '电影正片：深沉黑位、暖调高光与浓郁色彩': (
+      en: 'Motion picture print film: deep blacks, warm highlights and rich color',
+      ja: '映画用プリントフィルム。深い黒、暖かなハイライト、濃厚な色',
+    ),
+    'Première 冲印相纸：中性偏暖、宽容自然': (
+      en: 'Première photo paper: neutral-warm with natural latitude',
+      ja: 'Première 印画紙。ニュートラル寄りの暖色で自然なラチチュード',
+    ),
+    '富士晶彩相纸：清透冷调、绿色还原准确': (
+      en: 'Fuji Crystal paper: clean cool tones with accurate greens',
+      ja: '富士クリスタルペーパー。澄んだ冷調で緑の再現が正確',
+    ),
+    '扫描直出：保留底片原始密度，不做像纸补偿': (
+      en: 'Direct scan: keeps the original negative density without paper compensation',
+      ja: 'ダイレクトスキャン。印画紙補正を行わずフィルム本来の濃度を保持',
+    ),
+    '物理胶片光谱与感光化学模拟模型参考（H&D 曲线、染料耦合、红光晕、银盐颗粒）': (
+      en: 'Reference for physical film spectral and photochemical simulation (H&D curves, dye coupling, halation, silver halide grain)',
+      ja: '物理フィルムの分光・感光化学シミュレーションモデルのリファレンス（H&D曲線、色素カップリング、ハレーション、銀塩粒子）',
+    ),
+    '物理光谱胶片引擎：H&D 密度曲线、DIR 抑制剂、红光晕、银盐颗粒与印相纸冲印（独立原生实现）': (
+      en: 'Physical spectral film engine: H&D density curves, DIR couplers, halation, silver-halide grain and print paper rendering (standalone native port)',
+      ja: '物理スペクトルフィルムエンジン：H&D濃度曲線、DIRカプラー、ハレーション、銀塩粒子、印画紙処理（独立ネイティブ実装）',
+    ),
+
     // ==================== 开源致谢描述 ====================
     '图像处理、滤镜与编辑交互参考': (
       en: 'Image processing, filter pipeline, and editor interaction reference',
@@ -484,9 +563,15 @@ abstract final class EngineL10n {
       ja: 'Android ネイティブ層言語およびランタイム',
     ),
     'SVG 图形渲染': (en: 'SVG vector graphics rendering', ja: 'SVG ベクター描画'),
-    '图像编码与处理': (en: 'Pure Dart image encoding and processing', ja: '画像エンコード・処理ライブラリ'),
+    '图像编码与处理': (
+      en: 'Pure Dart image encoding and processing',
+      ja: '画像エンコード・処理ライブラリ'
+    ),
     'EXIF 元数据读写': (en: 'EXIF metadata parser', ja: 'EXIF メタデータ解析'),
-    'SHA-256 与摘要算法': (en: 'SHA-256 and cryptographic hashing', ja: 'SHA-256 暗号学的ハッシュ計算'),
+    'SHA-256 与摘要算法': (
+      en: 'SHA-256 and cryptographic hashing',
+      ja: 'SHA-256 暗号学的ハッシュ計算'
+    ),
     '国际化与日期格式化': (
       en: 'Internationalization and locale formatting',
       ja: '国際化および日付・数値フォーマット',
@@ -658,7 +743,8 @@ abstract final class EngineL10n {
     'fujiEterna': (
       labelEn: 'ETERNA Cinema',
       labelJa: 'ETERNA シネマ',
-      descEn: 'Motion-picture stock with understated saturation and wide latitude',
+      descEn:
+          'Motion-picture stock with understated saturation and wide latitude',
       descJa: '映画用フィルムの落ち着いた彩度と広い暗部階調',
     ),
     'fujiEternaBleach': (
@@ -826,7 +912,8 @@ abstract final class EngineL10n {
     'classicCinema': (
       labelEn: 'Classic Cinema',
       labelJa: 'クラシックシネマ',
-      descEn: 'Widescreen narrative grade with warm highlights and deep shadows',
+      descEn:
+          'Widescreen narrative grade with warm highlights and deep shadows',
       descJa: '映画的な暖色ハイライトと奥行きのある暗部表現',
     ),
     'rec709Video': (
@@ -970,7 +1057,8 @@ abstract final class EngineL10n {
     'agfaVista200': (
       labelEn: 'Agfa Vista 200',
       labelJa: 'Agfa Vista 200',
-      descEn: 'Classic European red-label punch with warm reds and cool shadows',
+      descEn:
+          'Classic European red-label punch with warm reds and cool shadows',
       descJa: '印象的な赤の発色と深みのあるクールシャドウ',
     ),
     'agfaUltra100': (
@@ -988,7 +1076,8 @@ abstract final class EngineL10n {
     'ilfordHP5': (
       labelEn: 'Ilford HP5 Plus',
       labelJa: 'Ilford HP5 Plus',
-      descEn: 'British silver-halide classic with wide latitude and organic grain',
+      descEn:
+          'British silver-halide classic with wide latitude and organic grain',
       descJa: '広いラティチュードと自然な粒子を持つ英国銀塩の定番',
     ),
     'ilfordFP4': (
@@ -1054,7 +1143,8 @@ abstract final class EngineL10n {
     'forestGreen': (
       labelEn: 'Forest Emerald',
       labelJa: 'フォレストグリーン',
-      descEn: 'Clean emerald greens with reduced yellow cast and atmospheric depth',
+      descEn:
+          'Clean emerald greens with reduced yellow cast and atmospheric depth',
       descJa: '黄色みを抑えた深いエメラルドグリーンと透明感',
     ),
     'floralBotanical': (
@@ -1090,8 +1180,7 @@ abstract final class EngineL10n {
         _ => '手机已开启省电模式，已暂停新传输任务',
       };
 
-  static String powerPausePhoneLow(
-          String langCode, int level, int threshold) =>
+  static String powerPausePhoneLow(String langCode, int level, int threshold) =>
       switch (langCode) {
         'ja' => '端末のバッテリー残量が低下しています ($level% ≤ $threshold%)。新規転送を一時停止しました',
         'en' =>
@@ -1112,7 +1201,8 @@ abstract final class EngineL10n {
           String langCode, int delaySec, int retryCount) =>
       switch (langCode) {
         'ja' => '転送中断、$delaySec秒後に再試行します ($retryCount回目)...',
-        'en' => 'Transfer interrupted; retrying (#$retryCount) in ${delaySec}s...',
+        'en' =>
+          'Transfer interrupted; retrying (#$retryCount) in ${delaySec}s...',
         _ => '下载遇阻，$delaySec秒后第$retryCount次重试...',
       };
 }

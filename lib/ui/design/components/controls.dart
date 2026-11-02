@@ -161,6 +161,12 @@ class ZSlider extends StatelessWidget {
   final ValueChanged<double>? onChangeEnd;
   final bool dense;
 
+  /// 参数行前的图标（可选）。
+  final IconData? icon;
+
+  /// 滑块上方的色彩 / 色相参考条（可选）。
+  final Gradient? trackGradient;
+
   const ZSlider({
     super.key,
     required this.label,
@@ -173,6 +179,8 @@ class ZSlider extends StatelessWidget {
     this.onChanged,
     this.onChangeEnd,
     this.dense = false,
+    this.icon,
+    this.trackGradient,
   });
 
   bool get _isModified => (value - defaultValue).abs() > 0.001;
@@ -225,6 +233,15 @@ class ZSlider extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                     ),
+                  if (icon != null) ...[
+                    Icon(
+                      icon,
+                      size: dense ? 13 : 14,
+                      color:
+                          _isModified ? zc.accent : zc.textTertiary,
+                    ),
+                    const SizedBox(width: ZSpace.xs),
+                  ],
                   Expanded(
                     child: Text(
                       label,
@@ -248,6 +265,20 @@ class ZSlider extends StatelessWidget {
               ),
             ),
           ),
+          if (trackGradient != null)
+            Container(
+              height: 3,
+              margin: const EdgeInsets.fromLTRB(
+                ZSpace.md,
+                ZSpace.xxs,
+                ZSpace.md,
+                ZSpace.xxs,
+              ),
+              decoration: BoxDecoration(
+                gradient: trackGradient,
+                borderRadius: ZRadius.brPill,
+              ),
+            ),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
               trackHeight: dense ? 2.5 : 3.0,

@@ -326,3 +326,17 @@ abstract final class ZSwatch {
 
   static Color fromRgb(int r, int g, int b) => Color.fromARGB(255, r, g, b);
 }
+
+/// 胶片模拟面板的固定材质色（金属片轴、暗盒高光、暗房配光）。
+abstract final class ZFilmSwatch {
+  static const Color spoolMetal = Color(0xFF9AA3AD);
+  static const Color spoolShadow = Color(0xFF4A5158);
+  static const Color canisterHighlight = Color(0x33FFFFFF);
+  static const Color canisterEdge = Color(0x66000000);
+  static const Color labelShadow = Color(0x22000000);
+  static const Color darkroomRed = Color(0xFFB3261E);
+  static const Color paperWhite = Color(0xFFF3EFE6);
+  static const Color filmBase = Color(0xFF2A1C12);
+  static const Color enlargerAmber = Color(0xFFFFB74D);
+  static const Color enlargerMagenta = Color(0xFFE91E63);
+}

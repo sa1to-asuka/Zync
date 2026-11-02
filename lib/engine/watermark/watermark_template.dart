@@ -96,6 +96,13 @@ enum WatermarkTemplate {
     false,
     false,
   ),
+  filmNegativeStrip(
+    'film_negative_strip',
+    '胶片齿孔 · 卷式边框',
+    '35mm 卷式负片外观 · 上下齿孔与片边编码 · 自动使用当前底片名与拍摄日期',
+    true,
+    false,
+  ),
   geoLocationEditorial(
     'geo_location_editorial',
     '地理坐标 · 经纬度展签',

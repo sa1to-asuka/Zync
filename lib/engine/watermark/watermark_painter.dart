@@ -25,6 +25,7 @@ class WatermarkCanvasPainter extends CustomPainter {
   final ui.Image? image;
   final PhotoMetadata metadata;
   final WatermarkTemplate template;
+  final String? filmStockName;
   final PhotoFilterType filterType;
   final double filterIntensity;
   final PhotoEditAdjustments adjustments;
@@ -109,6 +110,7 @@ class WatermarkCanvasPainter extends CustomPainter {
     required this.image,
     required this.metadata,
     required this.template,
+    this.filmStockName,
     this.filterType = PhotoFilterType.original,
     this.filterIntensity = 1.0,
     this.adjustments = const PhotoEditAdjustments(),
@@ -328,6 +330,17 @@ class WatermarkCanvasPainter extends CustomPainter {
             imageRect: Rect.fromLTWH(0, 0, srcW, srcH),
           );
         }
+      case WatermarkTemplate.filmNegativeStrip:
+        {
+          // 35mm 卷式负片：上下齿孔片边，照片位于中间。
+          final band = math.min(srcW, srcH) * 0.14 * spacing;
+          final side = band * 0.18;
+          return LayoutMetrics(
+            totalWidth: srcW + side * 2,
+            totalHeight: srcH + band * 2,
+            imageRect: Rect.fromLTWH(side, band, srcW, srcH),
+          );
+        }
       case WatermarkTemplate.geoLocationEditorial:
         {
           // 地理坐标 · 经纬度展签 (四周细白边 + 底部经纬度与品牌展签)
@@ -443,6 +456,9 @@ class WatermarkCanvasPainter extends CustomPainter {
         break;
       case WatermarkTemplate.retroTimestamp:
         _drawRetroTimestamp(canvas, size, img, imgRect);
+        break;
+      case WatermarkTemplate.filmNegativeStrip:
+        _drawFilmNegativeStrip(canvas, size, img, imgRect);
         break;
       case WatermarkTemplate.geoLocationEditorial:
         _drawGeoLocationEditorial(canvas, size, img, imgRect);
@@ -2342,7 +2358,7 @@ class WatermarkCanvasPainter extends CustomPainter {
     _drawPhotoOrPlaceholder(canvas, img, imgRect, scale);
 
     final stampOrange = textColorOverride ?? const Color(0xFFFF7A1A);
-    final glowColor = const Color(0xCCFF3D00);
+    const glowColor = Color(0xCCFF3D00);
     final marginX = 42 * scale * spacingScale;
     final marginY = 36 * scale * spacingScale;
 
@@ -2411,6 +2427,178 @@ class WatermarkCanvasPainter extends CustomPainter {
       leftP,
       Offset(imgRect.left + marginX, imgRect.bottom - marginY - leftP.height),
     );
+  }
+
+  void _drawFilmNegativeStrip(
+    Canvas canvas,
+    Size size,
+    ui.Image? img,
+    Rect imgRect,
+  ) {
+    final scale = size.width / 1200.0;
+    final band = imgRect.top;
+    if (band <= 0) return;
+    final baseColor = _cardFill(const Color(0xFF15120F));
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Paint()..color = baseColor,
+    );
+    _drawPhotoOrPlaceholder(canvas, img, imgRect, scale);
+
+    final edge = _textColor(const Color(0xFFF2E6D0));
+    final holeHeight = band * 0.25;
+    final holeWidth = holeHeight * 1.35;
+    final gap = holeWidth * 0.9;
+    final holeCount = math.max(6, (size.width / (holeWidth + gap)).floor());
+    final totalHoles = holeCount * holeWidth + (holeCount - 1) * gap;
+    final left = (size.width - totalHoles) / 2;
+    final holePaint = Paint()..color = edge.withAlpha(235);
+    final holeRadius = Radius.circular(holeHeight * 0.22);
+
+    void drawHoles(double top) {
+      for (var i = 0; i < holeCount; i++) {
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(
+              left + i * (holeWidth + gap),
+              top,
+              holeWidth,
+              holeHeight,
+            ),
+            holeRadius,
+          ),
+          holePaint,
+        );
+      }
+    }
+
+    drawHoles(band * 0.55);
+    drawHoles(imgRect.bottom + band * 0.16);
+
+    final stock = (filmStockName?.trim().isNotEmpty ?? false)
+        ? filmStockName!.trim().toUpperCase()
+        : '35MM FILM';
+    final stockP = TextPainter(
+      text: TextSpan(
+        text: stock,
+        style: TextStyle(
+          color: edge,
+          fontSize: math.min(band * 0.24, 38 * scale),
+          fontFamily: 'monospace',
+          fontWeight: FontWeight.w800,
+          letterSpacing: _letter(2.0, scale),
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+      ellipsis: '…',
+    )..layout(maxWidth: size.width * 0.72);
+    _paintText(canvas, stockP, Offset(imgRect.left, band * 0.12));
+
+    final frameP = TextPainter(
+      text: TextSpan(
+        text: '36',
+        style: TextStyle(
+          color: edge,
+          fontSize: math.min(band * 0.24, 38 * scale),
+          fontFamily: 'monospace',
+          fontWeight: FontWeight.w800,
+          letterSpacing: _letter(1.2, scale),
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    _paintText(
+      canvas,
+      frameP,
+      Offset(imgRect.right - frameP.width, band * 0.12),
+    );
+
+    // 下片边：条码标记 + 帧号编码。
+    final barTop = imgRect.bottom + band * 0.58;
+    final barHeight = band * 0.20;
+    final barsEnd = imgRect.center.dx - band * 0.55;
+    final barPaint = Paint()..color = edge.withAlpha(190);
+    var x = imgRect.left;
+    var index = 0;
+    while (x < barsEnd) {
+      final width = (index % 4 == 0
+              ? 3.0
+              : index % 2 == 0
+                  ? 1.8
+                  : 1.0) *
+          scale;
+      if (index % 3 != 1) {
+        canvas.drawRect(Rect.fromLTWH(x, barTop, width, barHeight), barPaint);
+      }
+      x += width + 5 * scale;
+      index++;
+    }
+    final codeP = TextPainter(
+      text: TextSpan(
+        text: '36A  →',
+        style: TextStyle(
+          color: edge,
+          fontSize: math.min(band * 0.22, 32 * scale),
+          fontFamily: 'monospace',
+          fontWeight: FontWeight.w700,
+          letterSpacing: _letter(1.0, scale),
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    _paintText(
+      canvas,
+      codeP,
+      Offset(imgRect.center.dx + band * 0.1, barTop - codeP.height * 0.12),
+    );
+
+    if (showDate) {
+      final stamp = _filmDateStamp(_meta.capturedDate);
+      if (stamp.isNotEmpty) {
+        final stampColor = _textColor(const Color(0xFFFF8A3D));
+        final stampP = TextPainter(
+          text: TextSpan(
+            text: stamp,
+            style: TextStyle(
+              color: stampColor,
+              fontSize: _metaSize(24, scale),
+              fontFamily: 'monospace',
+              fontWeight: FontWeight.w800,
+              letterSpacing: _letter(1.2, scale),
+              shadows: [
+                Shadow(
+                  color: const Color(0xCCFF5500),
+                  blurRadius: 10 * scale,
+                ),
+                Shadow(
+                  color: const Color(0x99000000),
+                  blurRadius: 4 * scale,
+                ),
+              ],
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        _paintText(
+          canvas,
+          stampP,
+          Offset(
+            imgRect.right - band * 0.34 - stampP.width,
+            imgRect.bottom - band * 0.30 - stampP.height,
+          ),
+        );
+      }
+    }
+  }
+
+  String _filmDateStamp(String raw) {
+    final match = RegExp(r'^(\d{2,4})[^0-9]+(\d{1,2})[^0-9]+(\d{1,2})')
+        .firstMatch(raw.trim());
+    if (match == null) return '';
+    final year = match.group(1)!;
+    final shortYear = year.length >= 4 ? year.substring(year.length - 2) : year;
+    return "'$shortYear ${match.group(2)} ${match.group(3)}";
   }
 
   // =========================================================================
@@ -2551,6 +2739,7 @@ class WatermarkCanvasPainter extends CustomPainter {
     return old.image != image ||
         old.metadata != metadata ||
         old.template != template ||
+        old.filmStockName != filmStockName ||
         old.filterType != filterType ||
         old.filterIntensity != filterIntensity ||
         old.adjustments != adjustments ||

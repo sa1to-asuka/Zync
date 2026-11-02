@@ -2498,10 +2498,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get wmDockTemplate => 'フレーム';
 
   @override
-  String get wmDockFilter => 'フィルム';
+  String get wmDockPresetGrade => 'プリセット調整';
 
   @override
-  String get wmDockGrade => 'パラメーター';
+  String get wmDockSpektrafilm => 'フィルムシミュレーション';
 
   @override
   String get wmDockGeometry => '切り抜き';
@@ -2890,4 +2890,113 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get pcCompareEffectLabel => '効果';
+
+  @override
+  String get wmPresetMine => 'マイプリセット';
+
+  @override
+  String get wmPresetBuiltin => '内蔵ルック';
+
+  @override
+  String get wmPresetSaveNew => '新規プリセットとして保存';
+
+  @override
+  String get wmPresetOverwrite => '上書き';
+
+  @override
+  String get wmPresetRename => '名前を変更';
+
+  @override
+  String get wmPresetRenameTitle => 'プリセット名を変更';
+
+  @override
+  String get wmPresetDeleteTitle => 'プリセットを削除';
+
+  @override
+  String wmPresetDeleteConfirm(String name) {
+    return '「$name」を削除しますか？元に戻せません。';
+  }
+
+  @override
+  String wmPresetRenamedToast(String name) {
+    return '「$name」に変更しました';
+  }
+
+  @override
+  String get wmPresetDeletedToast => 'プリセットを削除しました';
+
+  @override
+  String wmPresetAppliedToast(String name) {
+    return '「$name」を適用しました';
+  }
+
+  @override
+  String get wmPresetFilmBypassHint => 'フィルムシミュレーションが有効です。調整は反映されません。';
+
+  @override
+  String get wmPresetFilmDisabledToast => 'フィルムシミュレーションをオフにしました';
+
+  @override
+  String get wmGradeCatDetail => 'ディテール調整';
+
+  @override
+  String get wmGradeDetailRawOnly => 'RAW書き出し時のみ有効';
+
+  @override
+  String get spektraRawTip => '最良のフィルムシミュレーションにはRAW形式を推奨します';
+
+  @override
+  String get spektraStockSection => 'フィルム';
+
+  @override
+  String get spektraPaperSection => 'プリント・スキャン';
+
+  @override
+  String get spektraIntensity => 'シミュレーション濃度';
+
+  @override
+  String get spektraHalation => 'ハレーション';
+
+  @override
+  String get spektraHalationRadius => 'ハレーション半径';
+
+  @override
+  String get spektraGrain => '銀塩粒子';
+
+  @override
+  String get spektraGrainSize => '粒子サイズ';
+
+  @override
+  String get spektraEnlargerWarmth => '引き伸ばし機の暖色';
+
+  @override
+  String get spektraEnlargerTint => '引き伸ばし機の色調';
+
+  @override
+  String get spektraExposure => 'フィルム露出';
+
+  @override
+  String get spektraDisable => 'オフにする';
+
+  @override
+  String get spektraActiveHint => '長押しで元画像と比較';
+
+  @override
+  String get wmPresetCustomActive => '手動調整';
+
+  @override
+  String get wmDetailSharpening => 'シャープネス';
+
+  @override
+  String get wmDetailNoiseReduction => 'ノイズ低減';
+
+  @override
+  String get spektraDirectScan => 'ネガ直接スキャン';
+
+  @override
+  String get spektraCatalogUnavailable =>
+      'このビルドには Spektrafilm ネイティブエンジンが含まれていません。';
+
+  @override
+  String get spektraPreviewFailed => 'フィルムプレビューの生成に失敗しました。元画像を表示します';
 }

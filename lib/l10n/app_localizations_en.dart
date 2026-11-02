@@ -2578,10 +2578,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wmDockTemplate => 'Frame Style';
 
   @override
-  String get wmDockFilter => 'Film Preset';
+  String get wmDockPresetGrade => 'Presets';
 
   @override
-  String get wmDockGrade => 'Adjustments';
+  String get wmDockSpektrafilm => 'Film Simulation';
 
   @override
   String get wmDockGeometry => 'Geometry';
@@ -2975,4 +2975,117 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pcCompareEffectLabel => 'Effect';
+
+  @override
+  String get wmPresetMine => 'My Presets';
+
+  @override
+  String get wmPresetBuiltin => 'Built-in Looks';
+
+  @override
+  String get wmPresetSaveNew => 'Save as New Preset';
+
+  @override
+  String get wmPresetOverwrite => 'Overwrite';
+
+  @override
+  String get wmPresetRename => 'Rename';
+
+  @override
+  String get wmPresetRenameTitle => 'Rename Preset';
+
+  @override
+  String get wmPresetDeleteTitle => 'Delete Preset';
+
+  @override
+  String wmPresetDeleteConfirm(String name) {
+    return 'Delete \"$name\"? This cannot be undone.';
+  }
+
+  @override
+  String wmPresetRenamedToast(String name) {
+    return 'Renamed to \"$name\"';
+  }
+
+  @override
+  String get wmPresetDeletedToast => 'Preset deleted';
+
+  @override
+  String wmPresetAppliedToast(String name) {
+    return 'Applied \"$name\"';
+  }
+
+  @override
+  String get wmPresetFilmBypassHint =>
+      'Film Simulation is on — adjustments are ignored until you turn it off.';
+
+  @override
+  String get wmPresetFilmDisabledToast => 'Film Simulation turned off';
+
+  @override
+  String get wmGradeCatDetail => 'Detail & Finish';
+
+  @override
+  String get wmGradeDetailRawOnly => 'RAW export only';
+
+  @override
+  String get spektraRawTip =>
+      'For the best film simulation, using RAW is recommended';
+
+  @override
+  String get spektraStockSection => 'Film Stock';
+
+  @override
+  String get spektraPaperSection => 'Print & Scan';
+
+  @override
+  String get spektraIntensity => 'Simulation Strength';
+
+  @override
+  String get spektraHalation => 'Halation';
+
+  @override
+  String get spektraHalationRadius => 'Halation Radius';
+
+  @override
+  String get spektraGrain => 'Silver Grain';
+
+  @override
+  String get spektraGrainSize => 'Grain Size';
+
+  @override
+  String get spektraEnlargerWarmth => 'Enlarger Warmth';
+
+  @override
+  String get spektraEnlargerTint => 'Enlarger Tint';
+
+  @override
+  String get spektraExposure => 'Film Exposure';
+
+  @override
+  String get spektraDisable => 'Turn Off';
+
+  @override
+  String get spektraActiveHint =>
+      'Long-press the photo to compare with the original';
+
+  @override
+  String get wmPresetCustomActive => 'Manual adjustments';
+
+  @override
+  String get wmDetailSharpening => 'Sharpening';
+
+  @override
+  String get wmDetailNoiseReduction => 'Noise Reduction';
+
+  @override
+  String get spektraDirectScan => 'Negative Scan';
+
+  @override
+  String get spektraCatalogUnavailable =>
+      'Spektrafilm native engine unavailable on this build.';
+
+  @override
+  String get spektraPreviewFailed =>
+      'Film preview failed; showing the original photo';
 }

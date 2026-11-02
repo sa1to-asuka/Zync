@@ -1,11 +1,13 @@
 part of '../watermark_screen.dart';
 
+/// 单个调色参数的定义。
 class _GradeDialItem {
   final String code;
   final String Function(AppLocalizations l10n) title;
   final IconData icon;
   final double min;
   final double max;
+  final double defaultValue;
   final String unit;
   final Gradient? gradient;
   final double Function(PhotoEditAdjustments adj, ColorGrade pro) getValue;
@@ -18,6 +20,7 @@ class _GradeDialItem {
     required this.icon,
     this.min = -100,
     this.max = 100,
+    this.defaultValue = 0,
     this.unit = '',
     this.gradient,
     required this.getValue,
@@ -25,9 +28,23 @@ class _GradeDialItem {
   });
 }
 
+/// 参数分组。
+class _GradeGroupDef {
+  final String code;
+  final String title;
+  final IconData icon;
+  final List<String> codes;
+
+  const _GradeGroupDef({
+    required this.code,
+    required this.title,
+    required this.icon,
+    required this.codes,
+  });
+}
+
 extension _WatermarkScreenGradePanel on WatermarkScreenState {
   List<_GradeDialItem> _getGradeDialItems() => [
-        // 基础色调
         _GradeDialItem(
           code: 'Exposure',
           title: (l) => l.toneExposure,
@@ -70,8 +87,6 @@ extension _WatermarkScreenGradePanel on WatermarkScreenState {
           getValue: (a, _) => a.blacks,
           applyValue: (a, v) => a.copyWith(blacks: v),
         ),
-
-        // 白平衡与色彩
         _GradeDialItem(
           code: 'Temp',
           title: (l) => l.adjTemperature,
@@ -83,7 +98,7 @@ extension _WatermarkScreenGradePanel on WatermarkScreenState {
         _GradeDialItem(
           code: 'Tint',
           title: (l) => l.adjTint,
-          icon: Icons.palette_outlined,
+          icon: Icons.colorize_outlined,
           gradient: ZSwatch.wbTintGradient,
           getValue: (a, _) => a.tint,
           applyValue: (a, v) => a.copyWith(tint: v),
@@ -91,19 +106,17 @@ extension _WatermarkScreenGradePanel on WatermarkScreenState {
         _GradeDialItem(
           code: 'Vibrance',
           title: (l) => l.adjVibrance,
-          icon: Icons.local_florist_outlined,
+          icon: Icons.auto_awesome_outlined,
           getValue: (a, _) => a.vibrance,
           applyValue: (a, v) => a.copyWith(vibrance: v),
         ),
         _GradeDialItem(
           code: 'Saturation',
           title: (l) => l.adjSaturation,
-          icon: Icons.color_lens_outlined,
+          icon: Icons.water_drop_outlined,
           getValue: (a, _) => a.saturation,
           applyValue: (a, v) => a.copyWith(saturation: v),
         ),
-
-        // 偏好质感
         _GradeDialItem(
           code: 'Clarity',
           title: (l) => l.adjClarity,
@@ -125,14 +138,13 @@ extension _WatermarkScreenGradePanel on WatermarkScreenState {
           getValue: (a, _) => a.dehaze,
           applyValue: (a, v) => a.copyWith(dehaze: v),
         ),
-
-        // 颜色分级
         _GradeDialItem(
           code: 'Hi-Hue',
           title: (l) => l.adjHighlightHue,
           icon: Icons.light_mode_outlined,
           min: 0,
           max: 360,
+          defaultValue: 40,
           unit: '°',
           gradient: ZSwatch.hueRainbowGradient,
           getValue: (a, _) => a.highlightHue,
@@ -154,6 +166,7 @@ extension _WatermarkScreenGradePanel on WatermarkScreenState {
           icon: Icons.dark_mode_outlined,
           min: 0,
           max: 360,
+          defaultValue: 220,
           unit: '°',
           gradient: ZSwatch.hueRainbowGradient,
           getValue: (a, _) => a.shadowHue,
@@ -169,8 +182,6 @@ extension _WatermarkScreenGradePanel on WatermarkScreenState {
           getValue: (a, _) => a.shadowSat,
           applyValue: (a, v) => a.copyWith(shadowSat: v),
         ),
-
-        // 镜头与效果
         _GradeDialItem(
           code: 'Vignette',
           title: (l) => l.adjLensVignette,
@@ -190,1558 +201,853 @@ extension _WatermarkScreenGradePanel on WatermarkScreenState {
         ),
       ];
 
-  /// 第 ② 栏「胶片滤镜」：单层分类横滑标签（含预设库）+ 横向胶片卡带 + 浓度滑块与转入精调
-  Widget _buildFilmFilterPanel({bool wide = false}) {
+  bool _isFilterCategory(String category) =>
+      category != 'mine' && category != 'builtin';
+
+  List<String> _presetCategories() => <String>[
+        'mine',
+        'builtin',
+        ...PhotoFilterType.categories1,
+      ];
+
+  // ==================== 主面板 ====================
+
+  Widget _buildPresetGradePanel({bool wide = false}) {
     final zc = context.zc;
-    final l10n = context.l10n;
+    final showIntensity =
+        _isFilterCategory(_filterCategory) &&
+            _selectedFilter != PhotoFilterType.original;
 
-    final categories = <String>[
-      'preset',
-      'all',
-      ...PhotoFilterType.categories1,
-    ];
-
-    final isPresetCat = _filterCategory == 'preset';
-    final isAllCat = _filterCategory == 'all';
-
-    final List<PhotoFilterType> displayedFilters;
-    if (isPresetCat) {
-      displayedFilters = const [];
-    } else if (isAllCat) {
-      displayedFilters = PhotoFilterType.values;
-    } else {
-      displayedFilters = PhotoFilterType.getByCategories(_filterCategory);
-    }
-
-    if (wide) {
-      return _buildTabletFilmFilterPanel(
-        categories: categories,
-        isPresetCat: isPresetCat,
-        isAllCat: isAllCat,
-        displayedFilters: displayedFilters,
-      );
-    }
-
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      children: [
-        // 1. 顶部单行分类栏
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              for (final cat in categories) ...[
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: Builder(builder: (context) {
-                    final isSelected = cat == _filterCategory;
-                    final String label;
-                    if (cat == 'preset') {
-                      label = l10n.wmDialCategoryPreset;
-                    } else if (cat == 'all') {
-                      label = l10n.wmFilterAllCount(PhotoFilterType.values.length);
-                    } else {
-                      label = L10n.tr(cat, l10n.localeName);
-                    }
-                    return ChoiceChip(
-                      label: Text(label),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        if (selected) {
-                          _updateState(() => _filterCategory = cat);
-                        }
-                      },
-                      selectedColor: zc.accent,
-                      backgroundColor: zc.surface,
-                      labelStyle: TextStyle(
-                        color: isSelected ? zc.onAccent : zc.textSecondary,
-                        fontSize: 12,
-                        fontWeight:
-                            isSelected ? FontWeight.bold : FontWeight.normal,
-                      ),
-                      side: BorderSide(
-                        color: isSelected ? zc.accent : zc.outline,
-                        width: ZStroke.hairline,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 2),
-                      showCheckmark: false,
-                    );
-                  }),
-                ),
-              ],
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 10),
-
-        // 2. 中部横向胶片卡片带
-        SizedBox(
-          height: 100,
-          child: isPresetCat
-              ? _buildPresetHorizontalStrip()
-              : ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: displayedFilters.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 8),
-                  itemBuilder: (context, index) {
-                    final filter = displayedFilters[index];
-                    return SizedBox(
-                      width: 130,
-                      child: _buildFilmCard(filter),
-                    );
-                  },
-                ),
-        ),
-
-        const SizedBox(height: 10),
-
-        // 3. 底部常驻控制条：滤镜浓度滑块与转入精调
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: zc.surface,
-            borderRadius: BorderRadius.circular(ZRadius.sm),
-            border: Border.all(color: zc.outline),
-          ),
-          child: Row(
-            children: [
-              Text(
-                l10n.wmPresetIntensity,
-                style: TextStyle(color: zc.textSecondary, fontSize: 11),
+    return Container(
+      color: zc.bg,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (wide) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                ZSpace.md,
+                ZSpace.sm,
+                ZSpace.sm,
+                ZSpace.xs,
               ),
-              Expanded(
-                child: Slider(
-                  value: _filterIntensity,
-                  min: 0.0,
-                  max: 1.0,
-                  divisions: 20,
-                  activeColor: zc.accent,
-                  inactiveColor: zc.outline,
-                  label: '${(_filterIntensity * 100).round()}%',
-                  onChanged:
-                      _selectedFilter == PhotoFilterType.original && !isPresetCat
-                          ? null
-                          : (val) =>
-                              _updateState(() => _filterIntensity = val),
-                ),
-              ),
-              SizedBox(
-                width: 36,
-                child: Text(
-                  '${(_filterIntensity * 100).round()}%',
-                  textAlign: TextAlign.right,
-                  style: TextStyle(
-                    color: zc.accent,
-                    fontSize: 11,
-                    fontFamily: 'monospace',
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(width: 1, height: 20, color: zc.outline),
-              const SizedBox(width: 8),
-              OutlinedButton.icon(
-                onPressed: () {
-                  _updateState(() {
-                    if (_selectedFilter != PhotoFilterType.original) {
-                      _adjustments = _selectedFilter.presetAdjustments;
-                    }
-                    _tabController.animateTo(2);
-                  });
-                  showZToast(
-                    context,
-                    l10n.wmLoadedFilterSlidersToast(_selectedFilter.trLabel),
-                  );
-                },
-                icon: const Icon(Icons.tune, size: 14),
-                label: Text(l10n.wmDialTransferToGrade),
-                style: OutlinedButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  foregroundColor: zc.accent,
-                  side: BorderSide(color: zc.accent, width: ZStroke.hairline),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(ZRadius.pill),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// 平板模式滤镜与预设选择面板：支持「单列一行一种（带滚动条）」与「自适应高度分页」
-  Widget _buildTabletFilmFilterPanel({
-    required List<String> categories,
-    required bool isPresetCat,
-    required bool isAllCat,
-    required List<PhotoFilterType> displayedFilters,
-  }) {
-    final zc = context.zc;
-    final l10n = context.l10n;
-    final isPaged = AppSettings.instance.tabletFilterViewPaged;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // 1. 顶部分类栏（Chip 列表）
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                for (final cat in categories) ...[
-                  Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: Builder(builder: (context) {
-                      final isSelected = cat == _filterCategory;
-                      final String label;
-                      if (cat == 'preset') {
-                        label = l10n.wmDialCategoryPreset;
-                      } else if (cat == 'all') {
-                        label = l10n.wmFilterAllCount(PhotoFilterType.values.length);
-                      } else {
-                        label = L10n.tr(cat, l10n.localeName);
-                      }
-                      return ChoiceChip(
-                        label: Text(label),
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          if (selected) {
-                            _updateState(() {
-                              _filterCategory = cat;
-                              _filterCurrentPage = 0;
-                            });
-                          }
-                        },
-                        selectedColor: zc.accent,
-                        backgroundColor: zc.surface,
-                        labelStyle: TextStyle(
-                          color: isSelected ? zc.onAccent : zc.textSecondary,
-                          fontSize: 11,
-                          fontWeight:
-                              isSelected ? FontWeight.bold : FontWeight.normal,
-                        ),
-                        side: BorderSide(
-                          color: isSelected ? zc.accent : zc.outline,
-                          width: ZStroke.hairline,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 1),
-                        showCheckmark: false,
-                      );
-                    }),
-                  ),
+              child: Row(
+                children: [
+                  Expanded(child: _buildCategoryChips()),
+                  _buildViewModeToggle(),
                 ],
+              ),
+            ),
+            SizedBox(height: 172, child: _buildPresetBrowser(wide: true)),
+          ],
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.fromLTRB(
+                wide ? ZSpace.md : ZSpace.lg,
+                wide ? ZSpace.sm : ZSpace.md,
+                wide ? ZSpace.md : ZSpace.lg,
+                ZSpace.sm,
+              ),
+              children: [
+                if (!wide) ...[
+                  _buildCategoryChips(),
+                  const SizedBox(height: ZSpace.sm),
+                  SizedBox(height: 104, child: _buildPresetStrip()),
+                ],
+                if (showIntensity) _buildFilterIntensityBar(),
+                if (_isFilmActive) _buildFilmBypassHint(),
+                const SizedBox(height: ZSpace.sm),
+                ..._buildGradeGroups(),
+                const SizedBox(height: ZSpace.md),
               ],
             ),
           ),
-        ),
-
-        // 2. 模式切换工具栏：[ 一行一种列表 / 自适应屏幕高度分页 ]
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(
-                child: Text(
-                  isPresetCat
-                      ? l10n.wmDialCategoryPreset
-                      : (isAllCat
-                          ? l10n.wmFilterAllCount(displayedFilters.length)
-                          : '${L10n.tr(_filterCategory, l10n.localeName)} (${displayedFilters.length})'),
-                  style: TextStyle(
-                    color: zc.textSecondary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              _buildTabletViewModePill(
-                isPaged: isPaged,
-                onToggle: (val) {
-                  _updateState(() {
-                    AppSettings.instance.setTabletFilterViewPaged(val);
-                  });
-                },
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 2),
-
-        // 3. 中间滤镜/预设选择区（一行一种列表 或 自适应屏幕高度分页）
-        Expanded(
-          child: isPresetCat
-              ? (isPaged
-                  ? _buildTabletPresetPagedView()
-                  : _buildTabletPresetVerticalList())
-              : (isPaged
-                  ? _buildTabletFilmPagedView(displayedFilters)
-                  : _buildTabletFilmVerticalList(displayedFilters)),
-        ),
-
-        // 4. 底部常驻控制条：滤镜浓度滑块与转入精调
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: zc.surface,
-            border: Border(
-                top: BorderSide(color: zc.outline, width: ZStroke.hairline)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    l10n.wmPresetIntensity,
-                    style: TextStyle(color: zc.textSecondary, fontSize: 11),
-                  ),
-                  Expanded(
-                    child: Slider(
-                      value: _filterIntensity,
-                      min: 0.0,
-                      max: 1.0,
-                      divisions: 20,
-                      activeColor: zc.accent,
-                      inactiveColor: zc.outline,
-                      label: '${(_filterIntensity * 100).round()}%',
-                      onChanged: _selectedFilter == PhotoFilterType.original &&
-                              !isPresetCat
-                          ? null
-                          : (val) =>
-                              _updateState(() => _filterIntensity = val),
-                    ),
-                  ),
-                  SizedBox(
-                    width: 36,
-                    child: Text(
-                      '${(_filterIntensity * 100).round()}%',
-                      textAlign: TextAlign.right,
-                      style: TextStyle(
-                        color: zc.accent,
-                        fontSize: 11,
-                        fontFamily: 'monospace',
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              OutlinedButton.icon(
-                onPressed: () {
-                  _updateState(() {
-                    if (_selectedFilter != PhotoFilterType.original) {
-                      _adjustments = _selectedFilter.presetAdjustments;
-                    }
-                    _tabController.animateTo(2);
-                  });
-                  showZToast(
-                    context,
-                    l10n.wmLoadedFilterSlidersToast(_selectedFilter.trLabel),
-                  );
-                },
-                icon: const Icon(Icons.tune, size: 13),
-                label: Text(l10n.wmDialTransferToGrade),
-                style: OutlinedButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  foregroundColor: zc.accent,
-                  side: BorderSide(color: zc.accent, width: ZStroke.hairline),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(ZRadius.pill),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+          _buildPresetBottomBar(),
+        ],
+      ),
     );
   }
 
-  /// 平板模式滤镜单列列表（一行放一种，带可见滚动条）
-  Widget _buildTabletFilmVerticalList(List<PhotoFilterType> displayedFilters) {
+  // ==================== 分类与预设流 ====================
+
+  Widget _buildCategoryChips() {
+    final zc = context.zc;
+    final l10n = context.l10n;
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (final cat in _presetCategories()) ...[
+            Padding(
+              padding: const EdgeInsets.only(right: ZSpace.sm),
+              child: Builder(builder: (context) {
+                final selected = cat == _filterCategory;
+                final label = switch (cat) {
+                  'mine' => l10n.wmPresetMine,
+                  'builtin' => l10n.wmPresetBuiltin,
+                  _ => L10n.tr(cat, l10n.localeName),
+                };
+                return ChoiceChip(
+                  label: Text(label),
+                  selected: selected,
+                  onSelected: (value) {
+                    if (!value) return;
+                    _updateState(() => _filterCategory = cat);
+                  },
+                  selectedColor: zc.accent,
+                  backgroundColor: zc.surface,
+                  labelStyle: TextStyle(
+                    color: selected ? zc.onAccent : zc.textSecondary,
+                    fontSize: 12,
+                    fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                  side: BorderSide(
+                    color: selected ? zc.accent : zc.outline,
+                    width: ZStroke.hairline,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                  showCheckmark: false,
+                );
+              }),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildViewModeToggle() {
+    final zc = context.zc;
+    final paged = AppSettings.instance.tabletFilterViewPaged;
+    return IconButton(
+      tooltip: paged
+          ? context.l10n.wmViewModeListTooltip
+          : context.l10n.wmViewModePagedTooltip,
+      icon: Icon(
+        paged ? Icons.auto_stories_outlined : Icons.view_agenda_outlined,
+        size: 18,
+        color: zc.textTertiary,
+      ),
+      onPressed: () {
+        AppSettings.instance.setTabletFilterViewPaged(!paged);
+        _updateState(() {});
+      },
+    );
+  }
+
+  Widget _buildPresetBrowser({required bool wide}) {
+    if (AppSettings.instance.tabletFilterViewPaged) {
+      return _buildPagedPresetBrowser();
+    }
     return Scrollbar(
       controller: _filterScrollController,
-      thumbVisibility: true,
-      interactive: true,
       child: ListView.separated(
         controller: _filterScrollController,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        itemCount: displayedFilters.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 6),
+        padding: const EdgeInsets.symmetric(horizontal: ZSpace.md),
+        itemCount: _presetCards().length,
+        separatorBuilder: (_, __) => const SizedBox(height: ZSpace.xs),
         itemBuilder: (context, index) {
-          final filter = displayedFilters[index];
-          return _buildTabletFilmListRow(filter);
+          final card = _presetCards()[index];
+          return SizedBox(height: 64, child: card);
         },
       ),
     );
   }
 
-  Widget _buildTabletFilmListRow(PhotoFilterType filter) {
-    final zc = context.zc;
-    final l10n = context.l10n;
-    final isSelected = filter == _selectedFilter;
-
-    return Material(
-      color: ZSwatch.transparent,
-      child: InkWell(
-        onTap: () => _updateState(() => _selectedFilter = filter),
-        borderRadius: BorderRadius.circular(ZRadius.sm),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          decoration: BoxDecoration(
-            color: isSelected ? zc.accent.withAlpha(28) : zc.surface,
-            borderRadius: BorderRadius.circular(ZRadius.sm),
-            border: Border.all(
-              color: isSelected ? zc.accent : zc.outline,
-              width: isSelected ? ZStroke.emphasis : ZStroke.hairline,
-            ),
+  Widget _buildPagedPresetBrowser() {
+    final cards = _presetCards();
+    const perPage = 6;
+    final pages = (cards.length / perPage).ceil().clamp(1, 999);
+    return PageView.builder(
+      controller: _filterPageController,
+      itemCount: pages,
+      itemBuilder: (context, page) {
+        final start = page * perPage;
+        final end = math.min(start + perPage, cards.length);
+        return GridView.count(
+          crossAxisCount: 2,
+          childAspectRatio: 2.4,
+          padding: const EdgeInsets.symmetric(
+            horizontal: ZSpace.md,
+            vertical: ZSpace.xs,
           ),
-          child: Row(
-            children: [
-              // 经典签名三色圆点 + 胶片代码药丸
-              Container(
-                width: 48,
-                padding:
-                    const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-                decoration: BoxDecoration(
-                  color: zc.bg,
-                  borderRadius: BorderRadius.circular(ZRadius.xs),
-                  border: Border.all(color: zc.outline.withAlpha(80)),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: filter.previewColors
-                          .take(3)
-                          .map((c) => Container(
-                                width: 7,
-                                height: 7,
-                                margin:
-                                    const EdgeInsets.symmetric(horizontal: 1),
-                                decoration: BoxDecoration(
-                                  color: c,
-                                  shape: BoxShape.circle,
-                                ),
-                              ))
-                          .toList(),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      filter.code,
-                      style: TextStyle(
-                        color: zc.textSecondary,
-                        fontSize: 9,
-                        fontFamily: 'monospace',
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              // 中间滤镜名称与风格描述
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            filter.trLabel,
-                            style: TextStyle(
-                              color: isSelected ? zc.accent : zc.textPrimary,
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.w600,
-                              fontSize: 12.5,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (filter.category2.isNotEmpty) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 5, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: zc.surfaceHigh,
-                              borderRadius:
-                                  BorderRadius.circular(ZRadius.pill),
-                            ),
-                            child: Text(
-                              L10n.tr(filter.category2, l10n.localeName),
-                              style: TextStyle(
-                                color: zc.textTertiary,
-                                fontSize: 9,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      filter.recipeSummary.isNotEmpty
-                          ? filter.recipeSummary
-                          : filter.description,
-                      style: TextStyle(
-                        color: zc.textTertiary,
-                        fontSize: 10,
-                        height: 1.15,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              // 右侧选中状态指示
-              if (isSelected)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: zc.accent.withAlpha(35),
-                        borderRadius: BorderRadius.circular(ZRadius.pill),
-                      ),
-                      child: Text(
-                        '${(_filterIntensity * 100).round()}%',
-                        style: TextStyle(
-                          color: zc.accent,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'monospace',
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Icon(Icons.check_circle, size: 18, color: zc.accent),
-                  ],
-                )
-              else
-                Icon(Icons.radio_button_unchecked,
-                    size: 18, color: zc.textTertiary),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// 平板模式预设单列列表（一行放一种，带可见滚动条）
-  Widget _buildTabletPresetVerticalList() {
-    final zc = context.zc;
-    final l10n = context.l10n;
-    final builtins = kBuiltinGradePresets;
-
-    return FutureBuilder<List<ColorGradePreset>>(
-      future: ColorGradePresetStore.load(),
-      builder: (context, snapshot) {
-        final userPresets = snapshot.data ?? const [];
-        final totalCount = 1 + userPresets.length + builtins.length;
-
-        return Scrollbar(
-          controller: _filterScrollController,
-          thumbVisibility: true,
-          interactive: true,
-          child: ListView.separated(
-            controller: _filterScrollController,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            itemCount: totalCount,
-            separatorBuilder: (_, __) => const SizedBox(height: 6),
-            itemBuilder: (context, index) {
-              // 第 0 行：存为新预设行
-              if (index == 0) {
-                return Material(
-                  color: ZSwatch.transparent,
-                  child: InkWell(
-                    onTap: _showSavePresetDialog,
-                    borderRadius: BorderRadius.circular(ZRadius.sm),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: zc.accent.withAlpha(18),
-                        borderRadius: BorderRadius.circular(ZRadius.sm),
-                        border: Border.all(
-                            color: zc.accent.withAlpha(70),
-                            width: ZStroke.hairline),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.bookmark_add_outlined,
-                              size: 16, color: zc.accent),
-                          const SizedBox(width: 8),
-                          Text(
-                            l10n.wmDialSaveAsPreset,
-                            style: TextStyle(
-                              color: zc.accent,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              }
-
-              final userIndex = index - 1;
-              final isUser = userIndex < userPresets.length;
-              final ColorGrade grade;
-              final String name;
-              final String categoryLabel;
-
-              if (isUser) {
-                final p = userPresets[userIndex];
-                name = p.name;
-                grade = p.grade;
-                categoryLabel = l10n.wmDialPresetCustomGroup;
-              } else {
-                final b = builtins[userIndex - userPresets.length];
-                name = b.trName;
-                grade = b.grade;
-                categoryLabel = b.trCategory;
-              }
-
-              return Material(
-                color: ZSwatch.transparent,
-                child: InkWell(
-                  onTap: () {
-                    _updateState(() {
-                      _adjustments = grade.base;
-                      _proGrade = grade;
-                      _selectedFilter = PhotoFilterType.original;
-                      _filterIntensity = 1.0;
-                    });
-                    showZToast(context, '$name · $categoryLabel');
-                  },
-                  borderRadius: BorderRadius.circular(ZRadius.sm),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: zc.surface,
-                      borderRadius: BorderRadius.circular(ZRadius.sm),
-                      border: Border.all(color: zc.outline),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          isUser
-                              ? Icons.person_outline
-                              : Icons.auto_awesome_outlined,
-                          size: 18,
-                          color: zc.accent,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                name,
-                                style: TextStyle(
-                                  color: zc.textPrimary,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                categoryLabel,
-                                style: TextStyle(
-                                  color: zc.textTertiary,
-                                  fontSize: 9.5,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (isUser)
-                          IconButton(
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                            icon: Icon(Icons.close,
-                                size: 14, color: zc.textTertiary),
-                            onPressed: () async {
-                              final p = userPresets[userIndex];
-                              await ColorGradePresetStore.remove(p.id);
-                              _updateState(() {});
-                            },
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-
-  /// 平板模式滤镜自适应屏幕高度分页
-  Widget _buildTabletFilmPagedView(List<PhotoFilterType> displayedFilters) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final availH = constraints.maxHeight - 44;
-        const cardH = 80.0;
-        const spacing = 8.0;
-        final rows = math.max(2, (availH / (cardH + spacing)).floor());
-        const cols = 2;
-        final itemsPerPage = rows * cols;
-        final totalItems = displayedFilters.length;
-        final totalPages = math.max(1, (totalItems / itemsPerPage).ceil());
-        final currentPage = _filterCurrentPage.clamp(0, totalPages - 1);
-
-        return Column(
+          mainAxisSpacing: ZSpace.xs,
+          crossAxisSpacing: ZSpace.sm,
+          physics: const NeverScrollableScrollPhysics(),
           children: [
-            Expanded(
-              child: PageView.builder(
-                controller: _filterPageController,
-                onPageChanged: (p) =>
-                    _updateState(() => _filterCurrentPage = p),
-                itemCount: totalPages,
-                itemBuilder: (context, pageIndex) {
-                  final start = pageIndex * itemsPerPage;
-                  final end = math.min(start + itemsPerPage, totalItems);
-                  final pageItems = displayedFilters.sublist(start, end);
-
-                  return Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                    child: GridView.builder(
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate:
-                          SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: cols,
-                        crossAxisSpacing: spacing,
-                        mainAxisSpacing: spacing,
-                        childAspectRatio:
-                            (constraints.maxWidth - 20 - spacing) /
-                                cols /
-                                cardH,
-                      ),
-                      itemCount: pageItems.length,
-                      itemBuilder: (context, i) {
-                        final filter = pageItems[i];
-                        return _buildFilmCard(filter);
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-            _buildTabletPaginationBar(
-              currentPage: currentPage,
-              totalPages: totalPages,
-              onPrev: currentPage > 0
-                  ? () => _filterPageController.previousPage(
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.easeInOut,
-                      )
-                  : null,
-              onNext: currentPage < totalPages - 1
-                  ? () => _filterPageController.nextPage(
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.easeInOut,
-                      )
-                  : null,
-            ),
+            for (var i = start; i < end; i++) cards[i],
           ],
         );
       },
     );
   }
 
-  /// 平板模式预设自适应屏幕高度分页
-  Widget _buildTabletPresetPagedView() {
-    final zc = context.zc;
-    final l10n = context.l10n;
-    final builtins = kBuiltinGradePresets;
-
-    return FutureBuilder<List<ColorGradePreset>>(
-      future: ColorGradePresetStore.load(),
-      builder: (context, snapshot) {
-        final userPresets = snapshot.data ?? const [];
-        final totalCount = 1 + userPresets.length + builtins.length;
-
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final availH = constraints.maxHeight - 44;
-            const cardH = 80.0;
-            const spacing = 8.0;
-            final rows = math.max(2, (availH / (cardH + spacing)).floor());
-            const cols = 2;
-            final itemsPerPage = rows * cols;
-            final totalPages = math.max(1, (totalCount / itemsPerPage).ceil());
-            final currentPage = _filterCurrentPage.clamp(0, totalPages - 1);
-
-            return Column(
-              children: [
-                Expanded(
-                  child: PageView.builder(
-                    controller: _filterPageController,
-                    onPageChanged: (p) =>
-                        _updateState(() => _filterCurrentPage = p),
-                    itemCount: totalPages,
-                    itemBuilder: (context, pageIndex) {
-                      final start = pageIndex * itemsPerPage;
-                      final end = math.min(start + itemsPerPage, totalCount);
-
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 2),
-                        child: GridView.builder(
-                          physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: cols,
-                            crossAxisSpacing: spacing,
-                            mainAxisSpacing: spacing,
-                            childAspectRatio:
-                                (constraints.maxWidth - 20 - spacing) /
-                                    cols /
-                                    cardH,
-                          ),
-                          itemCount: end - start,
-                          itemBuilder: (context, i) {
-                            final index = start + i;
-                            if (index == 0) {
-                              return Material(
-                                color: ZSwatch.transparent,
-                                child: InkWell(
-                                  onTap: _showSavePresetDialog,
-                                  borderRadius:
-                                      BorderRadius.circular(ZRadius.sm),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: zc.accent.withAlpha(20),
-                                      borderRadius:
-                                          BorderRadius.circular(ZRadius.sm),
-                                      border: Border.all(
-                                          color: zc.accent,
-                                          width: ZStroke.hairline),
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.bookmark_add_outlined,
-                                            size: 22, color: zc.accent),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          l10n.wmDialSaveAsPreset,
-                                          style: TextStyle(
-                                            color: zc.accent,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }
-
-                            final userIndex = index - 1;
-                            if (userIndex < userPresets.length) {
-                              final preset = userPresets[userIndex];
-                              return Material(
-                                color: ZSwatch.transparent,
-                                child: InkWell(
-                                  onTap: () {
-                                    _updateState(() {
-                                      _proGrade = preset.grade;
-                                      _adjustments = preset.grade.base;
-                                    });
-                                    showZToast(context,
-                                        '${preset.name} · ${preset.summary}');
-                                  },
-                                  borderRadius:
-                                      BorderRadius.circular(ZRadius.sm),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: zc.surface,
-                                      borderRadius:
-                                          BorderRadius.circular(ZRadius.sm),
-                                      border: Border.all(color: zc.outline),
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Icon(Icons.person_outline,
-                                                size: 14, color: zc.accent),
-                                            IconButton(
-                                              padding: EdgeInsets.zero,
-                                              constraints:
-                                                  const BoxConstraints(),
-                                              icon: Icon(Icons.close,
-                                                  size: 13,
-                                                  color: zc.textTertiary),
-                                              onPressed: () async {
-                                                await ColorGradePresetStore
-                                                    .remove(preset.id);
-                                                _updateState(() {});
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                        Text(
-                                          preset.name,
-                                          style: TextStyle(
-                                            color: zc.textPrimary,
-                                            fontSize: 11.5,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        Text(
-                                          preset.summary,
-                                          style: TextStyle(
-                                            color: zc.textTertiary,
-                                            fontSize: 9,
-                                            fontFamily: 'monospace',
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }
-
-                            final builtinIndex =
-                                userIndex - userPresets.length;
-                            final builtin = builtins[builtinIndex];
-                            return Material(
-                              color: ZSwatch.transparent,
-                              child: InkWell(
-                                onTap: () {
-                                  _updateState(() {
-                                    _proGrade = builtin.grade;
-                                    _adjustments = builtin.grade.base;
-                                  });
-                                  showZToast(context,
-                                      '${builtin.trName} · ${builtin.trDescription}');
-                                },
-                                borderRadius:
-                                      BorderRadius.circular(ZRadius.sm),
-                                child: Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: zc.surface,
-                                    borderRadius:
-                                        BorderRadius.circular(ZRadius.sm),
-                                    border: Border.all(color: zc.outline),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Icon(Icons.auto_awesome_outlined,
-                                          size: 14, color: zc.accent),
-                                      Text(
-                                        builtin.trName,
-                                        style: TextStyle(
-                                          color: zc.textPrimary,
-                                          fontSize: 11.5,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      Text(
-                                        builtin.trDescription,
-                                        style: TextStyle(
-                                          color: zc.textTertiary,
-                                          fontSize: 9,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                _buildTabletPaginationBar(
-                  currentPage: currentPage,
-                  totalPages: totalPages,
-                  onPrev: currentPage > 0
-                      ? () => _filterPageController.previousPage(
-                            duration: const Duration(milliseconds: 250),
-                            curve: Curves.easeInOut,
-                          )
-                      : null,
-                  onNext: currentPage < totalPages - 1
-                      ? () => _filterPageController.nextPage(
-                            duration: const Duration(milliseconds: 250),
-                            curve: Curves.easeInOut,
-                          )
-                      : null,
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  /// 预设横向胶片带
-  Widget _buildPresetHorizontalStrip() {
-    final zc = context.zc;
-    final l10n = context.l10n;
-    final builtins = kBuiltinGradePresets;
-
-    return FutureBuilder<List<ColorGradePreset>>(
-      future: ColorGradePresetStore.load(),
-      builder: (context, snapshot) {
-        final userPresets = snapshot.data ?? const [];
-        final totalCount = 1 + userPresets.length + builtins.length;
-
-        return ListView.separated(
-          scrollDirection: Axis.horizontal,
-          itemCount: totalCount,
-          separatorBuilder: (_, __) => const SizedBox(width: 8),
-          itemBuilder: (context, index) {
-            // 第 0 张：存为预设卡片
-            if (index == 0) {
-              return InkWell(
-                onTap: _showSavePresetDialog,
-                borderRadius: BorderRadius.circular(ZRadius.sm),
-                child: Container(
-                  width: 120,
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: zc.accent.withAlpha(20),
-                    borderRadius: BorderRadius.circular(ZRadius.sm),
-                    border: Border.all(
-                      color: zc.accent,
-                      width: ZStroke.hairline,
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.bookmark_add_outlined,
-                          size: 22, color: zc.accent),
-                      const SizedBox(height: 6),
-                      Text(
-                        l10n.wmDialSaveAsPreset,
-                        style: TextStyle(
-                          color: zc.accent,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-
-            // 用户保存的自定义预设
-            final userIndex = index - 1;
-            if (userIndex < userPresets.length) {
-              final preset = userPresets[userIndex];
-              return InkWell(
-                onTap: () {
-                  _updateState(() {
-                    _proGrade = preset.grade;
-                    _adjustments = preset.grade.base;
-                  });
-                  showZToast(context, '${preset.name} · ${preset.summary}');
-                },
-                borderRadius: BorderRadius.circular(ZRadius.sm),
-                child: Container(
-                  width: 125,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: zc.surface,
-                    borderRadius: BorderRadius.circular(ZRadius.sm),
-                    border: Border.all(color: zc.outline),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Icon(Icons.person_outline,
-                              size: 14, color: zc.accent),
-                          IconButton(
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                            icon: Icon(Icons.close,
-                                size: 14, color: zc.textTertiary),
-                            onPressed: () async {
-                              await ColorGradePresetStore.remove(preset.id);
-                              _updateState(() {});
-                            },
-                          ),
-                        ],
-                      ),
-                      Text(
-                        preset.name,
-                        style: TextStyle(
-                          color: zc.textPrimary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        preset.summary,
-                        style: TextStyle(
-                          color: zc.textTertiary,
-                          fontSize: 9.5,
-                          fontFamily: 'monospace',
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-
-            // 内置调色预设
-            final builtinIndex = userIndex - userPresets.length;
-            final builtin = builtins[builtinIndex];
-            return InkWell(
-              onTap: () {
-                _updateState(() {
-                  _proGrade = builtin.grade;
-                  _adjustments = builtin.grade.base;
-                });
-                showZToast(
-                  context,
-                  '${builtin.trName} · ${builtin.trDescription}',
-                );
-              },
-              borderRadius: BorderRadius.circular(ZRadius.sm),
-              child: Container(
-                width: 125,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                decoration: BoxDecoration(
-                  color: zc.surface,
-                  borderRadius: BorderRadius.circular(ZRadius.sm),
-                  border: Border.all(color: zc.outline),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.auto_awesome, size: 13, color: zc.accent),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            builtin.trCategory,
-                            style: TextStyle(
-                              color: zc.textTertiary,
-                              fontSize: 9.5,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      builtin.trName,
-                      style: TextStyle(
-                        color: zc.textPrimary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      builtin.trDescription,
-                      style: TextStyle(
-                        color: zc.textTertiary,
-                        fontSize: 9.5,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  /// 预设卡片组件
-  Widget _buildFilmCard(PhotoFilterType filter) {
-    final zc = context.zc;
-    final isSelected = filter == _selectedFilter;
-    return Material(
-      color: ZSwatch.transparent,
-      child: InkWell(
-        onTap: () => _updateState(() => _selectedFilter = filter),
-        borderRadius: BorderRadius.circular(ZRadius.sm),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          decoration: BoxDecoration(
-            color: isSelected ? zc.accent.withAlpha(35) : zc.surface,
-            borderRadius: BorderRadius.circular(ZRadius.sm),
-            border: Border.all(
-              color: isSelected ? zc.accent : zc.outline,
-              width: isSelected ? ZStroke.emphasis : ZStroke.hairline,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Row(
-                    children: filter.previewColors
-                        .take(3)
-                        .map((c) => Container(
-                              width: 7,
-                              height: 7,
-                              margin: const EdgeInsets.only(right: 3),
-                              decoration: BoxDecoration(
-                                color: c,
-                                shape: BoxShape.circle,
-                              ),
-                            ))
-                        .toList(),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      filter.code,
-                      style: TextStyle(
-                        color: zc.textTertiary,
-                        fontSize: 9.5,
-                        fontFamily: 'monospace',
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (isSelected)
-                    Icon(Icons.check_circle, size: 12, color: zc.accent),
-                ],
-              ),
-              Text(
-                filter.trLabel,
-                style: TextStyle(
-                  color: isSelected ? zc.accent : zc.textPrimary,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                  fontSize: 12,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              Text(
-                filter.recipeSummary,
-                style: TextStyle(
-                  color: isSelected
-                      ? zc.accent.withAlpha(210)
-                      : zc.textTertiary,
-                  fontSize: 8.5,
-                  height: 1.1,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
+  Widget _buildPresetStrip() {
+    final cards = _presetCards();
+    return ListView.separated(
+      scrollDirection: Axis.horizontal,
+      itemCount: cards.length,
+      separatorBuilder: (_, __) => const SizedBox(width: ZSpace.sm),
+      itemBuilder: (context, index) => SizedBox(
+        width: 132,
+        child: cards[index],
       ),
     );
   }
 
-  /// 保存自定义调色预设弹窗
-  Future<void> _showSavePresetDialog() async {
-    final l10n = context.l10n;
+  List<Widget> _presetCards() {
+    final cards = <Widget>[_buildCustomCard()];
+    if (_filterCategory == 'mine') {
+      for (final preset in _userPresets) {
+        cards.add(_buildPresetCard(preset));
+      }
+      cards.add(_buildSavePresetCard());
+    } else if (_filterCategory == 'builtin') {
+      for (final preset in kBuiltinGradePresets) {
+        cards.add(_buildPresetCard(preset.toPreset()));
+      }
+    } else {
+      for (final filter in PhotoFilterType.getByCategories(_filterCategory)) {
+        cards.add(_buildFilterCard(filter));
+      }
+    }
+    return cards;
+  }
+
+  Widget _buildCustomCard() {
     final zc = context.zc;
-    final controller = TextEditingController();
-    final name = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: zc.surfaceHigh,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(ZRadius.md)),
-        title: Text(
-          l10n.wmDialSaveAsPreset,
-          style: TextStyle(
-              color: zc.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          style: TextStyle(color: zc.textPrimary, fontSize: 13),
-          decoration: InputDecoration(
-            hintText: l10n.wmDialSavePresetPrompt,
-            hintStyle: TextStyle(color: zc.textTertiary, fontSize: 12),
-            filled: true,
-            fillColor: zc.surface,
-            isDense: true,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(ZRadius.sm),
-              borderSide: BorderSide(color: zc.outline),
+    final selected = _currentPresetId == 'custom';
+    return _presetShell(
+      selected: selected,
+      onTap: () => _updateState(() => _currentPresetId = 'custom'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Icon(Icons.tune, size: 16, color: selected ? zc.accent : zc.textTertiary),
+          Text(
+            context.l10n.commonCustom,
+            style: TextStyle(
+              color: selected ? zc.accent : zc.textPrimary,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(l10n.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () {
-              final t = controller.text.trim();
-              if (t.isNotEmpty) Navigator.pop(ctx, t);
-            },
-            child: Text(l10n.commonConfirm),
+          Text(
+            context.l10n.wmPresetCustomActive,
+            style: TextStyle(color: zc.textTertiary, fontSize: 9),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
     );
-    if (name == null || name.isEmpty) return;
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final preset = ColorGradePreset(
-      id: 'user_$now',
-      name: name,
-      grade: _proGrade.copyWith(base: _adjustments),
-      createdAtMs: now,
-      updatedAtMs: now,
-    );
-    await ColorGradePresetStore.upsert(preset);
-    if (mounted) {
-      _updateState(() {});
-      showZToast(
-        context,
-        l10n.wmDialSavePresetSuccess(name),
-        tone: ZStatusTone.success,
-      );
-    }
   }
 
-  /// 第 ③ 栏「参数精调」：横向参数拨盘带 + 单根高精度主滑块 + 内联 RAW/3D LUT
-  Widget _buildParameterGradePanel() {
-    final l10n = context.l10n;
-    final dialItems = _getGradeDialItems();
-
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      children: [
-        // 1. 顶部快速分组锚点条 + 重置全部按钮
-        _buildGradeQuickGroups(l10n),
-
-        const SizedBox(height: 8),
-
-        // 2. 中部核心区：当前参数单主滑块控制卡片
-        _buildActiveParameterSlider(l10n, dialItems),
-
-        const SizedBox(height: 10),
-
-        // 3. 底部横向参数拨盘带
-        _buildParameterDialStrip(l10n, dialItems),
-      ],
-    );
-  }
-
-  /// 快速分组锚点条
-  Widget _buildGradeQuickGroups(AppLocalizations l10n) {
+  Widget _buildSavePresetCard() {
     final zc = context.zc;
+    return _presetShell(
+      accent: true,
+      onTap: _showSavePresetDialog,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Icon(Icons.bookmark_add_outlined, size: 16, color: zc.accent),
+          Text(
+            context.l10n.wmPresetSaveNew,
+            style: TextStyle(
+              color: zc.accent,
+              fontSize: 11.5,
+              fontWeight: FontWeight.bold,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox.shrink(),
+        ],
+      ),
+    );
+  }
 
-    final groups = [
-      (l10n.wmGradeCatTone, 'Exposure'),
-      (l10n.wmGradeCatWb, 'Temp'),
-      (l10n.wmGradeCatPresence, 'Clarity'),
-      (l10n.wmGradeCatSplit, 'Hi-Hue'),
-      (l10n.wmGradeCatEffects, 'Vignette'),
-      ('3D LUT', 'LUT'),
+  Widget _buildPresetCard(ColorGradePreset preset) {
+    final zc = context.zc;
+    final selected = _currentPresetId == preset.id;
+    final isUser = !isBuiltinPresetId(preset.id);
+    return _presetShell(
+      selected: selected,
+      onTap: () => _applyGradePreset(preset),
+      onLongPress: isUser ? () => _showPresetActions(preset) : null,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isUser ? Icons.person_outline : Icons.auto_awesome,
+                size: 14,
+                color: selected ? zc.accent : zc.textTertiary,
+              ),
+              const Spacer(),
+              if (selected)
+                Icon(Icons.check_circle, size: 13, color: zc.accent),
+            ],
+          ),
+          Text(
+            preset.name,
+            style: TextStyle(
+              color: selected ? zc.accent : zc.textPrimary,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          Text(
+            preset.summary,
+            style: TextStyle(
+              color: selected ? zc.accent.withAlpha(210) : zc.textTertiary,
+              fontSize: 8.5,
+              height: 1.1,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterCard(PhotoFilterType filter) {
+    final zc = context.zc;
+    final selected = filter == _selectedFilter;
+    return _presetShell(
+      selected: selected,
+      onTap: () {
+        _disableSpektrafilm(notify: true);
+        _updateState(() {
+          _selectedFilter = filter;
+          _filterIntensity = 1.0;
+          _currentPresetId = 'custom';
+        });
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              for (final c in filter.previewColors.take(3))
+                Container(
+                  width: 7,
+                  height: 7,
+                  margin: const EdgeInsets.only(right: 3),
+                  decoration: BoxDecoration(color: c, shape: BoxShape.circle),
+                ),
+              const Spacer(),
+              if (selected)
+                Icon(Icons.check_circle, size: 13, color: zc.accent),
+            ],
+          ),
+          Text(
+            filter.trLabel,
+            style: TextStyle(
+              color: selected ? zc.accent : zc.textPrimary,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          Text(
+            filter.recipeSummary,
+            style: TextStyle(
+              color: selected ? zc.accent.withAlpha(210) : zc.textTertiary,
+              fontSize: 8.5,
+              height: 1.1,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _presetShell({
+    required Widget child,
+    required VoidCallback onTap,
+    VoidCallback? onLongPress,
+    bool selected = false,
+    bool accent = false,
+  }) {
+    final zc = context.zc;
+    final card = InkWell(
+      onTap: onTap,
+      onLongPress: onLongPress,
+      borderRadius: ZRadius.brSm,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: ZSpace.sm,
+          vertical: ZSpace.xs,
+        ),
+        decoration: BoxDecoration(
+          color: selected ? zc.accent.withAlpha(35) : zc.surface,
+          borderRadius: ZRadius.brSm,
+          border: Border.all(
+            color: selected
+                ? zc.accent
+                : (accent ? zc.accent.withAlpha(160) : zc.outline),
+            width: selected ? ZStroke.emphasis : ZStroke.hairline,
+          ),
+        ),
+        child: child,
+      ),
+    );
+    return card;
+  }
+
+  Widget _buildFilterIntensityBar() {
+    final zc = context.zc;
+    final l10n = context.l10n;
+    return Container(
+      margin: const EdgeInsets.only(top: ZSpace.sm),
+      padding: const EdgeInsets.symmetric(
+        horizontal: ZSpace.md,
+        vertical: ZSpace.xxs,
+      ),
+      decoration: BoxDecoration(
+        color: zc.surface,
+        borderRadius: ZRadius.brSm,
+        border: Border.all(color: zc.outline),
+      ),
+      child: Row(
+        children: [
+          Text(
+            l10n.wmPresetIntensity,
+            style: TextStyle(color: zc.textSecondary, fontSize: 11),
+          ),
+          Expanded(
+            child: Slider(
+              value: _filterIntensity,
+              min: 0,
+              max: 1,
+              divisions: 20,
+              activeColor: zc.accent,
+              inactiveColor: zc.outline,
+              onChanged: (value) {
+                _disableSpektrafilm(notify: true);
+                _updateState(() {
+                  _filterIntensity = value;
+                  _currentPresetId = 'custom';
+                });
+              },
+            ),
+          ),
+          SizedBox(
+            width: 36,
+            child: Text(
+              '${(_filterIntensity * 100).round()}%',
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                color: zc.accent,
+                fontSize: 11,
+                fontFamily: 'monospace',
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(width: ZSpace.sm),
+          TextButton(
+            onPressed: () {
+              _updateState(() {
+                _adjustments = _selectedFilter.presetAdjustments;
+                _proGrade = _proGrade.copyWith(base: _adjustments);
+                _currentPresetId = 'custom';
+              });
+              showZToast(
+                context,
+                l10n.wmLoadedFilterSlidersToast(_selectedFilter.trLabel),
+              );
+            },
+            child: Text(l10n.wmDialTransferToGrade),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilmBypassHint() {
+    final zc = context.zc;
+    return Container(
+      margin: const EdgeInsets.only(top: ZSpace.sm),
+      padding: const EdgeInsets.symmetric(
+        horizontal: ZSpace.md,
+        vertical: ZSpace.sm,
+      ),
+      decoration: BoxDecoration(
+        color: zc.accentContainer,
+        borderRadius: ZRadius.brSm,
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.movie_filter_outlined, size: 16, color: zc.accent),
+          const SizedBox(width: ZSpace.sm),
+          Expanded(
+            child: Text(
+              context.l10n.wmPresetFilmBypassHint,
+              style: TextStyle(color: zc.textSecondary, fontSize: 11),
+            ),
+          ),
+          TextButton(
+            onPressed: () => _disableSpektrafilm(),
+            child: Text(context.l10n.spektraDisable),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==================== 纵向分组滑块 ====================
+
+  List<Widget> _buildGradeGroups() {
+    final l = context.l10n;
+    final items = {for (final item in _getGradeDialItems()) item.code: item};
+    final groups = <_GradeGroupDef>[
+      _GradeGroupDef(
+        code: 'tone',
+        title: l.wmGradeCatTone,
+        icon: Icons.tonality_outlined,
+        codes: const [
+          'Exposure',
+          'Contrast',
+          'Highlights',
+          'Shadows',
+          'Whites',
+          'Blacks',
+        ],
+      ),
+      _GradeGroupDef(
+        code: 'wb',
+        title: l.wmGradeCatWb,
+        icon: Icons.thermostat_outlined,
+        codes: const ['Temp', 'Tint', 'Vibrance', 'Saturation'],
+      ),
+      _GradeGroupDef(
+        code: 'presence',
+        title: l.wmGradeCatPresence,
+        icon: Icons.texture_outlined,
+        codes: const ['Clarity', 'Texture', 'Dehaze'],
+      ),
+      _GradeGroupDef(
+        code: 'split',
+        title: l.wmGradeCatSplit,
+        icon: Icons.color_lens_outlined,
+        codes: const ['Hi-Hue', 'Hi-Sat', 'Sh-Hue', 'Sh-Sat'],
+      ),
+      _GradeGroupDef(
+        code: 'effects',
+        title: l.wmGradeCatEffects,
+        icon: Icons.camera_outlined,
+        codes: const ['Vignette', 'Grain'],
+      ),
+      _GradeGroupDef(
+        code: 'detail',
+        title: l.wmGradeCatDetail,
+        icon: Icons.auto_fix_high_outlined,
+        codes: const [],
+      ),
     ];
 
-    return Row(
-      children: [
-        Expanded(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                for (final g in groups) ...[
-                  Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: InkWell(
-                      onTap: () => _updateState(() => _activeParamCode = g.$2),
-                      borderRadius: BorderRadius.circular(14),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: _activeParamCode == g.$2
-                              ? zc.accent.withAlpha(40)
-                              : zc.surface,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: _activeParamCode == g.$2
-                                ? zc.accent
-                                : zc.outline,
-                            width: ZStroke.hairline,
-                          ),
-                        ),
-                        child: Text(
-                          g.$1,
-                          style: TextStyle(
-                            color: _activeParamCode == g.$2
-                                ? zc.accent
-                                : zc.textSecondary,
-                            fontSize: 11,
-                            fontWeight: _activeParamCode == g.$2
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                          ),
-                        ),
+    return [
+      for (final group in groups)
+        group.code == 'detail'
+            ? _buildDetailGroup(group)
+            : _buildGradeGroup(group, [
+                for (final code in group.codes) items[code]!,
+              ]),
+    ];
+  }
+
+  Widget _buildGradeGroup(_GradeGroupDef group, List<_GradeDialItem> items) {
+    final zc = context.zc;
+    final collapsed = _collapsedGradeGroups.contains(group.code);
+    return Container(
+      margin: const EdgeInsets.only(bottom: ZSpace.sm),
+      decoration: BoxDecoration(
+        color: zc.surface,
+        borderRadius: ZRadius.brMd,
+        border: Border.all(color: zc.outline),
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () {
+              _updateState(() {
+                if (collapsed) {
+                  _collapsedGradeGroups.remove(group.code);
+                } else {
+                  _collapsedGradeGroups.add(group.code);
+                }
+              });
+            },
+            borderRadius: ZRadius.brMd,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: ZSpace.md,
+                vertical: ZSpace.sm,
+              ),
+              child: Row(
+                children: [
+                  Icon(group.icon, size: 15, color: zc.textSecondary),
+                  const SizedBox(width: ZSpace.sm),
+                  Expanded(
+                    child: Text(
+                      group.title,
+                      style: TextStyle(
+                        color: zc.textPrimary,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
+                  Text(
+                    '${items.length}',
+                    style: TextStyle(color: zc.textTertiary, fontSize: 11),
+                  ),
+                  const SizedBox(width: ZSpace.xs),
+                  Icon(
+                    collapsed
+                        ? Icons.keyboard_arrow_down
+                        : Icons.keyboard_arrow_up,
+                    size: 18,
+                    color: zc.textTertiary,
+                  ),
                 ],
-              ],
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 6),
-        InkWell(
-          onTap: () {
-            _updateState(() {
-              _adjustments = const PhotoEditAdjustments();
-              _proGrade = const ColorGrade();
-            });
-            showZToast(context, l10n.commonReset);
-          },
-          borderRadius: BorderRadius.circular(14),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.restart_alt, size: 14, color: zc.textTertiary),
-                const SizedBox(width: 2),
-                Text(
-                  l10n.wmDialResetAll,
-                  style: TextStyle(color: zc.textTertiary, fontSize: 11),
-                ),
-              ],
+          if (!collapsed) ...[
+            Divider(height: 1, color: zc.outlineVariant),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                ZSpace.md,
+                ZSpace.xs,
+                ZSpace.md,
+                ZSpace.xs,
+              ),
+              child: Column(
+                children: [
+                  for (final item in items) _buildGradeSliderRow(item),
+                ],
+              ),
             ),
-          ),
-        ),
-      ],
+          ],
+        ],
+      ),
     );
   }
 
-  /// 单高精度主滑块控制区
-  Widget _buildActiveParameterSlider(
-      AppLocalizations l10n, List<_GradeDialItem> dialItems) {
+  Widget _buildDetailGroup(_GradeGroupDef group) {
     final zc = context.zc;
+    final l = context.l10n;
+    final collapsed = _collapsedGradeGroups.contains(group.code);
+    final isRaw = _rawSourcePath != null && _rawSourcePath!.isNotEmpty;
+    return Container(
+      margin: const EdgeInsets.only(bottom: ZSpace.sm),
+      decoration: BoxDecoration(
+        color: zc.surface,
+        borderRadius: ZRadius.brMd,
+        border: Border.all(color: zc.outline),
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () {
+              _updateState(() {
+                if (collapsed) {
+                  _collapsedGradeGroups.remove(group.code);
+                } else {
+                  _collapsedGradeGroups.add(group.code);
+                }
+              });
+            },
+            borderRadius: ZRadius.brMd,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: ZSpace.md,
+                vertical: ZSpace.sm,
+              ),
+              child: Row(
+                children: [
+                  Icon(group.icon, size: 15, color: zc.textSecondary),
+                  const SizedBox(width: ZSpace.sm),
+                  Expanded(
+                    child: Text(
+                      group.title,
+                      style: TextStyle(
+                        color: zc.textPrimary,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  if (isRaw)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 1,
+                      ),
+                      decoration: BoxDecoration(
+                        color: zc.accentContainer,
+                        borderRadius: ZRadius.brXs,
+                      ),
+                      child: Text(
+                        'RAW',
+                        style: TextStyle(
+                          color: zc.accent,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(width: ZSpace.xs),
+                  Icon(
+                    collapsed
+                        ? Icons.keyboard_arrow_down
+                        : Icons.keyboard_arrow_up,
+                    size: 18,
+                    color: zc.textTertiary,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (!collapsed) ...[
+            Divider(height: 1, color: zc.outlineVariant),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                ZSpace.md,
+                ZSpace.xs,
+                ZSpace.md,
+                ZSpace.sm,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (isRaw) ...[
+                    ZSlider(
+                      label: l.wmDetailSharpening,
+                      value: _proGrade.sharpening.clamp(0, 100),
+                      min: 0,
+                      max: 100,
+                      defaultValue: 0,
+                      icon: Icons.auto_fix_high,
+                      dense: true,
+                      onChanged: (value) => _updateState(() {
+                        _proGrade = _proGrade.copyWith(
+                          sharpening: value,
+                          base: _adjustments,
+                        );
+                        _currentPresetId = 'custom';
+                      }),
+                    ),
+                    ZSlider(
+                      label: l.wmDetailNoiseReduction,
+                      value: _proGrade.noiseReduction.clamp(0, 100),
+                      min: 0,
+                      max: 100,
+                      defaultValue: 0,
+                      icon: Icons.blur_on,
+                      dense: true,
+                      onChanged: (value) => _updateState(() {
+                        _proGrade = _proGrade.copyWith(
+                          noiseReduction: value,
+                          base: _adjustments,
+                        );
+                        _currentPresetId = 'custom';
+                      }),
+                    ),
+                  ] else
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: ZSpace.xs),
+                      child: Text(
+                        l.wmGradeDetailRawOnly,
+                        style: TextStyle(
+                          color: zc.textTertiary,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                  _buildLutCard(),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 
-    if (_activeParamCode == 'LUT') {
-      final lut = _proGrade.lut;
-      final hasLut = lut.path.isNotEmpty;
-      return Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: zc.surface,
-          borderRadius: BorderRadius.circular(ZRadius.sm),
-          border: Border.all(color: zc.outline),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.auto_awesome, size: 16, color: zc.accent),
-                const SizedBox(width: 8),
-                Text(
+  Widget _buildGradeSliderRow(_GradeDialItem item) {
+    final value = item.getValue(_adjustments, _proGrade);
+    return ZSlider(
+      label: item.title(context.l10n),
+      value: value,
+      min: item.min,
+      max: item.max,
+      defaultValue: item.defaultValue,
+      divisions: (item.max - item.min).round().clamp(10, 360),
+      valueText: item.unit.isEmpty
+          ? null
+          : '${value.round()}${item.unit}',
+      icon: item.icon,
+      trackGradient: item.gradient,
+      dense: true,
+      onChanged: (next) => _onGradeSliderChanged(item, next),
+    );
+  }
+
+  void _onGradeSliderChanged(_GradeDialItem item, double value) {
+    _presetAnimController.stop();
+    _presetAnimFrom = null;
+    _presetAnimTo = null;
+    _disableSpektrafilm(notify: true);
+    _updateState(() {
+      _adjustments = item.applyValue(_adjustments, value);
+      _proGrade = _proGrade.copyWith(base: _adjustments);
+      _currentPresetId = 'custom';
+    });
+  }
+
+  Widget _buildLutCard() {
+    final zc = context.zc;
+    final l = context.l10n;
+    final lut = _proGrade.lut;
+    final hasLut = lut.path.isNotEmpty;
+    return Container(
+      padding: const EdgeInsets.all(ZSpace.md),
+      decoration: BoxDecoration(
+        color: zc.surfaceHigh,
+        borderRadius: ZRadius.brSm,
+        border: Border.all(color: zc.outline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.auto_awesome, size: 16, color: zc.accent),
+              const SizedBox(width: ZSpace.sm),
+              Expanded(
+                child: Text(
                   '3D LUT (.cube)',
                   style: TextStyle(
                     color: zc.textPrimary,
@@ -1749,432 +1055,410 @@ extension _WatermarkScreenGradePanel on WatermarkScreenState {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const Spacer(),
-                if (hasLut)
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    icon: Icon(Icons.close, size: 16, color: zc.textTertiary),
-                    onPressed: () {
-                      _updateState(() {
-                        _proGrade = _proGrade.copyWith(lut: const LutRef());
-                      });
-                    },
-                  ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    hasLut ? lut.name : l10n.wmDialNoLutChosen,
-                    style: TextStyle(
-                      color: hasLut ? zc.accent : zc.textTertiary,
-                      fontSize: 11,
-                      fontFamily: 'monospace',
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                OutlinedButton.icon(
-                  onPressed: () async {
-                    final path = await CameraNativeBridge.pickFile();
-                    if (path != null && path.isNotEmpty) {
-                      _updateState(() {
-                        _proGrade = _proGrade.copyWith(
-                          lut: LutRef(
-                            id: path,
-                            name: path.split(RegExp(r'[\\/]')).last,
-                            path: path,
-                            strength: 1.0,
-                          ),
-                        );
-                      });
-                    }
-                  },
-                  icon: const Icon(Icons.folder_open, size: 14),
-                  label: Text(l10n.wmDialActiveLutButton),
-                  style: OutlinedButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                    foregroundColor: zc.accent,
-                    side: BorderSide(color: zc.accent, width: ZStroke.hairline),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(ZRadius.pill),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            if (hasLut) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Text(
-                    l10n.wmPresetIntensity,
-                    style: TextStyle(color: zc.textSecondary, fontSize: 11),
-                  ),
-                  Expanded(
-                    child: Slider(
-                      value: lut.strength,
-                      min: 0.0,
-                      max: 1.0,
-                      divisions: 20,
-                      activeColor: zc.accent,
-                      inactiveColor: zc.outline,
-                      label: '${(lut.strength * 100).round()}%',
-                      onChanged: (val) {
-                        _updateState(() {
-                          _proGrade = _proGrade.copyWith(
-                            lut: lut.copyWith(strength: val),
-                          );
-                        });
-                      },
-                    ),
-                  ),
-                  Text(
-                    '${(lut.strength * 100).round()}%',
-                    style: TextStyle(
-                      color: zc.accent,
-                      fontSize: 11,
-                      fontFamily: 'monospace',
-                    ),
-                  ),
-                ],
               ),
+              if (hasLut)
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  icon: Icon(Icons.close, size: 16, color: zc.textTertiary),
+                  onPressed: () => _updateState(() {
+                    _proGrade = _proGrade.copyWith(lut: const LutRef());
+                  }),
+                ),
             ],
-          ],
-        ),
-      );
-    }
-
-    final item = dialItems.firstWhere(
-      (e) => e.code == _activeParamCode,
-      orElse: () => dialItems.first,
-    );
-
-    final val = item.getValue(_adjustments, _proGrade);
-    final displayVal = val.round();
-    final String valueText;
-    if (item.min >= 0) {
-      valueText = '$displayVal${item.unit}';
-    } else {
-      valueText = displayVal > 0
-          ? '+$displayVal${item.unit}'
-          : '$displayVal${item.unit}';
-    }
-    final isModified = val.abs() > 0.5;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: zc.surface,
-        borderRadius: BorderRadius.circular(ZRadius.sm),
-        border: Border.all(
-          color: isModified ? zc.accent.withAlpha(90) : zc.outline,
-          width: isModified ? 1.0 : ZStroke.hairline,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+          ),
+          const SizedBox(height: ZSpace.sm),
           Row(
             children: [
-              Icon(
-                item.icon,
-                size: 15,
-                color: isModified ? zc.accent : zc.textSecondary,
-              ),
-              const SizedBox(width: 6),
-              Flexible(
+              Expanded(
                 child: Text(
-                  '${item.title(l10n)} (${item.code})',
+                  hasLut ? lut.name : l.wmDialNoLutChosen,
                   style: TextStyle(
-                    color: isModified ? zc.accent : zc.textPrimary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
+                    color: hasLut ? zc.accent : zc.textTertiary,
+                    fontSize: 11,
+                    fontFamily: 'monospace',
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(width: 4),
-              // 微调 [-] 按钮
-              IconButton(
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                icon: Icon(Icons.remove_circle_outline,
-                    size: 17, color: zc.textTertiary),
-                onPressed: () {
-                  final step = item.min >= 0 ? 5.0 : 2.0;
-                  final nextVal = (val - step).clamp(item.min, item.max);
+              const SizedBox(width: ZSpace.sm),
+              OutlinedButton.icon(
+                onPressed: () async {
+                  final path = await CameraNativeBridge.pickFile();
+                  if (path == null || path.isEmpty || !mounted) return;
                   _updateState(() {
-                    _adjustments = item.applyValue(_adjustments, nextVal);
+                    _proGrade = _proGrade.copyWith(
+                      lut: LutRef(
+                        id: path,
+                        name: path.split(RegExp(r'[\\/]')).last,
+                        path: path,
+                        strength: 1.0,
+                      ),
+                    );
+                    _currentPresetId = 'custom';
                   });
                 },
-              ),
-              const SizedBox(width: 4),
-              // 单击归零数值胶囊
-              InkWell(
-                onTap: () {
-                  _updateState(() {
-                    _adjustments = item.applyValue(_adjustments, 0.0);
-                  });
-                },
-                borderRadius: BorderRadius.circular(4),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: isModified ? zc.accent.withAlpha(35) : zc.outline,
-                    borderRadius: BorderRadius.circular(4),
+                icon: const Icon(Icons.folder_open, size: 14),
+                label: Text(l.wmDialActiveLutButton),
+                style: OutlinedButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  foregroundColor: zc.accent,
+                  side: BorderSide(color: zc.accent, width: ZStroke.hairline),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(ZRadius.pill),
                   ),
-                  child: Text(
-                    valueText,
-                    style: TextStyle(
-                      color: isModified ? zc.accent : zc.textSecondary,
-                      fontSize: 11,
-                      fontFamily: 'monospace',
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 4),
-              // 微调 [+] 按钮
-              IconButton(
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                icon: Icon(Icons.add_circle_outline,
-                    size: 17, color: zc.textTertiary),
-                onPressed: () {
-                  final step = item.min >= 0 ? 5.0 : 2.0;
-                  final nextVal = (val + step).clamp(item.min, item.max);
-                  _updateState(() {
-                    _adjustments = item.applyValue(_adjustments, nextVal);
-                  });
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              if (item.gradient != null)
-                Container(
-                  height: 4,
-                  margin: const EdgeInsets.symmetric(horizontal: 14),
-                  decoration: BoxDecoration(
-                    gradient: item.gradient,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              SliderTheme(
-                data: SliderTheme.of(context).copyWith(
-                  trackHeight: item.gradient != null ? 3.0 : 4.0,
-                  activeTrackColor:
-                      item.gradient != null ? ZSwatch.transparent : zc.accent,
-                  inactiveTrackColor:
-                      item.gradient != null ? ZSwatch.transparent : zc.outline,
-                  thumbColor: zc.accent,
-                  thumbShape:
-                      const RoundSliderThumbShape(enabledThumbRadius: 6),
-                  overlayShape:
-                      const RoundSliderOverlayShape(overlayRadius: 14),
-                ),
-                child: Slider(
-                  value: val.clamp(item.min, item.max),
-                  min: item.min,
-                  max: item.max,
-                  divisions:
-                      (item.max - item.min).round().clamp(10, 360).toInt(),
-                  onChanged: (newVal) {
-                    _updateState(() {
-                      _adjustments = item.applyValue(_adjustments, newVal);
-                    });
-                  },
                 ),
               ),
             ],
           ),
+          if (hasLut) ...[
+            const SizedBox(height: ZSpace.sm),
+            Row(
+              children: [
+                Text(
+                  l.wmPresetIntensity,
+                  style: TextStyle(color: zc.textSecondary, fontSize: 11),
+                ),
+                Expanded(
+                  child: Slider(
+                    value: lut.strength,
+                    min: 0,
+                    max: 1,
+                    divisions: 20,
+                    activeColor: zc.accent,
+                    inactiveColor: zc.outline,
+                    onChanged: (value) => _updateState(() {
+                      _proGrade = _proGrade.copyWith(
+                        lut: lut.copyWith(strength: value),
+                      );
+                    }),
+                  ),
+                ),
+                Text(
+                  '${(lut.strength * 100).round()}%',
+                  style: TextStyle(
+                    color: zc.accent,
+                    fontSize: 11,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
   }
 
-  /// 底部横向参数拨盘带
-  Widget _buildParameterDialStrip(
-      AppLocalizations l10n, List<_GradeDialItem> dialItems) {
+  // ==================== 底部操作条 ====================
+
+  Widget _buildPresetBottomBar() {
     final zc = context.zc;
-    final totalCount = dialItems.length + 1; // 加上 3D LUT
-
-    return SizedBox(
-      height: 64,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: totalCount,
-        separatorBuilder: (_, __) => const SizedBox(width: 6),
-        itemBuilder: (context, index) {
-          if (index == dialItems.length) {
-            // 3D LUT 图标拨盘
-            final isSelected = _activeParamCode == 'LUT';
-            final hasLut = _proGrade.lut.path.isNotEmpty;
-            return InkWell(
-              onTap: () => _updateState(() => _activeParamCode = 'LUT'),
-              borderRadius: BorderRadius.circular(ZRadius.sm),
-              child: Container(
-                width: 62,
-                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-                decoration: BoxDecoration(
-                  color: isSelected ? zc.accent.withAlpha(35) : zc.surface,
-                  borderRadius: BorderRadius.circular(ZRadius.sm),
-                  border: Border.all(
-                    color: isSelected ? zc.accent : zc.outline,
-                    width: isSelected ? ZStroke.emphasis : ZStroke.hairline,
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.auto_awesome,
-                      size: 16,
-                      color: isSelected
-                          ? zc.accent
-                          : (hasLut ? zc.accent : zc.textSecondary),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '3D LUT',
-                      style: TextStyle(
-                        color: isSelected ? zc.accent : zc.textSecondary,
-                        fontSize: 9.5,
-                        fontWeight:
-                            isSelected ? FontWeight.bold : FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (hasLut) ...[
-                      const SizedBox(height: 2),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 5,
-                            height: 5,
-                            decoration: BoxDecoration(
-                              color: zc.accent,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 3),
-                          Text(
-                            'ON',
-                            style: TextStyle(
-                              color: zc.accent,
-                              fontSize: 8,
-                              fontFamily: 'monospace',
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ],
+    final l = context.l10n;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(
+        ZSpace.md,
+        ZSpace.sm,
+        ZSpace.md,
+        ZSpace.sm,
+      ),
+      decoration: BoxDecoration(
+        color: zc.surface,
+        border: Border(top: BorderSide(color: zc.outline)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            TextButton.icon(
+              onPressed: () {
+                _presetAnimController.stop();
+                _presetAnimFrom = null;
+                _presetAnimTo = null;
+                _updateState(() {
+                  _adjustments = const PhotoEditAdjustments();
+                  _proGrade = const ColorGrade();
+                  _selectedFilter = PhotoFilterType.original;
+                  _filterIntensity = 1.0;
+                  _currentPresetId = 'custom';
+                });
+              },
+              icon: const Icon(Icons.restart_alt, size: 16),
+              label: Text(l.wmDialResetAll),
+            ),
+            const SizedBox(width: ZSpace.sm),
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: _showSavePresetDialog,
+                icon: const Icon(Icons.bookmark_add_outlined, size: 16),
+                label: Text(
+                  l.wmPresetSaveNew,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-            );
-          }
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-          final item = dialItems[index];
-          final isSelected = item.code == _activeParamCode;
-          final val = item.getValue(_adjustments, _proGrade);
-          final isModified = val.abs() > 0.5;
+  // ==================== 预设管理弹窗 ====================
 
-          final displayVal = val.round();
-          final String badgeText;
-          if (item.min >= 0) {
-            badgeText = '$displayVal${item.unit}';
-          } else {
-            badgeText = displayVal > 0 ? '+$displayVal' : '$displayVal';
-          }
+  Future<void> _showSavePresetDialog() async {
+    final l = context.l10n;
+    final zc = context.zc;
+    final controller = TextEditingController();
+    final current = _userPresets.where((p) => p.id == _currentPresetId);
+    final overwriteTarget = current.isEmpty ? null : current.first;
+    var overwrite = false;
 
-          return InkWell(
-            onTap: () => _updateState(() => _activeParamCode = item.code),
-            borderRadius: BorderRadius.circular(ZRadius.sm),
-            child: Container(
-              width: 62,
-              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-              decoration: BoxDecoration(
-                color: isSelected ? zc.accent.withAlpha(35) : zc.surface,
-                borderRadius: BorderRadius.circular(ZRadius.sm),
-                border: Border.all(
-                  color: isSelected ? zc.accent : zc.outline,
-                  width: isSelected ? ZStroke.emphasis : ZStroke.hairline,
-                ),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            return AlertDialog(
+              title: Text(l.presetSaveDialogTitle),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    item.icon,
-                    size: 16,
-                    color: isSelected
-                        ? zc.accent
-                        : (isModified ? zc.accent : zc.textSecondary),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    item.title(l10n),
-                    style: TextStyle(
-                      color: isSelected ? zc.accent : zc.textSecondary,
-                      fontSize: 9.5,
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.w500,
+                  TextField(
+                    controller: controller,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      hintText: l.wmDialSavePresetPrompt,
+                      isDense: true,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                  if (isModified) ...[
-                    const SizedBox(height: 2),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 4,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: zc.accent,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 2),
-                        Text(
-                          badgeText,
-                          style: TextStyle(
-                            color: zc.accent,
-                            fontSize: 8,
-                            fontFamily: 'monospace',
-                            fontWeight: FontWeight.bold,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                  if (overwriteTarget != null) ...[
+                    const SizedBox(height: ZSpace.sm),
+                    CheckboxListTile(
+                      value: overwrite,
+                      onChanged: (value) {
+                        setDialogState(() => overwrite = value ?? false);
+                      },
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      title: Text(
+                        l.wmPresetOverwrite,
+                        style: TextStyle(color: zc.textSecondary, fontSize: 12),
+                      ),
+                      subtitle: Text(
+                        overwriteTarget.name,
+                        style: TextStyle(color: zc.textTertiary, fontSize: 11),
+                      ),
                     ),
                   ],
                 ],
               ),
-            ),
-          );
-        },
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: Text(l.commonCancel),
+                ),
+                FilledButton(
+                  onPressed: () async {
+                    final name = controller.text.trim();
+                    if (name.isEmpty) return;
+                    Navigator.of(dialogContext).pop();
+                    await _savePreset(name, overwriteTarget, overwrite);
+                  },
+                  child: Text(l.commonSave),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    controller.dispose();
+  }
+
+  Future<void> _savePreset(
+    String name,
+    ColorGradePreset? target,
+    bool overwrite,
+  ) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final ColorGradePreset preset;
+    if (overwrite && target != null) {
+      preset = target.copyWith(
+        name: name,
+        grade: _proGrade.copyWith(base: _adjustments),
+        updatedAtMs: now,
+      );
+    } else {
+      preset = ColorGradePreset(
+        id: 'user_$now',
+        name: name,
+        grade: _proGrade.copyWith(base: _adjustments),
+        createdAtMs: now,
+        updatedAtMs: now,
+      );
+    }
+    final presets = await ColorGradePresetStore.upsert(preset);
+    if (!mounted) return;
+    _updateState(() {
+      _userPresets = presets;
+      _currentPresetId = preset.id;
+      _filterCategory = 'mine';
+    });
+    if (mounted) showZToast(context, context.l10n.wmDialSavePresetSuccess(name));
+  }
+
+  Future<void> _showPresetActions(ColorGradePreset preset) async {
+    final l = context.l10n;
+    final zc = context.zc;
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: zc.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(ZRadius.lg)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  ZSpace.lg,
+                  ZSpace.md,
+                  ZSpace.lg,
+                  ZSpace.xs,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        preset.name,
+                        style: TextStyle(
+                          color: zc.textPrimary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.drive_file_rename_outline),
+                title: Text(l.wmPresetRename),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  _showRenamePresetDialog(preset);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.save_as_outlined),
+                title: Text(l.wmPresetOverwrite),
+                onTap: () async {
+                  Navigator.of(sheetContext).pop();
+                  final now = DateTime.now().millisecondsSinceEpoch;
+                  final presets = await ColorGradePresetStore.upsert(
+                    preset.copyWith(
+                      grade: _proGrade.copyWith(base: _adjustments),
+                      updatedAtMs: now,
+                    ),
+                  );
+                  if (!mounted) return;
+                  _updateState(() => _userPresets = presets);
+                  if (mounted) {
+                    showZToast(
+                      context,
+                      context.l10n.wmDialSavePresetSuccess(preset.name),
+                    );
+                  }
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.delete_outline, color: zc.danger),
+                title: Text(
+                  l.commonDelete,
+                  style: TextStyle(color: zc.danger),
+                ),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  _confirmDeletePreset(preset);
+                },
+              ),
+              const SizedBox(height: ZSpace.sm),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showRenamePresetDialog(ColorGradePreset preset) async {
+    final l = context.l10n;
+    final controller = TextEditingController(text: preset.name);
+    final name = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l.wmPresetRenameTitle),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(isDense: true),
+          onSubmitted: (value) =>
+              Navigator.of(dialogContext).pop(value.trim()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(l.commonCancel),
+          ),
+          FilledButton(
+            onPressed: () =>
+                Navigator.of(dialogContext).pop(controller.text.trim()),
+            child: Text(l.commonSave),
+          ),
+        ],
       ),
     );
+    controller.dispose();
+    if (name == null || name.isEmpty || !mounted) return;
+    final presets = await ColorGradePresetStore.rename(preset.id, name);
+    if (!mounted) return;
+    _updateState(() => _userPresets = presets);
+    if (mounted) showZToast(context, context.l10n.wmPresetRenamedToast(name));
+  }
+
+  Future<void> _confirmDeletePreset(ColorGradePreset preset) async {
+    final l = context.l10n;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l.wmPresetDeleteTitle),
+        content: Text(l.wmPresetDeleteConfirm(preset.name)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l.commonCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: context.zc.danger,
+            ),
+            child: Text(l.commonDelete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final presets = await ColorGradePresetStore.remove(preset.id);
+    if (!mounted) return;
+    _updateState(() => _userPresets = presets);
+    if (mounted) showZToast(context, context.l10n.wmPresetDeletedToast);
   }
 }

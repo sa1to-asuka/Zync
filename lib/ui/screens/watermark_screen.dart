@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../core/settings/app_settings.dart';
 import '../../core/utils/capture_date.dart';
@@ -14,6 +15,9 @@ import '../../engine/editor/photo_edit_controller.dart';
 import '../../engine/editor/pro_photo_models.dart';
 import '../../engine/editor/raw_processor_bridge.dart';
 import '../../engine/filter/photo_filter.dart';
+import '../../engine/spektrafilm/spektrafilm_models.dart';
+import '../../engine/spektrafilm/spektrafilm_native.dart';
+import '../../engine/spektrafilm/spektrafilm_renderer.dart';
 import '../../engine/transfer/export_history_manager.dart';
 import '../../engine/watermark/watermark_painter.dart';
 import '../../engine/watermark/watermark_renderer.dart';
@@ -32,6 +36,7 @@ import '../widgets/watermark_template_card.dart';
 
 part 'watermark/watermark_grade_panel.dart';
 part 'watermark/watermark_sheets.dart';
+part 'watermark/watermark_spektrafilm_panel.dart';
 
 /// 摄影画廊级水印工坊与胶片调色工作室
 class WatermarkScreen extends StatefulWidget {
@@ -49,15 +54,15 @@ class WatermarkScreen extends StatefulWidget {
 }
 
 class WatermarkScreenState extends State<WatermarkScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   void _updateState(VoidCallback fn) {
     if (mounted) setState(fn);
   }
 
   double _panelHeight(BuildContext context) => math.min(
       MediaQuery.orientationOf(context) == Orientation.landscape
-          ? (_tabController.index == 3 ? 204.0 : 210.0)
-          : (_tabController.index == 3 ? 270.0 : 330.0),
+          ? (_tabController.index >= 2 ? 204.0 : 210.0)
+          : (_tabController.index >= 2 ? 270.0 : 330.0),
       MediaQuery.sizeOf(context).height * .48);
 
   ui.Image? get _decodedImage => _editController.previewImage;
@@ -79,6 +84,9 @@ class WatermarkScreenState extends State<WatermarkScreen>
   List<int>? _sampledR;
   List<int>? _sampledG;
   List<int>? _sampledB;
+  List<int>? _sourceSampledR;
+  List<int>? _sourceSampledG;
+  List<int>? _sourceSampledB;
   double _spacingScale = 1.0;
   bool _showDetails = true;
 
@@ -110,8 +118,24 @@ class WatermarkScreenState extends State<WatermarkScreen>
 
   int _templateSubTab = 0;
   bool _showHistogramHud = false;
-  String _activeParamCode = 'Exposure';
-  String _filterCategory = 'preset';
+  String _filterCategory = 'builtin';
+
+  String? _currentPresetId = 'custom';
+  List<ColorGradePreset> _userPresets = const [];
+  final Set<String> _collapsedGradeGroups = <String>{};
+
+  SpektrafilmSettings _spektrafilm = const SpektrafilmSettings();
+  List<SpektraStockInfo> _spektraStocks = const [];
+  List<SpektraPaperInfo> _spektraPapers = const [];
+  bool _spektraCatalogUnavailable = false;
+  SpektrafilmPreviewController? _filmPreview;
+  bool _filmNoticeShown = false;
+  bool _filmErrorShown = false;
+  int _filmSampleRevision = 0;
+
+  late final AnimationController _presetAnimController;
+  PhotoEditAdjustments? _presetAnimFrom;
+  PhotoEditAdjustments? _presetAnimTo;
 
   List<String> get _customLines => [
         AppSettings.instance.watermarkCustomLine1.trim(),
@@ -139,7 +163,6 @@ class WatermarkScreenState extends State<WatermarkScreen>
   final PageController _wmPageController = PageController();
   final PageController _filterPageController = PageController();
   int _wmCurrentPage = 0;
-  int _filterCurrentPage = 0;
   int _tabletWatermarkSection = 0;
 
   @override
@@ -149,6 +172,13 @@ class WatermarkScreenState extends State<WatermarkScreen>
     _tabController = TabController(length: 4, vsync: this);
     _editController.addListener(_onEditChanged);
     _tabController.addListener(_onTabChanged);
+    _presetAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    )..addListener(_onPresetAnimTick);
+    _filmPreview = SpektrafilmPreviewController()
+      ..addListener(_onFilmPreviewChanged);
+    _loadUserPresets();
 
     if (widget.initialImageBytes != null) {
       loadImageBytes(widget.initialImageBytes!,
@@ -162,6 +192,8 @@ class WatermarkScreenState extends State<WatermarkScreen>
     _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
     _editController.dispose();
+    _presetAnimController.dispose();
+    _filmPreview?.dispose();
     _wmScrollController.dispose();
     _filterScrollController.dispose();
     _wmPageController.dispose();
@@ -170,7 +202,187 @@ class WatermarkScreenState extends State<WatermarkScreen>
   }
 
   void _onEditChanged() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    _syncFilmPreview();
+    setState(() {});
+  }
+
+  bool get _isFilmActive => _spektrafilm.isActive;
+
+  String? get _activeFilmStockName {
+    final id = _spektrafilm.stockId;
+    if (id == null || id.isEmpty) return null;
+    for (final stock in _spektraStocks) {
+      if (stock.id == id) return stock.name;
+    }
+    return null;
+  }
+
+  bool get _filmPreviewActive => _isFilmActive && !_isComparingOriginal;
+
+  ui.Image? get _previewDisplayImage {
+    if (!_filmPreviewActive) return _decodedImage;
+    return _filmPreview?.image ?? _decodedImage;
+  }
+
+  bool _spektraCatalogRequested = false;
+
+  void _ensureSpektraCatalog() {
+    if (_spektraCatalogRequested) return;
+    _spektraCatalogRequested = true;
+    _loadSpektraCatalog();
+  }
+
+  Future<void> _loadSpektraCatalog() async {
+    await SpektrafilmNative.loadCatalog();
+    if (!mounted) return;
+    setState(() {
+      _spektraStocks = SpektrafilmNative.stocks;
+      _spektraPapers = SpektrafilmNative.papers;
+      _spektraCatalogUnavailable = SpektrafilmNative.unavailable;
+    });
+  }
+
+  Future<void> _loadUserPresets() async {
+    final presets = await ColorGradePresetStore.load();
+    if (!mounted) return;
+    setState(() => _userPresets = presets);
+  }
+
+  void _onFilmPreviewChanged() {
+    if (!mounted) return;
+    final controller = _filmPreview;
+    final image = controller?.image;
+    if (_isFilmActive && image != null) {
+      _refreshFilmSamples(image);
+      _filmErrorShown = false;
+    }
+    if (controller?.lastError != null && !_filmErrorShown) {
+      _filmErrorShown = true;
+      showZToast(
+        context,
+        context.l10n.spektraPreviewFailed,
+        tone: ZStatusTone.danger,
+      );
+    }
+    setState(() {});
+  }
+
+  Future<void> _refreshFilmSamples(ui.Image image) async {
+    final revision = ++_filmSampleRevision;
+    final sample = await sampleGradePixelsFromImage(image);
+    if (!mounted || revision != _filmSampleRevision || sample == null) return;
+    setState(() {
+      _sampledR = sample.r;
+      _sampledG = sample.g;
+      _sampledB = sample.b;
+    });
+  }
+
+  /// 把当前源图与胶片参数提交给预览控制器；关闭时恢复原始直方图采样。
+  void _syncFilmPreview() {
+    final controller = _filmPreview;
+    if (controller == null) return;
+    if (!_isFilmActive) {
+      controller.update(null, _spektrafilm);
+      if (!identical(_sampledR, _sourceSampledR)) {
+        _updateState(() {
+          _sampledR = _sourceSampledR;
+          _sampledG = _sourceSampledG;
+          _sampledB = _sourceSampledB;
+        });
+      }
+      return;
+    }
+    controller.update(_decodedImage, _spektrafilm);
+    final image = controller.image;
+    if (image != null) _refreshFilmSamples(image);
+  }
+
+  /// 新照片不应继承上一张的胶片效果；保留面板位置，但清空底片与介质选择。
+  void _resetFilmForNewImage() {
+    _filmSampleRevision++;
+    _updateState(() {
+      _spektrafilm = const SpektrafilmSettings();
+      _isComparingOriginal = false;
+      _filmErrorShown = false;
+      _filmNoticeShown = false;
+    });
+    _filmPreview?.update(null, _spektrafilm);
+  }
+
+  void _setSpektrafilm(SpektrafilmSettings next, {bool announce = false}) {
+    if (next == _spektrafilm) return;
+    _updateState(() => _spektrafilm = next);
+    _syncFilmPreview();
+    if (announce && next.isActive && mounted) {
+      final matches =
+          _spektraStocks.where((item) => item.id == next.stockId).toList();
+      if (matches.isNotEmpty) {
+        showZToast(
+          context,
+          context.l10n.wmPresetAppliedToast(matches.first.name),
+        );
+      }
+    }
+  }
+
+  void _activateFilmStock(String stockId) {
+    _filmNoticeShown = false;
+    final stock = _spektraStocks.where((item) => item.id == stockId);
+    var paperId = _spektrafilm.paperId;
+    if (paperId != kSpektraDirectScanPaperId &&
+        !_spektraPapers.any((paper) => paper.id == paperId)) {
+      paperId = kSpektraDirectScanPaperId;
+    }
+    if (stock.isNotEmpty && stock.first.targetPrint.isNotEmpty) {
+      final target = stock.first.targetPrint;
+      if (_spektraPapers.any((paper) => paper.id == target)) {
+        paperId = target;
+      }
+    }
+    _setSpektrafilm(
+      _spektrafilm.withStock(stockId, paperId: paperId),
+      announce: true,
+    );
+  }
+
+  void _disableSpektrafilm({bool notify = false}) {
+    if (_spektrafilm.stockId == null) return;
+    _setSpektrafilm(_spektrafilm.withoutStock());
+    if (notify && mounted && !_filmNoticeShown) {
+      _filmNoticeShown = true;
+      showZToast(context, context.l10n.wmPresetFilmDisabledToast);
+    }
+  }
+
+  void _applyGradePreset(ColorGradePreset preset) {
+    _disableSpektrafilm(notify: true);
+    _presetAnimFrom = _adjustments;
+    _presetAnimTo = preset.grade.base;
+    _presetAnimController
+      ..stop()
+      ..duration = ZMotion.of(context, ZMotion.medium)
+      ..forward(from: 0);
+    _updateState(() {
+      _proGrade = preset.grade;
+      _selectedFilter = PhotoFilterType.original;
+      _filterIntensity = 0;
+      _currentPresetId = preset.id;
+    });
+    showZToast(context, context.l10n.wmPresetAppliedToast(preset.name));
+  }
+
+  void _onPresetAnimTick() {
+    final from = _presetAnimFrom;
+    final to = _presetAnimTo;
+    if (from == null || to == null || !mounted) return;
+    final t = Curves.easeOutCubic.transform(_presetAnimController.value);
+    setState(() => _adjustments = PhotoEditAdjustments.lerp(from, to, t));
+    if (_presetAnimController.isCompleted) {
+      _presetAnimFrom = null;
+      _presetAnimTo = null;
+    }
   }
 
   void _syncStyleFromSettings() {
@@ -220,6 +432,7 @@ class WatermarkScreenState extends State<WatermarkScreen>
   }
 
   void _onTabChanged() {
+    if (_tabController.index == 2) _ensureSpektraCatalog();
     _editController.setCropOverlay(_tabController.index == 3 &&
         (_editTool == PhotoEditTool.crop ||
             _editTool == PhotoEditTool.distort));
@@ -234,6 +447,7 @@ class WatermarkScreenState extends State<WatermarkScreen>
     // 每次载入图片都原子地重置 RAW 源路径，避免用上一张 NEF 导出新图。
     _rawSourcePath = rawPath;
     _editController.reset();
+    _resetFilmForNewImage();
     setState(() => _isLoadingImage = true);
     GradeThumbnailCache.clear();
     try {
@@ -246,6 +460,12 @@ class WatermarkScreenState extends State<WatermarkScreen>
         );
       }
       final parsed = await ExifHelper.parseBytes(bytes);
+      RawProbeResult? rawProbe;
+      if (rawPath != null && rawPath.isNotEmpty) {
+        final probe = await RawProcessorBridge.probe(rawPath);
+        if (probe.supported) rawProbe = probe;
+      }
+      if (!mounted) return;
       final PhotoMetadata meta;
       if (metadata != null) {
         meta = PhotoMetadata(
@@ -297,13 +517,19 @@ class WatermarkScreenState extends State<WatermarkScreen>
       final bList = sample?.b;
 
       if (!mounted) return;
+      final resolvedMeta =
+          rawProbe == null ? meta : ExifHelper.applyRawProbe(meta, rawProbe);
       setState(() {
-        _metadata = meta;
+        _metadata = resolvedMeta;
         _sampledR = rList;
         _sampledG = gList;
         _sampledB = bList;
+        _sourceSampledR = rList;
+        _sourceSampledG = gList;
+        _sourceSampledB = bList;
         _isLoadingImage = false;
       });
+      _syncFilmPreview();
     } catch (e) {
       if (mounted) setState(() => _isLoadingImage = false);
       if (mounted) {
@@ -362,26 +588,37 @@ class WatermarkScreenState extends State<WatermarkScreen>
 
     setState(() => _isExporting = true);
     ui.Image? fullImage;
+    final filmActive = _isFilmActive;
+    var filmBaked = false;
     try {
       Uint8List bytes;
       if (_rawSourcePath != null && _rawSourcePath!.isNotEmpty) {
-        final raw = await RawProcessorBridge.renderFull(
-          path: _rawSourcePath!,
-          filterType: _selectedFilter,
-          filterIntensity: _filterIntensity,
-          adjustments: _adjustments,
-          grade: _proGrade.copyWith(base: _adjustments),
-          jpegQuality: AppSettings.instance.exportQuality,
-        );
-        if (raw.bytes.isEmpty) {
-          final detail = raw.error.isNotEmpty ? '：${raw.error}' : '';
-          throw StateError(
-            mounted
-                ? '${context.l10n.wmRawFullDecodeFailed}$detail'
-                : 'RAW decode failed$detail',
+        if (filmActive) {
+          final baked = await _renderFilmFromRaw();
+          if (baked == null || baked.isEmpty) {
+            throw StateError('Spektrafilm linear RAW pipeline failed');
+          }
+          bytes = baked;
+          filmBaked = true;
+        } else {
+          final raw = await RawProcessorBridge.renderFull(
+            path: _rawSourcePath!,
+            filterType: _selectedFilter,
+            filterIntensity: _filterIntensity,
+            adjustments: _adjustments,
+            grade: _proGrade.copyWith(base: _adjustments),
+            jpegQuality: AppSettings.instance.exportQuality,
           );
+          if (raw.bytes.isEmpty) {
+            final detail = raw.error.isNotEmpty ? ': ${raw.error}' : '';
+            throw StateError(
+              mounted
+                  ? '${context.l10n.wmRawFullDecodeFailed}$detail'
+                  : 'RAW decode failed$detail',
+            );
+          }
+          bytes = raw.bytes;
         }
-        bytes = raw.bytes;
       } else {
         bytes = await _editController.renderFull();
       }
@@ -390,11 +627,15 @@ class WatermarkScreenState extends State<WatermarkScreen>
         sourceImage: fullImage,
         metadata: _metadata,
         template: _selectedTemplate,
-        filterType: _selectedFilter,
-        filterIntensity: _filterIntensity,
-        adjustments: _rawSourcePath != null
+        filterType: filmActive ? PhotoFilterType.original : _selectedFilter,
+        filterIntensity: filmActive ? 0 : _filterIntensity,
+        adjustments: filmActive
             ? const PhotoEditAdjustments()
-            : _adjustments,
+            : (_rawSourcePath != null
+                ? const PhotoEditAdjustments()
+                : _adjustments),
+        spektrafilm: filmActive && !filmBaked ? _spektrafilm : null,
+        filmStockName: _activeFilmStockName,
         spacingScale: _spacingScale,
         showDetails: _showDetails,
         cardDark: _cardDark,
@@ -482,6 +723,37 @@ class WatermarkScreenState extends State<WatermarkScreen>
     }
   }
 
+  /// RAW 导出直接使用 LibRaw 的 16-bit 线性 ProPhoto 数据，
+  /// 不再经过 sRGB JPEG，避免高光截断与二次 gamma。
+  Future<Uint8List?> _renderFilmFromRaw() async {
+    final rawPath = _rawSourcePath;
+    if (rawPath == null || rawPath.isEmpty) return null;
+    final tempDir = await getTemporaryDirectory();
+    final linearPath =
+        '${tempDir.path}/zync_film_${DateTime.now().microsecondsSinceEpoch}.linear';
+    try {
+      final linear = await RawProcessorBridge.extractLinear(
+        path: rawPath,
+        outputPath: linearPath,
+      );
+      if (linear == null) return null;
+      return await SpektrafilmNative.renderRawFile(
+        linearPath: linear.path,
+        width: linear.width,
+        height: linear.height,
+        settings: _spektrafilm,
+        quality: AppSettings.instance.exportQuality,
+      );
+    } finally {
+      final file = File(linearPath);
+      if (await file.exists()) {
+        try {
+          await file.delete();
+        } catch (_) {}
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final zc = context.zc;
@@ -491,7 +763,13 @@ class WatermarkScreenState extends State<WatermarkScreen>
       appBar: AppBar(
         title: Row(
           children: [
-            Text(l10n.wmStudioTitle),
+            Flexible(
+              child: Text(
+                l10n.wmStudioTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
             if (_decodedImage != null) ...[
               const SizedBox(width: ZSpace.sm),
               Flexible(
@@ -506,14 +784,16 @@ class WatermarkScreenState extends State<WatermarkScreen>
                       borderRadius: BorderRadius.circular(ZRadius.pill),
                       border: Border.all(color: zc.outline),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.camera_alt_outlined,
-                            size: 14, color: zc.accent),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.camera_alt_outlined,
+                              size: 14, color: zc.accent),
+                          const SizedBox(width: 6),
+                          Text(
                             '${_metadata.titleText} · ${_metadata.exposureSummary}',
                             style: TextStyle(
                               color: zc.textPrimary,
@@ -522,13 +802,12 @@ class WatermarkScreenState extends State<WatermarkScreen>
                               fontFamily: 'monospace',
                             ),
                             maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        const SizedBox(width: 4),
-                        Icon(Icons.edit_outlined,
-                            size: 12, color: zc.textTertiary),
-                      ],
+                          const SizedBox(width: 4),
+                          Icon(Icons.edit_outlined,
+                              size: 12, color: zc.textTertiary),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -701,16 +980,20 @@ class WatermarkScreenState extends State<WatermarkScreen>
                               child: CustomPaint(
                                 size: canvasSize,
                                 painter: WatermarkCanvasPainter(
-                                  image: _decodedImage,
+                                  image: _previewDisplayImage,
                                   metadata: _metadata,
                                   template: _selectedTemplate,
-                                  filterType: _isComparingOriginal
+                                  filmStockName: _activeFilmStockName,
+                                  filterType: (_filmPreviewActive ||
+                                          _isComparingOriginal)
                                       ? PhotoFilterType.original
                                       : _selectedFilter,
-                                  filterIntensity: _isComparingOriginal
+                                  filterIntensity: (_filmPreviewActive ||
+                                          _isComparingOriginal)
                                       ? 0.0
                                       : _filterIntensity,
-                                  adjustments: _isComparingOriginal
+                                  adjustments: (_filmPreviewActive ||
+                                          _isComparingOriginal)
                                       ? const PhotoEditAdjustments()
                                       : _adjustments,
                                   spacingScale: _spacingScale,
@@ -822,11 +1105,15 @@ class WatermarkScreenState extends State<WatermarkScreen>
                                 ),
                                 child: LightroomHistogramWidget(
                                   data: HistogramData.compute(
-                                    adjustments: _rawSourcePath != null
+                                    adjustments: (_rawSourcePath != null ||
+                                            _isFilmActive)
                                         ? const PhotoEditAdjustments()
                                         : _adjustments,
-                                    filterType: _selectedFilter,
-                                    filterIntensity: _filterIntensity,
+                                    filterType: _isFilmActive
+                                        ? PhotoFilterType.original
+                                        : _selectedFilter,
+                                    filterIntensity:
+                                        _isFilmActive ? 0 : _filterIntensity,
                                     sampledR: _sampledR,
                                     sampledG: _sampledG,
                                     sampledB: _sampledB,
@@ -835,7 +1122,7 @@ class WatermarkScreenState extends State<WatermarkScreen>
                                   onSelectZone: (zone) {
                                     _updateState(() {
                                       _activeHistogramZone = zone;
-                                      _tabController.animateTo(2);
+                                      _tabController.animateTo(1);
                                     });
                                   },
                                 ),
@@ -953,8 +1240,8 @@ class WatermarkScreenState extends State<WatermarkScreen>
                     const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                 tabs: [
                   Tab(text: l10n.wmDockTemplate),
-                  Tab(text: l10n.wmDockFilter),
-                  Tab(text: l10n.wmDockGrade),
+                  Tab(text: l10n.wmDockPresetGrade),
+                  Tab(text: l10n.wmDockSpektrafilm),
                   Tab(text: l10n.wmDockGeometry),
                 ],
               ),
@@ -967,8 +1254,8 @@ class WatermarkScreenState extends State<WatermarkScreen>
                 controller: _tabController,
                 children: [
                   _buildTemplateSelectorPanel(wide: false),
-                  _buildFilmFilterPanel(wide: false),
-                  _buildParameterGradePanel(),
+                  _buildPresetGradePanel(wide: false),
+                  _buildSpektrafilmPanel(),
                   _buildEditPanel(),
                 ],
               ),
@@ -996,8 +1283,8 @@ class WatermarkScreenState extends State<WatermarkScreen>
                           controller: _tabController,
                           children: [
                             _buildTemplateSelectorPanel(wide: true),
-                            _buildFilmFilterPanel(wide: true),
-                            _buildParameterGradePanel(),
+                            _buildPresetGradePanel(wide: true),
+                            _buildSpektrafilmPanel(),
                             _buildEditPanel(),
                           ],
                         ),

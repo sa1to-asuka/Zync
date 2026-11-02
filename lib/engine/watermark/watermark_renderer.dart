@@ -8,6 +8,8 @@ import 'package:path_provider/path_provider.dart';
 import '../../core/utils/capture_date.dart';
 import '../../core/utils/exif_helper.dart';
 import '../filter/photo_filter.dart';
+import '../spektrafilm/spektrafilm_models.dart';
+import '../spektrafilm/spektrafilm_renderer.dart';
 import 'watermark_painter.dart';
 import 'watermark_template.dart';
 
@@ -75,12 +77,26 @@ class WatermarkRenderer {
     WatermarkTextAlign customTextAlign = WatermarkTextAlign.left,
     WatermarkLogoCorner logoCorner = WatermarkLogoCorner.bottomRight,
     bool writeExif = true,
+    SpektrafilmSettings? spektrafilm,
+    String? filmStockName,
   }) async {
+    // 胶片模拟完全接管色彩：先把源图处理成新位图，画框 / 水印排版保持原样。
+    var image = sourceImage;
+    ui.Image? simulated;
+    if (spektrafilm != null && spektrafilm.isActive) {
+      simulated = await SpektrafilmRenderer.applyToUiImage(
+        sourceImage,
+        spektrafilm,
+      );
+      image = simulated;
+      filterType = PhotoFilterType.original;
+      filterIntensity = 0;
+      adjustments = const PhotoEditAdjustments();
+    }
+
     final rotated = quarterTurns % 2 != 0;
-    final srcW =
-        rotated ? sourceImage.height.toDouble() : sourceImage.width.toDouble();
-    final srcH =
-        rotated ? sourceImage.width.toDouble() : sourceImage.height.toDouble();
+    final srcW = rotated ? image.height.toDouble() : image.width.toDouble();
+    final srcH = rotated ? image.width.toDouble() : image.height.toDouble();
 
     // 1. 精确计算目标排版物理像素总宽高 (含边框与展签留白)
     final layout = WatermarkCanvasPainter.computeLayout(
@@ -94,9 +110,10 @@ class WatermarkRenderer {
         recorder, Rect.fromLTWH(0, 0, layout.totalWidth, layout.totalHeight));
 
     final painter = WatermarkCanvasPainter(
-      image: sourceImage,
+      image: image,
       metadata: metadata,
       template: template,
+      filmStockName: filmStockName,
       filterType: filterType,
       filterIntensity: filterIntensity,
       adjustments: adjustments,
@@ -139,6 +156,8 @@ class WatermarkRenderer {
 
     final picture = recorder.endRecording();
     final renderedImage = await picture.toImage(targetW, targetH);
+    simulated?.dispose();
+    simulated = null;
 
     // 取原始像素后在独立 isolate 里编码 JPEG：
     // 24MP 大图纯 Dart 编码约需 1~3 秒，放在主 isolate 会冻结界面。

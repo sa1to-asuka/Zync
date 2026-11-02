@@ -1,0 +1,29 @@
+spektrafilm_native CHANGELOG
+============================
+
+Derived from spektrafilm by Andrea Volpato
+https://github.com/andreavolpato/spektrafilm
+Licensed CC BY-SA 4.0 for profiles and LUTs; GPL-3.0 for code.
+
+Changes made for the Zync Android integration:
+
+1. Profile JSON files are copied byte-for-byte from the upstream commit
+   `3bb2c2d2801ff68b92019cf1dbcbb133d60832bc`. No spectral value was edited.
+2. `data/luts/spectral_upsampling/irradiance_xy_tc.npy` is the unmodified
+   upstream float16 spectral upsampling LUT. The unused coefficient LUT and
+   CSV filter tables were omitted from the shipped data directory because
+   their derived values are baked into `spectral_constants.json`.
+3. `data/neutral_print_filters.json` is the unmodified upstream database.
+4. `data/spectral_constants.json` was generated once with the upstream
+   `spektrafilm.config` / `model.color_filters` / `model.illuminants`
+   modules. It contains the CIE 1931 CMFs, standard illuminants, dichroic
+   filter curves and the Schott KG3 heat-filter curve required by the
+   native engine. Values are exported without modification.
+5. The physical pipeline was ported to C++17; the mathematical stages and
+   constants follow the upstream reference implementation. Approximations
+   are listed in README.md.
+
+6. `data/raw_luts/*.bin` and `data/output_gamut_srgb.bin` are float32
+   encodings produced from the upstream profile data and the upstream
+   `compute_hanatos2025_tc_lut` / `compress_rgb` functions. They are direct
+   derivatives of the CC BY-SA 4.0 profiles and remain CC BY-SA 4.0.

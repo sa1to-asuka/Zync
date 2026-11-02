@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:zync/core/settings/app_settings.dart';
-import 'package:zync/engine/watermark/watermark_template.dart';
 import 'package:zync/l10n/app_localizations.dart';
 import 'package:zync/ui/design/theme.dart';
 import 'package:zync/ui/screens/watermark_screen.dart';
@@ -38,7 +37,7 @@ Future<void> _settle(WidgetTester tester) async {
 
 Future<void> _tapTab(WidgetTester tester, String label) async {
   final tabBar = tester.getRect(find.byType(TabBar));
-  final tabs = ['画框版式', '胶片滤镜', '参数精调', '裁切几何'];
+  final tabs = ['画框版式', '预设调节', '胶片模拟', '裁切几何'];
   final index = tabs.indexOf(label);
   final width = tabBar.width / tabs.length;
   await tester
@@ -97,7 +96,7 @@ void main() {
     }
   });
 
-  testWidgets('平板模式水印工坊：胶片滤镜提供单列列表与自适应分页切换', (tester) async {
+  testWidgets('平板模式水印工坊：预设调节提供单列列表与自适应分页切换', (tester) async {
     tester.view.physicalSize = const Size(1280, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -107,8 +106,8 @@ void main() {
         _app(WatermarkScreen(initialImageBytes: await _png(60, 40, 0x112233))));
     await _settle(tester);
 
-    // 切换到胶片滤镜
-    await _tapTab(tester, '胶片滤镜');
+    // 切换到预设调节
+    await _tapTab(tester, '预设调节');
     await _settle(tester);
     expect(tester.takeException(), isNull);
 

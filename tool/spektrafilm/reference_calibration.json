@@ -1,0 +1,6764 @@
+{
+ "rows": [
+  {
+   "stock": "fujifilm_c200",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "gray_0.02",
+   "loge": [
+    -0.958574,
+    -0.964229,
+    -0.986814
+   ],
+   "density": [
+    0.40047,
+    0.192315,
+    0.101702
+   ],
+   "pdensity": [
+    2.337282,
+    2.008755,
+    1.889592
+   ],
+   "rgb": [
+    0.033205,
+    0.068012,
+    0.075357
+   ]
+  },
+  {
+   "stock": "fujifilm_c200",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "gray_0.05",
+   "loge": [
+    -0.560634,
+    -0.566289,
+    -0.588874
+   ],
+   "density": [
+    0.591635,
+    0.391383,
+    0.266041
+   ],
+   "pdensity": [
+    1.870077,
+    1.640363,
+    1.647721
+   ],
+   "rgb": [
+    0.092763,
+    0.120033,
+    0.114013
+   ]
+  },
+  {
+   "stock": "fujifilm_c200",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "gray_0.09",
+   "loge": [
+    -0.305362,
+    -0.311016,
+    -0.333601
+   ],
+   "density": [
+    0.718862,
+    0.535118,
+    0.425141
+   ],
+   "pdensity": [
+    1.281973,
+    1.167965,
+    1.180546
+   ],
+   "rgb": [
+    0.214301,
+    0.228352,
+    0.216651
+   ]
+  },
+  {
+   "stock": "fujifilm_c200",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "gray_0.184",
+   "loge": [
+    0.005213,
+    -0.000441,
+    -0.023026
+   ],
+   "density": [
+    0.885027,
+    0.70601,
+    0.642301
+   ],
+   "pdensity": [
+    0.631072,
+    0.592362,
+    0.572048
+   ],
+   "rgb": [
+    0.461441,
+    0.461824,
+    0.461408
+   ]
+  },
+  {
+   "stock": "fujifilm_c200",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "gray_0.35",
+   "loge": [
+    0.284464,
+    0.278809,
+    0.256224
+   ],
+   "density": [
+    1.041677,
+    0.853691,
+    0.841292
+   ],
+   "pdensity": [
+    0.289145,
+    0.290594,
+    0.283083
+   ],
+   "rgb": [
+    0.674817,
+    0.658219,
+    0.65457
+   ]
+  },
+  {
+   "stock": "fujifilm_c200",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "gray_0.6",
+   "loge": [
+    0.518547,
+    0.512892,
+    0.490307
+   ],
+   "density": [
+    1.176921,
+    0.978655,
+    1.005485
+   ],
+   "pdensity": [
+    0.112594,
+    0.12797,
+    0.134953
+   ],
+   "rgb": [
+    0.804261,
+    0.781616,
+    0.76903
+   ]
+  },
+  {
+   "stock": "fujifilm_c200",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "gray_0.9",
+   "loge": [
+    0.694638,
+    0.688984,
+    0.666399
+   ],
+   "density": [
+    1.278618,
+    1.081136,
+    1.117392
+   ],
+   "pdensity": [
+    0.042824,
+    0.051163,
+    0.06662
+   ],
+   "rgb": [
+    0.844694,
+    0.831599,
+    0.813331
+   ]
+  },
+  {
+   "stock": "fujifilm_c200",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "skin",
+   "loge": [
+    0.521943,
+    0.327285,
+    0.168041
+   ],
+   "density": [
+    1.23322,
+    0.859633,
+    0.648755
+   ],
+   "pdensity": [
+    0.078168,
+    0.296037,
+    0.506976
+   ],
+   "rgb": [
+    0.855096,
+    0.661366,
+    0.507686
+   ]
+  },
+  {
+   "stock": "fujifilm_c200",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "sky",
+   "loge": [
+    0.098292,
+    0.283085,
+    0.522294
+   ],
+   "density": [
+    0.875864,
+    0.853423,
+    1.214676
+   ],
+   "pdensity": [
+    0.626322,
+    0.273834,
+    0.052339
+   ],
+   "rgb": [
+    0.423593,
+    0.646219,
+    0.824626
+   ]
+  },
+  {
+   "stock": "fujifilm_c200",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "foliage",
+   "loge": [
+    -0.306095,
+    0.031773,
+    -0.323582
+   ],
+   "density": [
+    0.695137,
+    0.85432,
+    0.340145
+   ],
+   "pdensity": [
+    1.313915,
+    0.334051,
+    1.300173
+   ],
+   "rgb": [
+    0.166887,
+    0.498035,
+    0.23842
+   ]
+  },
+  {
+   "stock": "fujifilm_c200",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "red",
+   "loge": [
+    0.358557,
+    -0.487122,
+    -0.668888
+   ],
+   "density": [
+    1.260524,
+    0.294231,
+    0.097612
+   ],
+   "pdensity": [
+    0.10898,
+    1.867556,
+    1.87069
+   ],
+   "rgb": [
+    0.684909,
+    0.138679,
+    0.097913
+   ]
+  },
+  {
+   "stock": "fujifilm_c200",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "warm_highlight",
+   "loge": [
+    0.61709,
+    0.569333,
+    0.395707
+   ],
+   "density": [
+    1.258927,
+    1.029841,
+    0.837674
+   ],
+   "pdensity": [
+    0.054582,
+    0.091708,
+    0.254538
+   ],
+   "rgb": [
+    0.854325,
+    0.803728,
+    0.666922
+   ]
+  },
+  {
+   "stock": "fujifilm_c200",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "teal_shadow",
+   "loge": [
+    -1.0133,
+    -0.831547,
+    -0.710537
+   ],
+   "density": [
+    0.350405,
+    0.266273,
+    0.275461
+   ],
+   "pdensity": [
+    2.3783,
+    1.897067,
+    1.67558
+   ],
+   "rgb": [
+    0.021552,
+    0.080711,
+    0.100235
+   ]
+  },
+  {
+   "stock": "fujifilm_pro_400h",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "gray_0.02",
+   "loge": [
+    -0.960503,
+    -0.964102,
+    -0.972344
+   ],
+   "density": [
+    0.24587,
+    0.241889,
+    0.252265
+   ],
+   "pdensity": [
+    2.320597,
+    1.969311,
+    1.918587
+   ],
+   "rgb": [
+    0.034876,
+    0.071317,
+    0.073319
+   ]
+  },
+  {
+   "stock": "fujifilm_pro_400h",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "gray_0.05",
+   "loge": [
+    -0.562563,
+    -0.566162,
+    -0.574404
+   ],
+   "density": [
+    0.442438,
+    0.442841,
+    0.497057
+   ],
+   "pdensity": [
+    1.777955,
+    1.523334,
+    1.578086
+   ],
+   "rgb": [
+    0.106412,
+    0.139757,
+    0.127351
+   ]
+  },
+  {
+   "stock": "fujifilm_pro_400h",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "gray_0.09",
+   "loge": [
+    -0.307291,
+    -0.310889,
+    -0.319132
+   ],
+   "density": [
+    0.566091,
+    0.56564,
+    0.656717
+   ],
+   "pdensity": [
+    1.189845,
+    1.072446,
+    1.069365
+   ],
+   "rgb": [
+    0.23922,
+    0.257311,
+    0.249304
+   ]
+  },
+  {
+   "stock": "fujifilm_pro_400h",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "gray_0.184",
+   "loge": [
+    0.003285,
+    -0.000314,
+    -0.008556
+   ],
+   "density": [
+    0.712919,
+    0.707305,
+    0.832727
+   ],
+   "pdensity": [
+    0.626894,
+    0.588782,
+    0.568242
+   ],
+   "rgb": [
+    0.463621,
+    0.463802,
+    0.463535
+   ]
+  },
+  {
+   "stock": "fujifilm_pro_400h",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "gray_0.35",
+   "loge": [
+    0.282535,
+    0.278936,
+    0.270694
+   ],
+   "density": [
+    0.844402,
+    0.834064,
+    0.988551
+   ],
+   "pdensity": [
+    0.327627,
+    0.314966,
+    0.318373
+   ],
+   "rgb": [
+    0.646727,
+    0.638479,
+    0.628151
+   ]
+  },
+  {
+   "stock": "fujifilm_pro_400h",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "gray_0.6",
+   "loge": [
+    0.516618,
+    0.51302,
+    0.504777
+   ],
+   "density": [
+    0.958402,
+    0.942202,
+    1.128359
+   ],
+   "pdensity": [
+    0.15715,
+    0.157809,
+    0.172631
+   ],
+   "rgb": [
+    0.771725,
+    0.759347,
+    0.741421
+   ]
+  },
+  {
+   "stock": "fujifilm_pro_400h",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "gray_0.9",
+   "loge": [
+    0.692709,
+    0.689111,
+    0.680868
+   ],
+   "density": [
+    1.04813,
+    1.025998,
+    1.228523
+   ],
+   "pdensity": [
+    0.073579,
+    0.077582,
+    0.096066
+   ],
+   "rgb": [
+    0.826375,
+    0.815304,
+    0.794599
+   ]
+  },
+  {
+   "stock": "fujifilm_pro_400h",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "skin",
+   "loge": [
+    0.513178,
+    0.319141,
+    0.179466
+   ],
+   "density": [
+    0.993473,
+    0.838631,
+    0.865998
+   ],
+   "pdensity": [
+    0.129815,
+    0.317169,
+    0.467384
+   ],
+   "rgb": [
+    0.809622,
+    0.64623,
+    0.531448
+   ]
+  },
+  {
+   "stock": "fujifilm_pro_400h",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "sky",
+   "loge": [
+    0.097382,
+    0.288591,
+    0.54301
+   ],
+   "density": [
+    0.717733,
+    0.83665,
+    1.272417
+   ],
+   "pdensity": [
+    0.593013,
+    0.297263,
+    0.097022
+   ],
+   "rgb": [
+    0.448172,
+    0.633809,
+    0.789337
+   ]
+  },
+  {
+   "stock": "fujifilm_pro_400h",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "foliage",
+   "loge": [
+    -0.302621,
+    0.043861,
+    -0.342307
+   ],
+   "density": [
+    0.55328,
+    0.814043,
+    0.563678
+   ],
+   "pdensity": [
+    1.200149,
+    0.385838,
+    1.246098
+   ],
+   "rgb": [
+    0.200469,
+    0.487664,
+    0.236002
+   ]
+  },
+  {
+   "stock": "fujifilm_pro_400h",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "red",
+   "loge": [
+    0.337445,
+    -0.528104,
+    -0.658292
+   ],
+   "density": [
+    0.989709,
+    0.336777,
+    0.246421
+   ],
+   "pdensity": [
+    0.191466,
+    1.821497,
+    1.909293
+   ],
+   "rgb": [
+    0.637529,
+    0.137176,
+    0.087398
+   ]
+  },
+  {
+   "stock": "fujifilm_pro_400h",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "warm_highlight",
+   "loge": [
+    0.615739,
+    0.567915,
+    0.403423
+   ],
+   "density": [
+    1.027663,
+    0.980962,
+    1.003012
+   ],
+   "pdensity": [
+    0.091002,
+    0.123107,
+    0.274335
+   ],
+   "rgb": [
+    0.8286,
+    0.782252,
+    0.658066
+   ]
+  },
+  {
+   "stock": "fujifilm_pro_400h",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "teal_shadow",
+   "loge": [
+    -1.011805,
+    -0.825324,
+    -0.692752
+   ],
+   "density": [
+    0.188632,
+    0.321975,
+    0.51551
+   ],
+   "pdensity": [
+    2.374755,
+    1.822098,
+    1.591476
+   ],
+   "rgb": [
+    0.018978,
+    0.089344,
+    0.111622
+   ]
+  },
+  {
+   "stock": "fujifilm_provia_100f",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.02",
+   "loge": [
+    -0.954511,
+    -0.964999,
+    -0.968523
+   ],
+   "density": [
+    1.856931,
+    1.88232,
+    1.513194
+   ],
+   "pdensity": [
+    1.856931,
+    1.88232,
+    1.513194
+   ],
+   "rgb": [
+    0.057694,
+    0.048932,
+    0.058462
+   ]
+  },
+  {
+   "stock": "fujifilm_provia_100f",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.05",
+   "loge": [
+    -0.556571,
+    -0.567059,
+    -0.570583
+   ],
+   "density": [
+    1.243968,
+    1.210473,
+    1.020441
+   ],
+   "pdensity": [
+    1.243968,
+    1.210473,
+    1.020441
+   ],
+   "rgb": [
+    0.175547,
+    0.169179,
+    0.174308
+   ]
+  },
+  {
+   "stock": "fujifilm_provia_100f",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.09",
+   "loge": [
+    -0.301299,
+    -0.311786,
+    -0.315311
+   ],
+   "density": [
+    0.895336,
+    0.856382,
+    0.743024
+   ],
+   "pdensity": [
+    0.895336,
+    0.856382,
+    0.743024
+   ],
+   "rgb": [
+    0.290203,
+    0.285719,
+    0.285065
+   ]
+  },
+  {
+   "stock": "fujifilm_provia_100f",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.184",
+   "loge": [
+    0.009277,
+    -0.001211,
+    -0.004736
+   ],
+   "density": [
+    0.526656,
+    0.509212,
+    0.443706
+   ],
+   "pdensity": [
+    0.526656,
+    0.509212,
+    0.443706
+   ],
+   "rgb": [
+    0.47245,
+    0.464876,
+    0.462351
+   ]
+  },
+  {
+   "stock": "fujifilm_provia_100f",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.35",
+   "loge": [
+    0.288527,
+    0.278039,
+    0.274515
+   ],
+   "density": [
+    0.251639,
+    0.248731,
+    0.215239
+   ],
+   "pdensity": [
+    0.251639,
+    0.248731,
+    0.215239
+   ],
+   "rgb": [
+    0.668482,
+    0.65994,
+    0.65841
+   ]
+  },
+  {
+   "stock": "fujifilm_provia_100f",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.6",
+   "loge": [
+    0.52261,
+    0.512123,
+    0.508598
+   ],
+   "density": [
+    0.102979,
+    0.101615,
+    0.091689
+   ],
+   "pdensity": [
+    0.102979,
+    0.101615,
+    0.091689
+   ],
+   "rgb": [
+    0.790139,
+    0.786336,
+    0.782526
+   ]
+  },
+  {
+   "stock": "fujifilm_provia_100f",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.9",
+   "loge": [
+    0.698701,
+    0.688214,
+    0.684689
+   ],
+   "density": [
+    0.044967,
+    0.043984,
+    0.037894
+   ],
+   "pdensity": [
+    0.044967,
+    0.043984,
+    0.037894
+   ],
+   "rgb": [
+    0.829698,
+    0.829096,
+    0.828926
+   ]
+  },
+  {
+   "stock": "fujifilm_provia_100f",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "skin",
+   "loge": [
+    0.54136,
+    0.340831,
+    0.181922
+   ],
+   "density": [
+    0.083224,
+    0.209425,
+    0.31427
+   ],
+   "pdensity": [
+    0.083224,
+    0.209425,
+    0.31427
+   ],
+   "rgb": [
+    0.813448,
+    0.708358,
+    0.606584
+   ]
+  },
+  {
+   "stock": "fujifilm_provia_100f",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "sky",
+   "loge": [
+    0.104655,
+    0.26529,
+    0.54869
+   ],
+   "density": [
+    0.484451,
+    0.244171,
+    0.061039
+   ],
+   "pdensity": [
+    0.484451,
+    0.244171,
+    0.061039
+   ],
+   "rgb": [
+    0.489148,
+    0.630859,
+    0.7499
+   ]
+  },
+  {
+   "stock": "fujifilm_provia_100f",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "foliage",
+   "loge": [
+    -0.351957,
+    0.02251,
+    -0.352922
+   ],
+   "density": [
+    1.066975,
+    0.340858,
+    0.829707
+   ],
+   "pdensity": [
+    1.066975,
+    0.340858,
+    0.829707
+   ],
+   "rgb": [
+    0.211349,
+    0.451521,
+    0.297216
+   ]
+  },
+  {
+   "stock": "fujifilm_provia_100f",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "red",
+   "loge": [
+    0.419412,
+    -0.418974,
+    -0.657315
+   ],
+   "density": [
+    0.069822,
+    1.324388,
+    1.360795
+   ],
+   "pdensity": [
+    0.069822,
+    1.324388,
+    1.360795
+   ],
+   "rgb": [
+    0.638366,
+    0.202093,
+    0.12811
+   ]
+  },
+  {
+   "stock": "fujifilm_provia_100f",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "warm_highlight",
+   "loge": [
+    0.618969,
+    0.574166,
+    0.40488
+   ],
+   "density": [
+    0.064902,
+    0.076065,
+    0.147228
+   ],
+   "pdensity": [
+    0.064902,
+    0.076065,
+    0.147228
+   ],
+   "rgb": [
+    0.823075,
+    0.804928,
+    0.738356
+   ]
+  },
+  {
+   "stock": "fujifilm_provia_100f",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "teal_shadow",
+   "loge": [
+    -1.017778,
+    -0.845271,
+    -0.68778
+   ],
+   "density": [
+    2.102055,
+    1.580594,
+    1.046454
+   ],
+   "pdensity": [
+    2.102055,
+    1.580594,
+    1.046454
+   ],
+   "rgb": [
+    0.019474,
+    0.078724,
+    0.120941
+   ]
+  },
+  {
+   "stock": "fujifilm_velvia_100",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.02",
+   "loge": [
+    -0.953713,
+    -0.964911,
+    -0.969542
+   ],
+   "density": [
+    2.255521,
+    2.70603,
+    2.3984
+   ],
+   "pdensity": [
+    2.255521,
+    2.70603,
+    2.3984
+   ],
+   "rgb": [
+    0.015657,
+    0.016093,
+    0.024392
+   ]
+  },
+  {
+   "stock": "fujifilm_velvia_100",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.05",
+   "loge": [
+    -0.555773,
+    -0.566971,
+    -0.571602
+   ],
+   "density": [
+    1.363868,
+    1.528372,
+    1.591152
+   ],
+   "pdensity": [
+    1.363868,
+    1.528372,
+    1.591152
+   ],
+   "rgb": [
+    0.135102,
+    0.129942,
+    0.126415
+   ]
+  },
+  {
+   "stock": "fujifilm_velvia_100",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.09",
+   "loge": [
+    -0.3005,
+    -0.311698,
+    -0.316329
+   ],
+   "density": [
+    0.89714,
+    0.987899,
+    1.054466
+   ],
+   "pdensity": [
+    0.89714,
+    0.987899,
+    1.054466
+   ],
+   "rgb": [
+    0.272614,
+    0.264569,
+    0.25617
+   ]
+  },
+  {
+   "stock": "fujifilm_velvia_100",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.184",
+   "loge": [
+    0.010075,
+    -0.001123,
+    -0.005754
+   ],
+   "density": [
+    0.484888,
+    0.535183,
+    0.553306
+   ],
+   "pdensity": [
+    0.484888,
+    0.535183,
+    0.553306
+   ],
+   "rgb": [
+    0.472914,
+    0.462702,
+    0.464594
+   ]
+  },
+  {
+   "stock": "fujifilm_velvia_100",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.35",
+   "loge": [
+    0.289325,
+    0.278127,
+    0.273496
+   ],
+   "density": [
+    0.199785,
+    0.222395,
+    0.239821
+   ],
+   "pdensity": [
+    0.199785,
+    0.222395,
+    0.239821
+   ],
+   "rgb": [
+    0.680762,
+    0.673277,
+    0.667181
+   ]
+  },
+  {
+   "stock": "fujifilm_velvia_100",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.6",
+   "loge": [
+    0.523408,
+    0.51221,
+    0.507579
+   ],
+   "density": [
+    0.065596,
+    0.073103,
+    0.088974
+   ],
+   "pdensity": [
+    0.065596,
+    0.073103,
+    0.088974
+   ],
+   "rgb": [
+    0.791027,
+    0.790499,
+    0.778304
+   ]
+  },
+  {
+   "stock": "fujifilm_velvia_100",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.9",
+   "loge": [
+    0.6995,
+    0.688302,
+    0.683671
+   ],
+   "density": [
+    0.02352,
+    0.025981,
+    0.032304
+   ],
+   "pdensity": [
+    0.02352,
+    0.025981,
+    0.032304
+   ],
+   "rgb": [
+    0.819768,
+    0.82308,
+    0.816503
+   ]
+  },
+  {
+   "stock": "fujifilm_velvia_100",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "skin",
+   "loge": [
+    0.540753,
+    0.338976,
+    0.183561
+   ],
+   "density": [
+    0.053081,
+    0.17543,
+    0.352291
+   ],
+   "pdensity": [
+    0.053081,
+    0.17543,
+    0.352291
+   ],
+   "rgb": [
+    0.813327,
+    0.714599,
+    0.587207
+   ]
+  },
+  {
+   "stock": "fujifilm_velvia_100",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "sky",
+   "loge": [
+    0.105991,
+    0.262555,
+    0.543821
+   ],
+   "density": [
+    0.423566,
+    0.227663,
+    0.062784
+   ],
+   "pdensity": [
+    0.423566,
+    0.227663,
+    0.062784
+   ],
+   "rgb": [
+    0.50006,
+    0.652425,
+    0.800421
+   ]
+  },
+  {
+   "stock": "fujifilm_velvia_100",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "foliage",
+   "loge": [
+    -0.340325,
+    0.032238,
+    -0.336612
+   ],
+   "density": [
+    1.087533,
+    0.349855,
+    1.170032
+   ],
+   "pdensity": [
+    1.087533,
+    0.349855,
+    1.170032
+   ],
+   "rgb": [
+    0.194718,
+    0.483944,
+    0.252747
+   ]
+  },
+  {
+   "stock": "fujifilm_velvia_100",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "red",
+   "loge": [
+    0.415591,
+    -0.443316,
+    -0.658279
+   ],
+   "density": [
+    0.043195,
+    1.668056,
+    2.165145
+   ],
+   "pdensity": [
+    0.043195,
+    1.668056,
+    2.165145
+   ],
+   "rgb": [
+    0.636308,
+    0.117554,
+    0.077145
+   ]
+  },
+  {
+   "stock": "fujifilm_velvia_100",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "warm_highlight",
+   "loge": [
+    0.619716,
+    0.575453,
+    0.40764
+   ],
+   "density": [
+    0.037584,
+    0.050772,
+    0.146956
+   ],
+   "pdensity": [
+    0.037584,
+    0.050772,
+    0.146956
+   ],
+   "rgb": [
+    0.81714,
+    0.806294,
+    0.725778
+   ]
+  },
+  {
+   "stock": "fujifilm_velvia_100",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "teal_shadow",
+   "loge": [
+    -1.015044,
+    -0.845107,
+    -0.691052
+   ],
+   "density": [
+    2.521661,
+    2.205193,
+    1.615437
+   ],
+   "pdensity": [
+    2.521661,
+    2.205193,
+    1.615437
+   ],
+   "rgb": [
+    0.001852,
+    0.044038,
+    0.079843
+   ]
+  },
+  {
+   "stock": "fujifilm_xtra_400",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "gray_0.02",
+   "loge": [
+    -0.960357,
+    -0.964065,
+    -0.970139
+   ],
+   "density": [
+    0.348148,
+    0.16768,
+    0.09128
+   ],
+   "pdensity": [
+    2.386165,
+    2.036579,
+    1.898948
+   ],
+   "rgb": [
+    0.028421,
+    0.064757,
+    0.073619
+   ]
+  },
+  {
+   "stock": "fujifilm_xtra_400",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "gray_0.05",
+   "loge": [
+    -0.562417,
+    -0.566125,
+    -0.572199
+   ],
+   "density": [
+    0.569194,
+    0.366663,
+    0.25316
+   ],
+   "pdensity": [
+    1.96867,
+    1.702228,
+    1.684793
+   ],
+   "rgb": [
+    0.077059,
+    0.109519,
+    0.107203
+   ]
+  },
+  {
+   "stock": "fujifilm_xtra_400",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "gray_0.09",
+   "loge": [
+    -0.307145,
+    -0.310853,
+    -0.316926
+   ],
+   "density": [
+    0.713542,
+    0.519604,
+    0.417737
+   ],
+   "pdensity": [
+    1.324052,
+    1.226396,
+    1.224298
+   ],
+   "rgb": [
+    0.203763,
+    0.213089,
+    0.204181
+   ]
+  },
+  {
+   "stock": "fujifilm_xtra_400",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "gray_0.184",
+   "loge": [
+    0.00343,
+    -0.000277,
+    -0.006351
+   ],
+   "density": [
+    0.887757,
+    0.707331,
+    0.653257
+   ],
+   "pdensity": [
+    0.628562,
+    0.590212,
+    0.56988
+   ],
+   "rgb": [
+    0.462753,
+    0.463008,
+    0.462625
+   ]
+  },
+  {
+   "stock": "fujifilm_xtra_400",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "gray_0.35",
+   "loge": [
+    0.282681,
+    0.278973,
+    0.272899
+   ],
+   "density": [
+    1.04448,
+    0.866208,
+    0.873852
+   ],
+   "pdensity": [
+    0.284393,
+    0.271668,
+    0.26503
+   ],
+   "rgb": [
+    0.677388,
+    0.67148,
+    0.668706
+   ]
+  },
+  {
+   "stock": "fujifilm_xtra_400",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "gray_0.6",
+   "loge": [
+    0.516764,
+    0.513056,
+    0.506982
+   ],
+   "density": [
+    1.183935,
+    0.995876,
+    1.057541
+   ],
+   "pdensity": [
+    0.105058,
+    0.11207,
+    0.113899
+   ],
+   "rgb": [
+    0.807077,
+    0.792555,
+    0.785231
+   ]
+  },
+  {
+   "stock": "fujifilm_xtra_400",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "gray_0.9",
+   "loge": [
+    0.692855,
+    0.689147,
+    0.683074
+   ],
+   "density": [
+    1.296686,
+    1.096954,
+    1.182598
+   ],
+   "pdensity": [
+    0.034588,
+    0.043255,
+    0.050287
+   ],
+   "rgb": [
+    0.848574,
+    0.836218,
+    0.825547
+   ]
+  },
+  {
+   "stock": "fujifilm_xtra_400",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "skin",
+   "loge": [
+    0.513562,
+    0.327738,
+    0.183133
+   ],
+   "density": [
+    1.24801,
+    0.874397,
+    0.642539
+   ],
+   "pdensity": [
+    0.068288,
+    0.27682,
+    0.520079
+   ],
+   "rgb": [
+    0.864156,
+    0.673644,
+    0.499977
+   ]
+  },
+  {
+   "stock": "fujifilm_xtra_400",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "sky",
+   "loge": [
+    0.100076,
+    0.278279,
+    0.539864
+   ],
+   "density": [
+    0.872512,
+    0.855048,
+    1.324592
+   ],
+   "pdensity": [
+    0.637886,
+    0.267658,
+    0.033196
+   ],
+   "rgb": [
+    0.415775,
+    0.649347,
+    0.839696
+   ]
+  },
+  {
+   "stock": "fujifilm_xtra_400",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "foliage",
+   "loge": [
+    -0.294838,
+    0.039496,
+    -0.31793
+   ],
+   "density": [
+    0.69358,
+    0.893647,
+    0.295759
+   ],
+   "pdensity": [
+    1.312526,
+    0.285874,
+    1.408318
+   ],
+   "rgb": [
+    0.17083,
+    0.517163,
+    0.220211
+   ]
+  },
+  {
+   "stock": "fujifilm_xtra_400",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "red",
+   "loge": [
+    0.33842,
+    -0.500358,
+    -0.660258
+   ],
+   "density": [
+    1.28588,
+    0.246506,
+    0.079947
+   ],
+   "pdensity": [
+    0.097104,
+    1.94496,
+    1.882289
+   ],
+   "rgb": [
+    0.685145,
+    0.132776,
+    0.099311
+   ]
+  },
+  {
+   "stock": "fujifilm_xtra_400",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "warm_highlight",
+   "loge": [
+    0.615213,
+    0.571446,
+    0.410655
+   ],
+   "density": [
+    1.278204,
+    1.053822,
+    0.853735
+   ],
+   "pdensity": [
+    0.043979,
+    0.075932,
+    0.244804
+   ],
+   "rgb": [
+    0.860032,
+    0.814044,
+    0.671268
+   ]
+  },
+  {
+   "stock": "fujifilm_xtra_400",
+   "paper": "fujifilm_crystal_archive_typeii",
+   "scan": false,
+   "patch": "teal_shadow",
+   "loge": [
+    -1.009698,
+    -0.833156,
+    -0.692937
+   ],
+   "density": [
+    0.297175,
+    0.241582,
+    0.277304
+   ],
+   "pdensity": [
+    2.410466,
+    1.934716,
+    1.695079
+   ],
+   "rgb": [
+    0.019894,
+    0.076303,
+    0.096702
+   ]
+  },
+  {
+   "stock": "kodak_ektachrome_100",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.02",
+   "loge": [
+    -0.952976,
+    -0.964447,
+    -0.983345
+   ],
+   "density": [
+    1.783605,
+    1.962888,
+    1.972154
+   ],
+   "pdensity": [
+    1.783605,
+    1.962888,
+    1.972154
+   ],
+   "rgb": [
+    0.049224,
+    0.040939,
+    0.036982
+   ]
+  },
+  {
+   "stock": "kodak_ektachrome_100",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.05",
+   "loge": [
+    -0.555036,
+    -0.566507,
+    -0.585405
+   ],
+   "density": [
+    1.139781,
+    1.228918,
+    1.241236
+   ],
+   "pdensity": [
+    1.139781,
+    1.228918,
+    1.241236
+   ],
+   "rgb": [
+    0.177895,
+    0.166245,
+    0.160748
+   ]
+  },
+  {
+   "stock": "kodak_ektachrome_100",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.09",
+   "loge": [
+    -0.299763,
+    -0.311235,
+    -0.330133
+   ],
+   "density": [
+    0.803445,
+    0.845584,
+    0.865892
+   ],
+   "pdensity": [
+    0.803445,
+    0.845584,
+    0.865892
+   ],
+   "rgb": [
+    0.300186,
+    0.289972,
+    0.282322
+   ]
+  },
+  {
+   "stock": "kodak_ektachrome_100",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.184",
+   "loge": [
+    0.010812,
+    -0.000659,
+    -0.019558
+   ],
+   "density": [
+    0.489029,
+    0.495013,
+    0.524512
+   ],
+   "pdensity": [
+    0.489029,
+    0.495013,
+    0.524512
+   ],
+   "rgb": [
+    0.472248,
+    0.466133,
+    0.453897
+   ]
+  },
+  {
+   "stock": "kodak_ektachrome_100",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.35",
+   "loge": [
+    0.290062,
+    0.278591,
+    0.259693
+   ],
+   "density": [
+    0.265991,
+    0.258658,
+    0.287639
+   ],
+   "pdensity": [
+    0.265991,
+    0.258658,
+    0.287639
+   ],
+   "rgb": [
+    0.641743,
+    0.637005,
+    0.622822
+   ]
+  },
+  {
+   "stock": "kodak_ektachrome_100",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.6",
+   "loge": [
+    0.524146,
+    0.512674,
+    0.493776
+   ],
+   "density": [
+    0.133021,
+    0.122823,
+    0.147906
+   ],
+   "pdensity": [
+    0.133021,
+    0.122823,
+    0.147906
+   ],
+   "rgb": [
+    0.760937,
+    0.755294,
+    0.742045
+   ]
+  },
+  {
+   "stock": "kodak_ektachrome_100",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.9",
+   "loge": [
+    0.700237,
+    0.688765,
+    0.669867
+   ],
+   "density": [
+    0.070586,
+    0.062624,
+    0.076395
+   ],
+   "pdensity": [
+    0.070586,
+    0.062624,
+    0.076395
+   ],
+   "rgb": [
+    0.811748,
+    0.804218,
+    0.799276
+   ]
+  },
+  {
+   "stock": "kodak_ektachrome_100",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "skin",
+   "loge": [
+    0.543465,
+    0.337253,
+    0.16686
+   ],
+   "density": [
+    0.115503,
+    0.223101,
+    0.378947
+   ],
+   "pdensity": [
+    0.115503,
+    0.223101,
+    0.378947
+   ],
+   "rgb": [
+    0.77611,
+    0.675159,
+    0.566071
+   ]
+  },
+  {
+   "stock": "kodak_ektachrome_100",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "sky",
+   "loge": [
+    0.08964,
+    0.265733,
+    0.540602
+   ],
+   "density": [
+    0.454885,
+    0.261724,
+    0.11237
+   ],
+   "pdensity": [
+    0.454885,
+    0.261724,
+    0.11237
+   ],
+   "rgb": [
+    0.48704,
+    0.620191,
+    0.746275
+   ]
+  },
+  {
+   "stock": "kodak_ektachrome_100",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "foliage",
+   "loge": [
+    -0.358931,
+    0.033671,
+    -0.390047
+   ],
+   "density": [
+    0.946294,
+    0.373612,
+    0.997081
+   ],
+   "pdensity": [
+    0.946294,
+    0.373612,
+    0.997081
+   ],
+   "rgb": [
+    0.258929,
+    0.456241,
+    0.261716
+   ]
+  },
+  {
+   "stock": "kodak_ektachrome_100",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "red",
+   "loge": [
+    0.414443,
+    -0.457573,
+    -0.658737
+   ],
+   "density": [
+    0.113259,
+    1.265455,
+    1.591346
+   ],
+   "pdensity": [
+    0.113259,
+    1.265455,
+    1.591346
+   ],
+   "rgb": [
+    0.601509,
+    0.176225,
+    0.104879
+   ]
+  },
+  {
+   "stock": "kodak_ektachrome_100",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "warm_highlight",
+   "loge": [
+    0.624261,
+    0.575035,
+    0.384325
+   ],
+   "density": [
+    0.092263,
+    0.097184,
+    0.214421
+   ],
+   "pdensity": [
+    0.092263,
+    0.097184,
+    0.214421
+   ],
+   "rgb": [
+    0.80276,
+    0.774234,
+    0.687929
+   ]
+  },
+  {
+   "stock": "kodak_ektachrome_100",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "teal_shadow",
+   "loge": [
+    -1.026245,
+    -0.842657,
+    -0.700162
+   ],
+   "density": [
+    2.057148,
+    1.665385,
+    1.307062
+   ],
+   "pdensity": [
+    2.057148,
+    1.665385,
+    1.307062
+   ],
+   "rgb": [
+    0.008145,
+    0.075746,
+    0.110611
+   ]
+  },
+  {
+   "stock": "kodak_ektar_100",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.02",
+   "loge": [
+    -0.952121,
+    -0.969863,
+    -0.9854
+   ],
+   "density": [
+    0.100888,
+    0.163376,
+    0.333407
+   ],
+   "pdensity": [
+    2.088298,
+    1.726257,
+    1.719375
+   ],
+   "rgb": [
+    0.076118,
+    0.078532,
+    0.081253
+   ]
+  },
+  {
+   "stock": "kodak_ektar_100",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.05",
+   "loge": [
+    -0.554181,
+    -0.571923,
+    -0.58746
+   ],
+   "density": [
+    0.295743,
+    0.377429,
+    0.58338
+   ],
+   "pdensity": [
+    1.66412,
+    1.347678,
+    1.35067
+   ],
+   "rgb": [
+    0.135961,
+    0.147956,
+    0.150984
+   ]
+  },
+  {
+   "stock": "kodak_ektar_100",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.09",
+   "loge": [
+    -0.298909,
+    -0.316651,
+    -0.332188
+   ],
+   "density": [
+    0.457589,
+    0.521292,
+    0.731959
+   ],
+   "pdensity": [
+    1.170795,
+    0.961498,
+    0.968437
+   ],
+   "rgb": [
+    0.250275,
+    0.260866,
+    0.262532
+   ]
+  },
+  {
+   "stock": "kodak_ektar_100",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.184",
+   "loge": [
+    0.011666,
+    -0.006075,
+    -0.021612
+   ],
+   "density": [
+    0.651978,
+    0.682437,
+    0.904468
+   ],
+   "pdensity": [
+    0.637097,
+    0.542289,
+    0.545399
+   ],
+   "rgb": [
+    0.459417,
+    0.459206,
+    0.459015
+   ]
+  },
+  {
+   "stock": "kodak_ektar_100",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.35",
+   "loge": [
+    0.290917,
+    0.273175,
+    0.257638
+   ],
+   "density": [
+    0.814323,
+    0.826336,
+    1.074583
+   ],
+   "pdensity": [
+    0.338008,
+    0.278319,
+    0.26379
+   ],
+   "rgb": [
+    0.634454,
+    0.643078,
+    0.652909
+   ]
+  },
+  {
+   "stock": "kodak_ektar_100",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.6",
+   "loge": [
+    0.525,
+    0.507258,
+    0.491721
+   ],
+   "density": [
+    0.95118,
+    0.947605,
+    1.224795
+   ],
+   "pdensity": [
+    0.175984,
+    0.1378,
+    0.118
+   ],
+   "rgb": [
+    0.748284,
+    0.760912,
+    0.774892
+   ]
+  },
+  {
+   "stock": "kodak_ektar_100",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.9",
+   "loge": [
+    0.701091,
+    0.683349,
+    0.667812
+   ],
+   "density": [
+    1.057347,
+    1.040241,
+    1.325359
+   ],
+   "pdensity": [
+    0.095715,
+    0.072206,
+    0.061045
+   ],
+   "rgb": [
+    0.801515,
+    0.811215,
+    0.817108
+   ]
+  },
+  {
+   "stock": "kodak_ektar_100",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "skin",
+   "loge": [
+    0.541601,
+    0.302643,
+    0.165459
+   ],
+   "density": [
+    1.016616,
+    0.811607,
+    0.91328
+   ],
+   "pdensity": [
+    0.136996,
+    0.32114,
+    0.493735
+   ],
+   "rgb": [
+    0.805056,
+    0.6269,
+    0.499861
+   ]
+  },
+  {
+   "stock": "kodak_ektar_100",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "sky",
+   "loge": [
+    0.100118,
+    0.317359,
+    0.533892
+   ],
+   "density": [
+    0.641852,
+    0.868027,
+    1.397007
+   ],
+   "pdensity": [
+    0.630266,
+    0.199237,
+    0.045741
+   ],
+   "rgb": [
+    0.402411,
+    0.669324,
+    0.815114
+   ]
+  },
+  {
+   "stock": "kodak_ektar_100",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "foliage",
+   "loge": [
+    -0.329632,
+    0.01253,
+    -0.367585
+   ],
+   "density": [
+    0.408852,
+    0.821815,
+    0.621824
+   ],
+   "pdensity": [
+    1.282311,
+    0.36777,
+    1.210884
+   ],
+   "rgb": [
+    0.185763,
+    0.446372,
+    0.218524
+   ]
+  },
+  {
+   "stock": "kodak_ektar_100",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "red",
+   "loge": [
+    0.398968,
+    -0.533759,
+    -0.663842
+   ],
+   "density": [
+    1.046481,
+    0.196795,
+    0.271433
+   ],
+   "pdensity": [
+    0.207632,
+    1.701022,
+    1.741638
+   ],
+   "rgb": [
+    0.627815,
+    0.150827,
+    0.089396
+   ]
+  },
+  {
+   "stock": "kodak_ektar_100",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "warm_highlight",
+   "loge": [
+    0.623064,
+    0.549067,
+    0.387146
+   ],
+   "density": [
+    1.035518,
+    0.977887,
+    1.06877
+   ],
+   "pdensity": [
+    0.113068,
+    0.127191,
+    0.252255
+   ],
+   "rgb": [
+    0.810498,
+    0.767312,
+    0.664444
+   ]
+  },
+  {
+   "stock": "kodak_ektar_100",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "teal_shadow",
+   "loge": [
+    -1.016551,
+    -0.815117,
+    -0.704142
+   ],
+   "density": [
+    0.058454,
+    0.25141,
+    0.603346
+   ],
+   "pdensity": [
+    2.140848,
+    1.583236,
+    1.3386
+   ],
+   "rgb": [
+    0.053532,
+    0.101246,
+    0.142165
+   ]
+  },
+  {
+   "stock": "kodak_gold_200",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.02",
+   "loge": [
+    -0.954099,
+    -0.967097,
+    -0.980633
+   ],
+   "density": [
+    0.204659,
+    0.243161,
+    0.232124
+   ],
+   "pdensity": [
+    2.112469,
+    1.697014,
+    1.723456
+   ],
+   "rgb": [
+    0.072389,
+    0.08109,
+    0.081207
+   ]
+  },
+  {
+   "stock": "kodak_gold_200",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.05",
+   "loge": [
+    -0.556159,
+    -0.569157,
+    -0.582693
+   ],
+   "density": [
+    0.418444,
+    0.449918,
+    0.465886
+   ],
+   "pdensity": [
+    1.600506,
+    1.297635,
+    1.379779
+   ],
+   "rgb": [
+    0.149891,
+    0.157864,
+    0.146911
+   ]
+  },
+  {
+   "stock": "kodak_gold_200",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.09",
+   "loge": [
+    -0.300887,
+    -0.313884,
+    -0.32742
+   ],
+   "density": [
+    0.55989,
+    0.577446,
+    0.622397
+   ],
+   "pdensity": [
+    1.122141,
+    0.935573,
+    0.975539
+   ],
+   "rgb": [
+    0.266835,
+    0.270196,
+    0.261615
+   ]
+  },
+  {
+   "stock": "kodak_gold_200",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.184",
+   "loge": [
+    0.009689,
+    -0.003309,
+    -0.016845
+   ],
+   "density": [
+    0.723732,
+    0.725857,
+    0.79593
+   ],
+   "pdensity": [
+    0.633666,
+    0.539196,
+    0.542204
+   ],
+   "rgb": [
+    0.461135,
+    0.461032,
+    0.460885
+   ]
+  },
+  {
+   "stock": "kodak_gold_200",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.35",
+   "loge": [
+    0.288939,
+    0.275941,
+    0.262405
+   ],
+   "density": [
+    0.868958,
+    0.863471,
+    0.948453
+   ],
+   "pdensity": [
+    0.340668,
+    0.281577,
+    0.277659
+   ],
+   "rgb": [
+    0.633296,
+    0.640029,
+    0.642623
+   ]
+  },
+  {
+   "stock": "kodak_gold_200",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.6",
+   "loge": [
+    0.523022,
+    0.510025,
+    0.496489
+   ],
+   "density": [
+    0.998041,
+    0.982695,
+    1.08341
+   ],
+   "pdensity": [
+    0.173966,
+    0.139955,
+    0.134051
+   ],
+   "rgb": [
+    0.751446,
+    0.758987,
+    0.761309
+   ]
+  },
+  {
+   "stock": "kodak_gold_200",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.9",
+   "loge": [
+    0.699113,
+    0.686116,
+    0.67258
+   ],
+   "density": [
+    1.100322,
+    1.074793,
+    1.17977
+   ],
+   "pdensity": [
+    0.091509,
+    0.07274,
+    0.071403
+   ],
+   "rgb": [
+    0.806224,
+    0.810768,
+    0.80761
+   ]
+  },
+  {
+   "stock": "kodak_gold_200",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "skin",
+   "loge": [
+    0.538831,
+    0.305276,
+    0.17112
+   ],
+   "density": [
+    1.055982,
+    0.851611,
+    0.816937
+   ],
+   "pdensity": [
+    0.133744,
+    0.317127,
+    0.460943
+   ],
+   "rgb": [
+    0.806896,
+    0.631407,
+    0.520031
+   ]
+  },
+  {
+   "stock": "kodak_gold_200",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "sky",
+   "loge": [
+    0.144648,
+    0.318741,
+    0.535436
+   ],
+   "density": [
+    0.749582,
+    0.891042,
+    1.228903
+   ],
+   "pdensity": [
+    0.556318,
+    0.220124,
+    0.066
+   ],
+   "rgb": [
+    0.45484,
+    0.664381,
+    0.804261
+   ]
+  },
+  {
+   "stock": "kodak_gold_200",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "foliage",
+   "loge": [
+    -0.343032,
+    0.018294,
+    -0.349916
+   ],
+   "density": [
+    0.512605,
+    0.841418,
+    0.536893
+   ],
+   "pdensity": [
+    1.259649,
+    0.379414,
+    1.122547
+   ],
+   "rgb": [
+    0.189022,
+    0.447515,
+    0.24205
+   ]
+  },
+  {
+   "stock": "kodak_gold_200",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "red",
+   "loge": [
+    0.413312,
+    -0.538585,
+    -0.661906
+   ],
+   "density": [
+    1.091669,
+    0.295583,
+    0.200016
+   ],
+   "pdensity": [
+    0.176712,
+    1.643619,
+    1.726537
+   ],
+   "rgb": [
+    0.650893,
+    0.163107,
+    0.09369
+   ]
+  },
+  {
+   "stock": "kodak_gold_200",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "warm_highlight",
+   "loge": [
+    0.610142,
+    0.552454,
+    0.394946
+   ],
+   "density": [
+    1.06993,
+    1.014751,
+    0.955029
+   ],
+   "pdensity": [
+    0.114339,
+    0.124558,
+    0.243162
+   ],
+   "rgb": [
+    0.808498,
+    0.769377,
+    0.671324
+   ]
+  },
+  {
+   "stock": "kodak_gold_200",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "teal_shadow",
+   "loge": [
+    -0.994566,
+    -0.812795,
+    -0.700815
+   ],
+   "density": [
+    0.154032,
+    0.338825,
+    0.486696
+   ],
+   "pdensity": [
+    2.181251,
+    1.5243,
+    1.378424
+   ],
+   "rgb": [
+    0.045769,
+    0.106818,
+    0.135758
+   ]
+  },
+  {
+   "stock": "kodak_kodachrome_64",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.02",
+   "loge": [
+    -0.952085,
+    -0.964772,
+    -0.992653
+   ],
+   "density": [
+    2.111348,
+    2.146029,
+    1.554869
+   ],
+   "pdensity": [
+    2.111348,
+    2.146029,
+    1.554869
+   ],
+   "rgb": [
+    0.070931,
+    0.05695,
+    0.044207
+   ]
+  },
+  {
+   "stock": "kodak_kodachrome_64",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.05",
+   "loge": [
+    -0.554145,
+    -0.566832,
+    -0.594713
+   ],
+   "density": [
+    1.352423,
+    1.399291,
+    0.962904
+   ],
+   "pdensity": [
+    1.352423,
+    1.399291,
+    0.962904
+   ],
+   "rgb": [
+    0.18917,
+    0.174542,
+    0.164189
+   ]
+  },
+  {
+   "stock": "kodak_kodachrome_64",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.09",
+   "loge": [
+    -0.298873,
+    -0.31156,
+    -0.33944
+   ],
+   "density": [
+    0.932624,
+    0.96276,
+    0.652144
+   ],
+   "pdensity": [
+    0.932624,
+    0.96276,
+    0.652144
+   ],
+   "rgb": [
+    0.304699,
+    0.294479,
+    0.282545
+   ]
+  },
+  {
+   "stock": "kodak_kodachrome_64",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.184",
+   "loge": [
+    0.011702,
+    -0.000984,
+    -0.028865
+   ],
+   "density": [
+    0.533144,
+    0.555928,
+    0.360862
+   ],
+   "pdensity": [
+    0.533144,
+    0.555928,
+    0.360862
+   ],
+   "rgb": [
+    0.471018,
+    0.464329,
+    0.4519
+   ]
+  },
+  {
+   "stock": "kodak_kodachrome_64",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.35",
+   "loge": [
+    0.290953,
+    0.278266,
+    0.250385
+   ],
+   "density": [
+    0.266054,
+    0.28876,
+    0.171103
+   ],
+   "pdensity": [
+    0.266054,
+    0.28876,
+    0.171103
+   ],
+   "rgb": [
+    0.628907,
+    0.619858,
+    0.60695
+   ]
+  },
+  {
+   "stock": "kodak_kodachrome_64",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.6",
+   "loge": [
+    0.525036,
+    0.512349,
+    0.484468
+   ],
+   "density": [
+    0.121282,
+    0.137236,
+    0.07547
+   ],
+   "pdensity": [
+    0.121282,
+    0.137236,
+    0.07547
+   ],
+   "rgb": [
+    0.734546,
+    0.725395,
+    0.70355
+   ]
+  },
+  {
+   "stock": "kodak_kodachrome_64",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "gray_0.9",
+   "loge": [
+    0.701127,
+    0.68844,
+    0.66056
+   ],
+   "density": [
+    0.059562,
+    0.069438,
+    0.03334
+   ],
+   "pdensity": [
+    0.059562,
+    0.069438,
+    0.03334
+   ],
+   "rgb": [
+    0.779263,
+    0.772109,
+    0.74498
+   ]
+  },
+  {
+   "stock": "kodak_kodachrome_64",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "skin",
+   "loge": [
+    0.546672,
+    0.323534,
+    0.158863
+   ],
+   "density": [
+    0.103286,
+    0.262564,
+    0.241447
+   ],
+   "pdensity": [
+    0.103286,
+    0.262564,
+    0.241447
+   ],
+   "rgb": [
+    0.745862,
+    0.637246,
+    0.565964
+   ]
+  },
+  {
+   "stock": "kodak_kodachrome_64",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "sky",
+   "loge": [
+    0.10102,
+    0.283276,
+    0.530431
+   ],
+   "density": [
+    0.474653,
+    0.270592,
+    0.053856
+   ],
+   "pdensity": [
+    0.474653,
+    0.270592,
+    0.053856
+   ],
+   "rgb": [
+    0.497938,
+    0.627936,
+    0.689599
+   ]
+  },
+  {
+   "stock": "kodak_kodachrome_64",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "foliage",
+   "loge": [
+    -0.345061,
+    0.038534,
+    -0.384482
+   ],
+   "density": [
+    1.110796,
+    0.401743,
+    0.749906
+   ],
+   "pdensity": [
+    1.110796,
+    0.401743,
+    0.749906
+   ],
+   "rgb": [
+    0.273611,
+    0.499623,
+    0.296016
+   ]
+  },
+  {
+   "stock": "kodak_kodachrome_64",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "red",
+   "loge": [
+    0.422407,
+    -0.508938,
+    -0.663535
+   ],
+   "density": [
+    0.096814,
+    1.716601,
+    1.262643
+   ],
+   "pdensity": [
+    0.096814,
+    1.716601,
+    1.262643
+   ],
+   "rgb": [
+    0.5482,
+    0.119775,
+    0.105043
+   ]
+  },
+  {
+   "stock": "kodak_kodachrome_64",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "warm_highlight",
+   "loge": [
+    0.622332,
+    0.568768,
+    0.37667
+   ],
+   "density": [
+    0.08196,
+    0.111373,
+    0.118527
+   ],
+   "pdensity": [
+    0.08196,
+    0.111373,
+    0.118527
+   ],
+   "rgb": [
+    0.767263,
+    0.741503,
+    0.673519
+   ]
+  },
+  {
+   "stock": "kodak_kodachrome_64",
+   "paper": "kodak_portra_endura",
+   "scan": true,
+   "patch": "teal_shadow",
+   "loge": [
+    -1.019101,
+    -0.830189,
+    -0.710277
+   ],
+   "density": [
+    2.387139,
+    1.791103,
+    1.009266
+   ],
+   "pdensity": [
+    2.387139,
+    1.791103,
+    1.009266
+   ],
+   "rgb": [
+    0.048579,
+    0.096813,
+    0.128148
+   ]
+  },
+  {
+   "stock": "kodak_portra_160",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.02",
+   "loge": [
+    -0.961335,
+    -0.96906,
+    -0.985505
+   ],
+   "density": [
+    0.192091,
+    0.211364,
+    0.357959
+   ],
+   "pdensity": [
+    2.100466,
+    1.683667,
+    1.661094
+   ],
+   "rgb": [
+    0.072488,
+    0.083982,
+    0.089705
+   ]
+  },
+  {
+   "stock": "kodak_portra_160",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.05",
+   "loge": [
+    -0.563395,
+    -0.57112,
+    -0.587565
+   ],
+   "density": [
+    0.407072,
+    0.423895,
+    0.572804
+   ],
+   "pdensity": [
+    1.564766,
+    1.25554,
+    1.263258
+   ],
+   "rgb": [
+    0.153976,
+    0.169677,
+    0.172365
+   ]
+  },
+  {
+   "stock": "kodak_portra_160",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.09",
+   "loge": [
+    -0.308122,
+    -0.315848,
+    -0.332293
+   ],
+   "density": [
+    0.542909,
+    0.545757,
+    0.695099
+   ],
+   "pdensity": [
+    1.103252,
+    0.90859,
+    0.933132
+   ],
+   "rgb": [
+    0.271534,
+    0.280177,
+    0.276364
+   ]
+  },
+  {
+   "stock": "kodak_portra_160",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.184",
+   "loge": [
+    0.002453,
+    -0.005273,
+    -0.021718
+   ],
+   "density": [
+    0.70284,
+    0.68428,
+    0.853209
+   ],
+   "pdensity": [
+    0.633242,
+    0.53892,
+    0.541928
+   ],
+   "rgb": [
+    0.461356,
+    0.461205,
+    0.461049
+   ]
+  },
+  {
+   "stock": "kodak_portra_160",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.35",
+   "loge": [
+    0.281703,
+    0.273978,
+    0.257533
+   ],
+   "density": [
+    0.850821,
+    0.821454,
+    1.016562
+   ],
+   "pdensity": [
+    0.33969,
+    0.278868,
+    0.26526
+   ],
+   "rgb": [
+    0.633268,
+    0.642468,
+    0.651774
+   ]
+  },
+  {
+   "stock": "kodak_portra_160",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.6",
+   "loge": [
+    0.515787,
+    0.508061,
+    0.491616
+   ],
+   "density": [
+    0.980416,
+    0.94331,
+    1.161509
+   ],
+   "pdensity": [
+    0.175613,
+    0.134197,
+    0.119884
+   ],
+   "rgb": [
+    0.748288,
+    0.763305,
+    0.773258
+   ]
+  },
+  {
+   "stock": "kodak_portra_160",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.9",
+   "loge": [
+    0.691878,
+    0.684152,
+    0.667707
+   ],
+   "density": [
+    1.080261,
+    1.036589,
+    1.259906
+   ],
+   "pdensity": [
+    0.095677,
+    0.068054,
+    0.062106
+   ],
+   "rgb": [
+    0.800741,
+    0.813873,
+    0.815762
+   ]
+  },
+  {
+   "stock": "kodak_portra_160",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "skin",
+   "loge": [
+    0.506888,
+    0.302398,
+    0.166013
+   ],
+   "density": [
+    1.021087,
+    0.813881,
+    0.87642
+   ],
+   "pdensity": [
+    0.153261,
+    0.315507,
+    0.471364
+   ],
+   "rgb": [
+    0.790899,
+    0.629754,
+    0.513695
+   ]
+  },
+  {
+   "stock": "kodak_portra_160",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "sky",
+   "loge": [
+    0.114406,
+    0.326541,
+    0.532417
+   ],
+   "density": [
+    0.712543,
+    0.863584,
+    1.315528
+   ],
+   "pdensity": [
+    0.583523,
+    0.194213,
+    0.049231
+   ],
+   "rgb": [
+    0.431902,
+    0.678535,
+    0.817483
+   ]
+  },
+  {
+   "stock": "kodak_portra_160",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "foliage",
+   "loge": [
+    -0.287465,
+    0.001468,
+    -0.361736
+   ],
+   "density": [
+    0.541211,
+    0.774817,
+    0.625173
+   ],
+   "pdensity": [
+    1.079719,
+    0.414857,
+    1.103214
+   ],
+   "rgb": [
+    0.260416,
+    0.45163,
+    0.236615
+   ]
+  },
+  {
+   "stock": "kodak_portra_160",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "red",
+   "loge": [
+    0.333188,
+    -0.52313,
+    -0.664449
+   ],
+   "density": [
+    1.011217,
+    0.301147,
+    0.33484
+   ],
+   "pdensity": [
+    0.242045,
+    1.587988,
+    1.662028
+   ],
+   "rgb": [
+    0.619748,
+    0.163611,
+    0.098579
+   ]
+  },
+  {
+   "stock": "kodak_portra_160",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "warm_highlight",
+   "loge": [
+    0.611144,
+    0.546261,
+    0.388378
+   ],
+   "density": [
+    1.057435,
+    0.971498,
+    1.018709
+   ],
+   "pdensity": [
+    0.114723,
+    0.125484,
+    0.249358
+   ],
+   "rgb": [
+    0.80869,
+    0.768457,
+    0.66666
+   ]
+  },
+  {
+   "stock": "kodak_portra_160",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "teal_shadow",
+   "loge": [
+    -0.999377,
+    -0.811204,
+    -0.704953
+   ],
+   "density": [
+    0.140359,
+    0.317512,
+    0.585321
+   ],
+   "pdensity": [
+    2.171937,
+    1.481316,
+    1.261177
+   ],
+   "rgb": [
+    0.041321,
+    0.115112,
+    0.157309
+   ]
+  },
+  {
+   "stock": "kodak_portra_400",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.02",
+   "loge": [
+    -0.958355,
+    -0.968387,
+    -1.001087
+   ],
+   "density": [
+    0.180767,
+    0.222147,
+    0.275702
+   ],
+   "pdensity": [
+    2.122235,
+    1.70792,
+    1.713345
+   ],
+   "rgb": [
+    0.070955,
+    0.0799,
+    0.082243
+   ]
+  },
+  {
+   "stock": "kodak_portra_400",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.05",
+   "loge": [
+    -0.560415,
+    -0.570447,
+    -0.603147
+   ],
+   "density": [
+    0.399376,
+    0.437729,
+    0.519934
+   ],
+   "pdensity": [
+    1.586143,
+    1.286013,
+    1.33322
+   ],
+   "rgb": [
+    0.151659,
+    0.161589,
+    0.156581
+   ]
+  },
+  {
+   "stock": "kodak_portra_400",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.09",
+   "loge": [
+    -0.305142,
+    -0.315175,
+    -0.347875
+   ],
+   "density": [
+    0.538856,
+    0.562739,
+    0.668525
+   ],
+   "pdensity": [
+    1.102131,
+    0.924563,
+    0.94579
+   ],
+   "rgb": [
+    0.272706,
+    0.275303,
+    0.271658
+   ]
+  },
+  {
+   "stock": "kodak_portra_400",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.184",
+   "loge": [
+    0.005433,
+    -0.004599,
+    -0.037299
+   ],
+   "density": [
+    0.692898,
+    0.704642,
+    0.83253
+   ],
+   "pdensity": [
+    0.634515,
+    0.540018,
+    0.543065
+   ],
+   "rgb": [
+    0.460714,
+    0.460551,
+    0.460382
+   ]
+  },
+  {
+   "stock": "kodak_portra_400",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.35",
+   "loge": [
+    0.284683,
+    0.274651,
+    0.241951
+   ],
+   "density": [
+    0.832502,
+    0.839727,
+    0.991353
+   ],
+   "pdensity": [
+    0.345319,
+    0.281272,
+    0.27379
+   ],
+   "rgb": [
+    0.62953,
+    0.639892,
+    0.645344
+   ]
+  },
+  {
+   "stock": "kodak_portra_400",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.6",
+   "loge": [
+    0.518766,
+    0.508734,
+    0.476034
+   ],
+   "density": [
+    0.962867,
+    0.958401,
+    1.135921
+   ],
+   "pdensity": [
+    0.173154,
+    0.137648,
+    0.126474
+   ],
+   "rgb": [
+    0.751306,
+    0.760919,
+    0.767642
+   ]
+  },
+  {
+   "stock": "kodak_portra_400",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.9",
+   "loge": [
+    0.694858,
+    0.684825,
+    0.652125
+   ],
+   "density": [
+    1.068382,
+    1.051153,
+    1.237832
+   ],
+   "pdensity": [
+    0.087986,
+    0.069831,
+    0.064727
+   ],
+   "rgb": [
+    0.808022,
+    0.81293,
+    0.812942
+   ]
+  },
+  {
+   "stock": "kodak_portra_400",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "skin",
+   "loge": [
+    0.524546,
+    0.299825,
+    0.149664
+   ],
+   "density": [
+    1.018748,
+    0.827583,
+    0.856629
+   ],
+   "pdensity": [
+    0.136129,
+    0.317848,
+    0.462482
+   ],
+   "rgb": [
+    0.80491,
+    0.630626,
+    0.519056
+   ]
+  },
+  {
+   "stock": "kodak_portra_400",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "sky",
+   "loge": [
+    0.109002,
+    0.319771,
+    0.523171
+   ],
+   "density": [
+    0.697987,
+    0.871652,
+    1.307083
+   ],
+   "pdensity": [
+    0.598269,
+    0.212024,
+    0.051209
+   ],
+   "rgb": [
+    0.424774,
+    0.664997,
+    0.813222
+   ]
+  },
+  {
+   "stock": "kodak_portra_400",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "foliage",
+   "loge": [
+    -0.307156,
+    0.018127,
+    -0.397106
+   ],
+   "density": [
+    0.523216,
+    0.808532,
+    0.559134
+   ],
+   "pdensity": [
+    1.124522,
+    0.397324,
+    1.174253
+   ],
+   "rgb": [
+    0.24439,
+    0.451753,
+    0.217104
+   ]
+  },
+  {
+   "stock": "kodak_portra_400",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "red",
+   "loge": [
+    0.372756,
+    -0.549267,
+    -0.667972
+   ],
+   "density": [
+    1.031991,
+    0.275813,
+    0.257358
+   ],
+   "pdensity": [
+    0.206442,
+    1.652062,
+    1.709152
+   ],
+   "rgb": [
+    0.633478,
+    0.157678,
+    0.09368
+   ]
+  },
+  {
+   "stock": "kodak_portra_400",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "warm_highlight",
+   "loge": [
+    0.61448,
+    0.549955,
+    0.367482
+   ],
+   "density": [
+    1.045511,
+    0.990889,
+    0.987849
+   ],
+   "pdensity": [
+    0.106137,
+    0.122898,
+    0.255366
+   ],
+   "rgb": [
+    0.816215,
+    0.770518,
+    0.661522
+   ]
+  },
+  {
+   "stock": "kodak_portra_400",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "teal_shadow",
+   "loge": [
+    -1.008001,
+    -0.810988,
+    -0.718078
+   ],
+   "density": [
+    0.122842,
+    0.327666,
+    0.547548
+   ],
+   "pdensity": [
+    2.198144,
+    1.51747,
+    1.31133
+   ],
+   "rgb": [
+    0.040572,
+    0.108628,
+    0.14693
+   ]
+  },
+  {
+   "stock": "kodak_portra_800",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.02",
+   "loge": [
+    -0.951294,
+    -0.96586,
+    -0.987199
+   ],
+   "density": [
+    0.254025,
+    0.279904,
+    0.225229
+   ],
+   "pdensity": [
+    2.07894,
+    1.678163,
+    1.680751
+   ],
+   "rgb": [
+    0.075988,
+    0.084677,
+    0.087278
+   ]
+  },
+  {
+   "stock": "kodak_portra_800",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.05",
+   "loge": [
+    -0.553354,
+    -0.56792,
+    -0.589259
+   ],
+   "density": [
+    0.467132,
+    0.488413,
+    0.435513
+   ],
+   "pdensity": [
+    1.54254,
+    1.268101,
+    1.312391
+   ],
+   "rgb": [
+    0.160932,
+    0.166884,
+    0.16161
+   ]
+  },
+  {
+   "stock": "kodak_portra_800",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.09",
+   "loge": [
+    -0.298082,
+    -0.312647,
+    -0.333986
+   ],
+   "density": [
+    0.601215,
+    0.613327,
+    0.575732
+   ],
+   "pdensity": [
+    1.090344,
+    0.917339,
+    0.93617
+   ],
+   "rgb": [
+    0.276485,
+    0.278291,
+    0.275153
+   ]
+  },
+  {
+   "stock": "kodak_portra_800",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.184",
+   "loge": [
+    0.012494,
+    -0.002072,
+    -0.023411
+   ],
+   "density": [
+    0.757142,
+    0.757708,
+    0.732503
+   ],
+   "pdensity": [
+    0.634167,
+    0.539689,
+    0.542704
+   ],
+   "rgb": [
+    0.460887,
+    0.460745,
+    0.460592
+   ]
+  },
+  {
+   "stock": "kodak_portra_800",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.35",
+   "loge": [
+    0.291744,
+    0.277178,
+    0.255839
+   ],
+   "density": [
+    0.896727,
+    0.890815,
+    0.875026
+   ],
+   "pdensity": [
+    0.352962,
+    0.291219,
+    0.290038
+   ],
+   "rgb": [
+    0.625004,
+    0.632019,
+    0.632988
+   ]
+  },
+  {
+   "stock": "kodak_portra_800",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.6",
+   "loge": [
+    0.525827,
+    0.511262,
+    0.489922
+   ],
+   "density": [
+    1.021178,
+    1.005835,
+    1.005613
+   ],
+   "pdensity": [
+    0.188159,
+    0.150892,
+    0.144207
+   ],
+   "rgb": [
+    0.741323,
+    0.749905,
+    0.753147
+   ]
+  },
+  {
+   "stock": "kodak_portra_800",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.9",
+   "loge": [
+    0.701918,
+    0.687353,
+    0.666014
+   ],
+   "density": [
+    1.120526,
+    1.097395,
+    1.100972
+   ],
+   "pdensity": [
+    0.103248,
+    0.080435,
+    0.07772
+   ],
+   "rgb": [
+    0.798252,
+    0.805146,
+    0.803666
+   ]
+  },
+  {
+   "stock": "kodak_portra_800",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "skin",
+   "loge": [
+    0.545723,
+    0.314326,
+    0.16527
+   ],
+   "density": [
+    1.077847,
+    0.885731,
+    0.75576
+   ],
+   "pdensity": [
+    0.149472,
+    0.3153,
+    0.46235
+   ],
+   "rgb": [
+    0.793776,
+    0.630759,
+    0.519248
+   ]
+  },
+  {
+   "stock": "kodak_portra_800",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "sky",
+   "loge": [
+    0.102047,
+    0.30071,
+    0.530397
+   ],
+   "density": [
+    0.759992,
+    0.907585,
+    1.159114
+   ],
+   "pdensity": [
+    0.603554,
+    0.242658,
+    0.065084
+   ],
+   "rgb": [
+    0.426208,
+    0.644317,
+    0.799363
+   ]
+  },
+  {
+   "stock": "kodak_portra_800",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "foliage",
+   "loge": [
+    -0.334902,
+    0.027965,
+    -0.356044
+   ],
+   "density": [
+    0.56163,
+    0.864758,
+    0.501705
+   ],
+   "pdensity": [
+    1.184485,
+    0.388423,
+    1.081697
+   ],
+   "rgb": [
+    0.214128,
+    0.453457,
+    0.250052
+   ]
+  },
+  {
+   "stock": "kodak_portra_800",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "red",
+   "loge": [
+    0.411262,
+    -0.517864,
+    -0.663966
+   ],
+   "density": [
+    1.096533,
+    0.36258,
+    0.206586
+   ],
+   "pdensity": [
+    0.209398,
+    1.572675,
+    1.67066
+   ],
+   "rgb": [
+    0.639334,
+    0.169941,
+    0.099383
+   ]
+  },
+  {
+   "stock": "kodak_portra_800",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "warm_highlight",
+   "loge": [
+    0.623217,
+    0.56084,
+    0.387399
+   ],
+   "density": [
+    1.097023,
+    1.04174,
+    0.881049
+   ],
+   "pdensity": [
+    0.123276,
+    0.131216,
+    0.260215
+   ],
+   "rgb": [
+    0.802654,
+    0.763501,
+    0.659088
+   ]
+  },
+  {
+   "stock": "kodak_portra_800",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "teal_shadow",
+   "loge": [
+    -1.016688,
+    -0.821207,
+    -0.707101
+   ],
+   "density": [
+    0.186995,
+    0.377127,
+    0.457055
+   ],
+   "pdensity": [
+    2.17204,
+    1.501113,
+    1.303457
+   ],
+   "rgb": [
+    0.04358,
+    0.111615,
+    0.149383
+   ]
+  },
+  {
+   "stock": "kodak_portra_800_push1",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.02",
+   "loge": [
+    -0.951294,
+    -0.96586,
+    -0.987199
+   ],
+   "density": [
+    0.163022,
+    0.185897,
+    0.145133
+   ],
+   "pdensity": [
+    2.218236,
+    1.79304,
+    1.737844
+   ],
+   "rgb": [
+    0.059837,
+    0.068854,
+    0.077091
+   ]
+  },
+  {
+   "stock": "kodak_portra_800_push1",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.05",
+   "loge": [
+    -0.553354,
+    -0.56792,
+    -0.589259
+   ],
+   "density": [
+    0.394276,
+    0.415661,
+    0.349656
+   ],
+   "pdensity": [
+    1.781779,
+    1.448765,
+    1.476444
+   ],
+   "rgb": [
+    0.117265,
+    0.125673,
+    0.124637
+   ]
+  },
+  {
+   "stock": "kodak_portra_800_push1",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.09",
+   "loge": [
+    -0.298082,
+    -0.312647,
+    -0.333986
+   ],
+   "density": [
+    0.565799,
+    0.575557,
+    0.516901
+   ],
+   "pdensity": [
+    1.233428,
+    1.036661,
+    1.062057
+   ],
+   "rgb": [
+    0.234375,
+    0.235658,
+    0.231585
+   ]
+  },
+  {
+   "stock": "kodak_portra_800_push1",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.184",
+   "loge": [
+    0.012494,
+    -0.002072,
+    -0.023411
+   ],
+   "density": [
+    0.762104,
+    0.759525,
+    0.71703
+   ],
+   "pdensity": [
+    0.639087,
+    0.543876,
+    0.547087
+   ],
+   "rgb": [
+    0.458411,
+    0.45825,
+    0.45803
+   ]
+  },
+  {
+   "stock": "kodak_portra_800_push1",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.35",
+   "loge": [
+    0.291744,
+    0.277178,
+    0.255839
+   ],
+   "density": [
+    0.92567,
+    0.916121,
+    0.892022
+   ],
+   "pdensity": [
+    0.318594,
+    0.259221,
+    0.250124
+   ],
+   "rgb": [
+    0.647948,
+    0.658153,
+    0.6645
+   ]
+  },
+  {
+   "stock": "kodak_portra_800_push1",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.6",
+   "loge": [
+    0.525827,
+    0.511262,
+    0.489922
+   ],
+   "density": [
+    1.069803,
+    1.045183,
+    1.047439
+   ],
+   "pdensity": [
+    0.148526,
+    0.118668,
+    0.103165
+   ],
+   "rgb": [
+    0.768044,
+    0.776475,
+    0.786307
+   ]
+  },
+  {
+   "stock": "kodak_portra_800_push1",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.9",
+   "loge": [
+    0.701918,
+    0.687353,
+    0.666014
+   ],
+   "density": [
+    1.187271,
+    1.144468,
+    1.163119
+   ],
+   "pdensity": [
+    0.068985,
+    0.056316,
+    0.045075
+   ],
+   "rgb": [
+    0.819452,
+    0.822495,
+    0.827251
+   ]
+  },
+  {
+   "stock": "kodak_portra_800_push1",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "skin",
+   "loge": [
+    0.545723,
+    0.314326,
+    0.16527
+   ],
+   "density": [
+    1.150155,
+    0.903052,
+    0.714815
+   ],
+   "pdensity": [
+    0.103495,
+    0.30005,
+    0.507437
+   ],
+   "rgb": [
+    0.834736,
+    0.642834,
+    0.49196
+   ]
+  },
+  {
+   "stock": "kodak_portra_800_push1",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "sky",
+   "loge": [
+    0.102047,
+    0.30071,
+    0.530397
+   ],
+   "density": [
+    0.749979,
+    0.936463,
+    1.303658
+   ],
+   "pdensity": [
+    0.637676,
+    0.203077,
+    0.020779
+   ],
+   "rgb": [
+    0.397438,
+    0.666991,
+    0.834343
+   ]
+  },
+  {
+   "stock": "kodak_portra_800_push1",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "foliage",
+   "loge": [
+    -0.334902,
+    0.027965,
+    -0.356044
+   ],
+   "density": [
+    0.499915,
+    0.934648,
+    0.377243
+   ],
+   "pdensity": [
+    1.407897,
+    0.322391,
+    1.345351
+   ],
+   "rgb": [
+    0.153898,
+    0.446354,
+    0.19693
+   ]
+  },
+  {
+   "stock": "kodak_portra_800_push1",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "red",
+   "loge": [
+    0.411262,
+    -0.517864,
+    -0.663966
+   ],
+   "density": [
+    1.213599,
+    0.214233,
+    0.103297
+   ],
+   "pdensity": [
+    0.165112,
+    1.779533,
+    1.744259
+   ],
+   "rgb": [
+    0.646733,
+    0.142295,
+    0.089578
+   ]
+  },
+  {
+   "stock": "kodak_portra_800_push1",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "warm_highlight",
+   "loge": [
+    0.623217,
+    0.56084,
+    0.387399
+   ],
+   "density": [
+    1.165841,
+    1.088743,
+    0.877338
+   ],
+   "pdensity": [
+    0.083168,
+    0.100302,
+    0.242682
+   ],
+   "rgb": [
+    0.832324,
+    0.787388,
+    0.668298
+   ]
+  },
+  {
+   "stock": "kodak_portra_800_push1",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "teal_shadow",
+   "loge": [
+    -1.016688,
+    -0.821207,
+    -0.707101
+   ],
+   "density": [
+    0.108854,
+    0.282343,
+    0.400846
+   ],
+   "pdensity": [
+    2.270508,
+    1.663221,
+    1.415958
+   ],
+   "rgb": [
+    0.039628,
+    0.087384,
+    0.12495
+   ]
+  },
+  {
+   "stock": "kodak_portra_800_push2",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.02",
+   "loge": [
+    -0.951294,
+    -0.96586,
+    -0.987199
+   ],
+   "density": [
+    0.137484,
+    0.154201,
+    0.126308
+   ],
+   "pdensity": [
+    2.251276,
+    1.825011,
+    1.743943
+   ],
+   "rgb": [
+    0.056247,
+    0.06507,
+    0.075581
+   ]
+  },
+  {
+   "stock": "kodak_portra_800_push2",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.05",
+   "loge": [
+    -0.553354,
+    -0.56792,
+    -0.589259
+   ],
+   "density": [
+    0.356536,
+    0.375853,
+    0.314955
+   ],
+   "pdensity": [
+    1.890143,
+    1.52919,
+    1.524095
+   ],
+   "rgb": [
+    0.100032,
+    0.110447,
+    0.114305
+   ]
+  },
+  {
+   "stock": "kodak_portra_800_push2",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.09",
+   "loge": [
+    -0.298082,
+    -0.312647,
+    -0.333986
+   ],
+   "density": [
+    0.539305,
+    0.54843,
+    0.481888
+   ],
+   "pdensity": [
+    1.339229,
+    1.116695,
+    1.129029
+   ],
+   "rgb": [
+    0.206034,
+    0.210313,
+    0.21013
+   ]
+  },
+  {
+   "stock": "kodak_portra_800_push2",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.184",
+   "loge": [
+    0.012494,
+    -0.002072,
+    -0.023411
+   ],
+   "density": [
+    0.763664,
+    0.758157,
+    0.702409
+   ],
+   "pdensity": [
+    0.646966,
+    0.550346,
+    0.553818
+   ],
+   "rgb": [
+    0.454453,
+    0.454398,
+    0.454116
+   ]
+  },
+  {
+   "stock": "kodak_portra_800_push2",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.35",
+   "loge": [
+    0.291744,
+    0.277178,
+    0.255839
+   ],
+   "density": [
+    0.950764,
+    0.934028,
+    0.90506
+   ],
+   "pdensity": [
+    0.288948,
+    0.236447,
+    0.22101
+   ],
+   "rgb": [
+    0.66877,
+    0.677889,
+    0.688332
+   ]
+  },
+  {
+   "stock": "kodak_portra_800_push2",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.6",
+   "loge": [
+    0.525827,
+    0.511262,
+    0.489922
+   ],
+   "density": [
+    1.107529,
+    1.074977,
+    1.075901
+   ],
+   "pdensity": [
+    0.121475,
+    0.096852,
+    0.079164
+   ],
+   "rgb": [
+    0.785774,
+    0.793453,
+    0.804813
+   ]
+  },
+  {
+   "stock": "kodak_portra_800_push2",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.9",
+   "loge": [
+    0.701918,
+    0.687353,
+    0.666014
+   ],
+   "density": [
+    1.232795,
+    1.181716,
+    1.199047
+   ],
+   "pdensity": [
+    0.051382,
+    0.041389,
+    0.030918
+   ],
+   "rgb": [
+    0.829447,
+    0.832361,
+    0.836179
+   ]
+  },
+  {
+   "stock": "kodak_portra_800_push2",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "skin",
+   "loge": [
+    0.545723,
+    0.314326,
+    0.16527
+   ],
+   "density": [
+    1.202826,
+    0.91242,
+    0.649448
+   ],
+   "pdensity": [
+    0.077988,
+    0.29753,
+    0.612314
+   ],
+   "rgb": [
+    0.859455,
+    0.641835,
+    0.432107
+   ]
+  },
+  {
+   "stock": "kodak_portra_800_push2",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "sky",
+   "loge": [
+    0.102047,
+    0.30071,
+    0.530397
+   ],
+   "density": [
+    0.731384,
+    0.963821,
+    1.406726
+   ],
+   "pdensity": [
+    0.690415,
+    0.170457,
+    0.007756
+   ],
+   "rgb": [
+    0.362642,
+    0.68144,
+    0.839905
+   ]
+  },
+  {
+   "stock": "kodak_portra_800_push2",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "foliage",
+   "loge": [
+    -0.334902,
+    0.027965,
+    -0.356044
+   ],
+   "density": [
+    0.456574,
+    1.01649,
+    0.314781
+   ],
+   "pdensity": [
+    1.558051,
+    0.244753,
+    1.445778
+   ],
+   "rgb": [
+    0.124769,
+    0.459005,
+    0.196001
+   ]
+  },
+  {
+   "stock": "kodak_portra_800_push2",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "red",
+   "loge": [
+    0.411262,
+    -0.517864,
+    -0.663966
+   ],
+   "density": [
+    1.30053,
+    0.166473,
+    0.087129
+   ],
+   "pdensity": [
+    0.132555,
+    1.829008,
+    1.747503
+   ],
+   "rgb": [
+    0.661863,
+    0.139301,
+    0.091106
+   ]
+  },
+  {
+   "stock": "kodak_portra_800_push2",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "warm_highlight",
+   "loge": [
+    0.623217,
+    0.56084,
+    0.387399
+   ],
+   "density": [
+    1.213903,
+    1.124683,
+    0.864374
+   ],
+   "pdensity": [
+    0.061899,
+    0.080188,
+    0.240294
+   ],
+   "rgb": [
+    0.847448,
+    0.80157,
+    0.666577
+   ]
+  },
+  {
+   "stock": "kodak_portra_800_push2",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "teal_shadow",
+   "loge": [
+    -1.016688,
+    -0.821207,
+    -0.707101
+   ],
+   "density": [
+    0.092773,
+    0.238762,
+    0.356822
+   ],
+   "pdensity": [
+    2.290321,
+    1.723049,
+    1.485047
+   ],
+   "rgb": [
+    0.041363,
+    0.079187,
+    0.112698
+   ]
+  },
+  {
+   "stock": "kodak_ultramax_400",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.02",
+   "loge": [
+    -0.952233,
+    -0.965545,
+    -0.986559
+   ],
+   "density": [
+    0.239054,
+    0.292618,
+    0.237424
+   ],
+   "pdensity": [
+    2.082644,
+    1.674191,
+    1.689247
+   ],
+   "rgb": [
+    0.075574,
+    0.084878,
+    0.086216
+   ]
+  },
+  {
+   "stock": "kodak_ultramax_400",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.05",
+   "loge": [
+    -0.554293,
+    -0.567605,
+    -0.588619
+   ],
+   "density": [
+    0.446013,
+    0.496442,
+    0.454309
+   ],
+   "pdensity": [
+    1.552394,
+    1.266159,
+    1.317826
+   ],
+   "rgb": [
+    0.158728,
+    0.166748,
+    0.160473
+   ]
+  },
+  {
+   "stock": "kodak_ultramax_400",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.09",
+   "loge": [
+    -0.29902,
+    -0.312332,
+    -0.333346
+   ],
+   "density": [
+    0.577453,
+    0.618148,
+    0.595615
+   ],
+   "pdensity": [
+    1.098187,
+    0.92039,
+    0.938832
+   ],
+   "rgb": [
+    0.273802,
+    0.276918,
+    0.274106
+   ]
+  },
+  {
+   "stock": "kodak_ultramax_400",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.184",
+   "loge": [
+    0.011555,
+    -0.001757,
+    -0.022771
+   ],
+   "density": [
+    0.731888,
+    0.762436,
+    0.75289
+   ],
+   "pdensity": [
+    0.633781,
+    0.539321,
+    0.542336
+   ],
+   "rgb": [
+    0.46108,
+    0.46096,
+    0.460808
+   ]
+  },
+  {
+   "stock": "kodak_ultramax_400",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.35",
+   "loge": [
+    0.290805,
+    0.277493,
+    0.25648
+   ],
+   "density": [
+    0.870658,
+    0.896967,
+    0.897294
+   ],
+   "pdensity": [
+    0.348261,
+    0.287145,
+    0.286297
+   ],
+   "rgb": [
+    0.6282,
+    0.635262,
+    0.635973
+   ]
+  },
+  {
+   "stock": "kodak_ultramax_400",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.6",
+   "loge": [
+    0.524888,
+    0.511577,
+    0.490563
+   ],
+   "density": [
+    0.994129,
+    1.011805,
+    1.030193
+   ],
+   "pdensity": [
+    0.183093,
+    0.147427,
+    0.139709
+   ],
+   "rgb": [
+    0.744935,
+    0.752901,
+    0.756805
+   ]
+  },
+  {
+   "stock": "kodak_ultramax_400",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "gray_0.9",
+   "loge": [
+    0.70098,
+    0.687668,
+    0.666654
+   ],
+   "density": [
+    1.092085,
+    1.102596,
+    1.126882
+   ],
+   "pdensity": [
+    0.099158,
+    0.078,
+    0.074219
+   ],
+   "rgb": [
+    0.800974,
+    0.806995,
+    0.806226
+   ]
+  },
+  {
+   "stock": "kodak_ultramax_400",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "skin",
+   "loge": [
+    0.546223,
+    0.317515,
+    0.16521
+   ],
+   "density": [
+    1.05098,
+    0.894202,
+    0.774929
+   ],
+   "pdensity": [
+    0.142466,
+    0.3078,
+    0.461276
+   ],
+   "rgb": [
+    0.799863,
+    0.636208,
+    0.520124
+   ]
+  },
+  {
+   "stock": "kodak_ultramax_400",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "sky",
+   "loge": [
+    0.10705,
+    0.294302,
+    0.53211
+   ],
+   "density": [
+    0.737668,
+    0.907294,
+    1.185341
+   ],
+   "pdensity": [
+    0.599416,
+    0.246466,
+    0.063023
+   ],
+   "rgb": [
+    0.429317,
+    0.642521,
+    0.80117
+   ]
+  },
+  {
+   "stock": "kodak_ultramax_400",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "foliage",
+   "loge": [
+    -0.330961,
+    0.032568,
+    -0.362246
+   ],
+   "density": [
+    0.541787,
+    0.873538,
+    0.51388
+   ],
+   "pdensity": [
+    1.189614,
+    0.384614,
+    1.097086
+   ],
+   "rgb": [
+    0.212858,
+    0.453897,
+    0.245714
+   ]
+  },
+  {
+   "stock": "kodak_ultramax_400",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "red",
+   "loge": [
+    0.416759,
+    -0.515389,
+    -0.66344
+   ],
+   "density": [
+    1.072971,
+    0.378782,
+    0.220322
+   ],
+   "pdensity": [
+    0.193924,
+    1.558095,
+    1.677225
+   ],
+   "rgb": [
+    0.649296,
+    0.174525,
+    0.099749
+   ]
+  },
+  {
+   "stock": "kodak_ultramax_400",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "warm_highlight",
+   "loge": [
+    0.620646,
+    0.563736,
+    0.386857
+   ],
+   "density": [
+    1.067846,
+    1.05076,
+    0.902515
+   ],
+   "pdensity": [
+    0.119085,
+    0.126037,
+    0.25585
+   ],
+   "rgb": [
+    0.80543,
+    0.767476,
+    0.661985
+   ]
+  },
+  {
+   "stock": "kodak_ultramax_400",
+   "paper": "kodak_portra_endura",
+   "scan": false,
+   "patch": "teal_shadow",
+   "loge": [
+    -1.014288,
+    -0.824505,
+    -0.705839
+   ],
+   "density": [
+    0.176141,
+    0.382538,
+    0.473197
+   ],
+   "pdensity": [
+    2.173723,
+    1.5071,
+    1.317619
+   ],
+   "rgb": [
+    0.04407,
+    0.110494,
+    0.146727
+   ]
+  },
+  {
+   "stock": "kodak_verita_200d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.02",
+   "loge": [
+    -0.956297,
+    -0.966695,
+    -0.990597
+   ],
+   "density": [
+    0.246904,
+    0.212581,
+    0.260128
+   ],
+   "pdensity": [
+    2.847013,
+    2.151774,
+    1.955651
+   ],
+   "rgb": [
+    0.010696,
+    0.029079,
+    0.028229
+   ]
+  },
+  {
+   "stock": "kodak_verita_200d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.05",
+   "loge": [
+    -0.558357,
+    -0.568755,
+    -0.592657
+   ],
+   "density": [
+    0.477415,
+    0.428106,
+    0.482335
+   ],
+   "pdensity": [
+    1.793801,
+    1.361109,
+    1.196949
+   ],
+   "rgb": [
+    0.106293,
+    0.150786,
+    0.153125
+   ]
+  },
+  {
+   "stock": "kodak_verita_200d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.09",
+   "loge": [
+    -0.303084,
+    -0.313483,
+    -0.337384
+   ],
+   "density": [
+    0.612072,
+    0.558379,
+    0.622701
+   ],
+   "pdensity": [
+    1.163905,
+    0.934161,
+    0.79449
+   ],
+   "rgb": [
+    0.253075,
+    0.284959,
+    0.289698
+   ]
+  },
+  {
+   "stock": "kodak_verita_200d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.184",
+   "loge": [
+    0.007491,
+    -0.002908,
+    -0.026809
+   ],
+   "density": [
+    0.753553,
+    0.697829,
+    0.780081
+   ],
+   "pdensity": [
+    0.664712,
+    0.581632,
+    0.481218
+   ],
+   "rgb": [
+    0.456869,
+    0.458291,
+    0.458581
+   ]
+  },
+  {
+   "stock": "kodak_verita_200d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.35",
+   "loge": [
+    0.286741,
+    0.276343,
+    0.252441
+   ],
+   "density": [
+    0.872227,
+    0.819466,
+    0.926657
+   ],
+   "pdensity": [
+    0.391394,
+    0.359153,
+    0.291269
+   ],
+   "rgb": [
+    0.621176,
+    0.607153,
+    0.599436
+   ]
+  },
+  {
+   "stock": "kodak_verita_200d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.6",
+   "loge": [
+    0.520824,
+    0.510426,
+    0.486524
+   ],
+   "density": [
+    0.977435,
+    0.926636,
+    1.059838
+   ],
+   "pdensity": [
+    0.234126,
+    0.218676,
+    0.17437
+   ],
+   "rgb": [
+    0.737319,
+    0.7193,
+    0.702834
+   ]
+  },
+  {
+   "stock": "kodak_verita_200d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.9",
+   "loge": [
+    0.696916,
+    0.686517,
+    0.662616
+   ],
+   "density": [
+    1.062323,
+    1.014086,
+    1.154189
+   ],
+   "pdensity": [
+    0.149511,
+    0.137841,
+    0.11516
+   ],
+   "rgb": [
+    0.799104,
+    0.782159,
+    0.753185
+   ]
+  },
+  {
+   "stock": "kodak_verita_200d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "skin",
+   "loge": [
+    0.530776,
+    0.312904,
+    0.161141
+   ],
+   "density": [
+    1.017476,
+    0.822161,
+    0.817341
+   ],
+   "pdensity": [
+    0.198292,
+    0.362353,
+    0.432556
+   ],
+   "rgb": [
+    0.765942,
+    0.615216,
+    0.509035
+   ]
+  },
+  {
+   "stock": "kodak_verita_200d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "sky",
+   "loge": [
+    0.100919,
+    0.30249,
+    0.528771
+   ],
+   "density": [
+    0.759369,
+    0.831629,
+    1.188046
+   ],
+   "pdensity": [
+    0.623917,
+    0.329379,
+    0.096126
+   ],
+   "rgb": [
+    0.45774,
+    0.613258,
+    0.740365
+   ]
+  },
+  {
+   "stock": "kodak_verita_200d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "foliage",
+   "loge": [
+    -0.325349,
+    0.025088,
+    -0.36765
+   ],
+   "density": [
+    0.584067,
+    0.784241,
+    0.5411
+   ],
+   "pdensity": [
+    1.294964,
+    0.443947,
+    1.039141
+   ],
+   "rgb": [
+    0.205843,
+    0.438519,
+    0.231463
+   ]
+  },
+  {
+   "stock": "kodak_verita_200d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "red",
+   "loge": [
+    0.383735,
+    -0.51773,
+    -0.665181
+   ],
+   "density": [
+    1.021546,
+    0.310462,
+    0.245916
+   ],
+   "pdensity": [
+    0.214833,
+    1.838626,
+    2.059799
+   ],
+   "rgb": [
+    0.550912,
+    0.146532,
+    0.048825
+   ]
+  },
+  {
+   "stock": "kodak_verita_200d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "warm_highlight",
+   "loge": [
+    0.618546,
+    0.559049,
+    0.382345
+   ],
+   "density": [
+    1.04173,
+    0.96095,
+    0.942593
+   ],
+   "pdensity": [
+    0.171548,
+    0.189741,
+    0.279541
+   ],
+   "rgb": [
+    0.792067,
+    0.737832,
+    0.621494
+   ]
+  },
+  {
+   "stock": "kodak_verita_200d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "teal_shadow",
+   "loge": [
+    -1.014839,
+    -0.820971,
+    -0.709633
+   ],
+   "density": [
+    0.176454,
+    0.315108,
+    0.514176
+   ],
+   "pdensity": [
+    3.069051,
+    1.757588,
+    1.075813
+   ],
+   "rgb": [
+    0.003225,
+    0.070548,
+    0.117703
+   ]
+  },
+  {
+   "stock": "kodak_vision3_200t",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.02",
+   "loge": [
+    -0.958768,
+    -0.963799,
+    -0.986401
+   ],
+   "density": [
+    0.276047,
+    0.299929,
+    0.299958
+   ],
+   "pdensity": [
+    2.701272,
+    2.063101,
+    2.006626
+   ],
+   "rgb": [
+    0.017432,
+    0.035569,
+    0.026522
+   ]
+  },
+  {
+   "stock": "kodak_vision3_200t",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.05",
+   "loge": [
+    -0.560828,
+    -0.565859,
+    -0.588461
+   ],
+   "density": [
+    0.473955,
+    0.48072,
+    0.513029
+   ],
+   "pdensity": [
+    1.753387,
+    1.316314,
+    1.222265
+   ],
+   "rgb": [
+    0.114723,
+    0.15921,
+    0.149659
+   ]
+  },
+  {
+   "stock": "kodak_vision3_200t",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.09",
+   "loge": [
+    -0.305556,
+    -0.310586,
+    -0.333189
+   ],
+   "density": [
+    0.59693,
+    0.586387,
+    0.647316
+   ],
+   "pdensity": [
+    1.171319,
+    0.930111,
+    0.802968
+   ],
+   "rgb": [
+    0.250895,
+    0.285464,
+    0.286738
+   ]
+  },
+  {
+   "stock": "kodak_vision3_200t",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.184",
+   "loge": [
+    0.00502,
+    -1.1e-05,
+    -0.022614
+   ],
+   "density": [
+    0.738603,
+    0.709849,
+    0.797384
+   ],
+   "pdensity": [
+    0.663347,
+    0.580655,
+    0.480387
+   ],
+   "rgb": [
+    0.457581,
+    0.458876,
+    0.459129
+   ]
+  },
+  {
+   "stock": "kodak_vision3_200t",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.35",
+   "loge": [
+    0.28427,
+    0.279239,
+    0.256637
+   ],
+   "density": [
+    0.861582,
+    0.824958,
+    0.93186
+   ],
+   "pdensity": [
+    0.379245,
+    0.348209,
+    0.29318
+   ],
+   "rgb": [
+    0.630016,
+    0.614763,
+    0.599255
+   ]
+  },
+  {
+   "stock": "kodak_vision3_200t",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.6",
+   "loge": [
+    0.518353,
+    0.513323,
+    0.49072
+   ],
+   "density": [
+    0.969504,
+    0.927132,
+    1.053259
+   ],
+   "pdensity": [
+    0.221834,
+    0.204211,
+    0.177923
+   ],
+   "rgb": [
+    0.747153,
+    0.7299,
+    0.700686
+   ]
+  },
+  {
+   "stock": "kodak_vision3_200t",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.9",
+   "loge": [
+    0.694444,
+    0.689414,
+    0.666811
+   ],
+   "density": [
+    1.055743,
+    1.010754,
+    1.141573
+   ],
+   "pdensity": [
+    0.138161,
+    0.123327,
+    0.117267
+   ],
+   "rgb": [
+    0.80712,
+    0.792057,
+    0.750342
+   ]
+  },
+  {
+   "stock": "kodak_vision3_200t",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "skin",
+   "loge": [
+    0.496544,
+    0.31235,
+    0.144142
+   ],
+   "density": [
+    0.988123,
+    0.829562,
+    0.822812
+   ],
+   "pdensity": [
+    0.207247,
+    0.344457,
+    0.433722
+   ],
+   "rgb": [
+    0.76053,
+    0.625157,
+    0.509029
+   ]
+  },
+  {
+   "stock": "kodak_vision3_200t",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "sky",
+   "loge": [
+    0.148015,
+    0.290674,
+    0.553888
+   ],
+   "density": [
+    0.77032,
+    0.823069,
+    1.184306
+   ],
+   "pdensity": [
+    0.566816,
+    0.339123,
+    0.09909
+   ],
+   "rgb": [
+    0.49498,
+    0.61259,
+    0.740821
+   ]
+  },
+  {
+   "stock": "kodak_vision3_200t",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "foliage",
+   "loge": [
+    -0.264706,
+    0.046274,
+    -0.428792
+   ],
+   "density": [
+    0.609793,
+    0.797767,
+    0.5182
+   ],
+   "pdensity": [
+    1.082443,
+    0.447934,
+    1.188989
+   ],
+   "rgb": [
+    0.298545,
+    0.445387,
+    0.183946
+   ]
+  },
+  {
+   "stock": "kodak_vision3_200t",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "red",
+   "loge": [
+    0.309729,
+    -0.56477,
+    -0.72099
+   ],
+   "density": [
+    0.965593,
+    0.38046,
+    0.282437
+   ],
+   "pdensity": [
+    0.261328,
+    1.703082,
+    2.057082
+   ],
+   "rgb": [
+    0.539255,
+    0.161375,
+    0.049098
+   ]
+  },
+  {
+   "stock": "kodak_vision3_200t",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "warm_highlight",
+   "loge": [
+    0.604445,
+    0.568257,
+    0.367699
+   ],
+   "density": [
+    1.027745,
+    0.967541,
+    0.934993
+   ],
+   "pdensity": [
+    0.162922,
+    0.168888,
+    0.285509
+   ],
+   "rgb": [
+    0.799137,
+    0.752003,
+    0.616855
+   ]
+  },
+  {
+   "stock": "kodak_vision3_200t",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "teal_shadow",
+   "loge": [
+    -0.970403,
+    -0.823858,
+    -0.693829
+   ],
+   "density": [
+    0.242351,
+    0.369973,
+    0.5242
+   ],
+   "pdensity": [
+    2.819774,
+    1.761681,
+    1.195727
+   ],
+   "rgb": [
+    0.005502,
+    0.07175,
+    0.111579
+   ]
+  },
+  {
+   "stock": "kodak_vision3_250d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.02",
+   "loge": [
+    -0.948951,
+    -0.96523,
+    -0.993399
+   ],
+   "density": [
+    0.264971,
+    0.294569,
+    0.307048
+   ],
+   "pdensity": [
+    2.662203,
+    2.082614,
+    1.997288
+   ],
+   "rgb": [
+    0.019515,
+    0.034903,
+    0.026959
+   ]
+  },
+  {
+   "stock": "kodak_vision3_250d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.05",
+   "loge": [
+    -0.551011,
+    -0.56729,
+    -0.595459
+   ],
+   "density": [
+    0.444794,
+    0.475376,
+    0.51067
+   ],
+   "pdensity": [
+    1.780906,
+    1.361828,
+    1.256675
+   ],
+   "rgb": [
+    0.110754,
+    0.149492,
+    0.141054
+   ]
+  },
+  {
+   "stock": "kodak_vision3_250d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.09",
+   "loge": [
+    -0.295738,
+    -0.312018,
+    -0.340187
+   ],
+   "density": [
+    0.565726,
+    0.58978,
+    0.648785
+   ],
+   "pdensity": [
+    1.194992,
+    0.952859,
+    0.824245
+   ],
+   "rgb": [
+    0.243819,
+    0.276938,
+    0.277859
+   ]
+  },
+  {
+   "stock": "kodak_vision3_250d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.184",
+   "loge": [
+    0.014837,
+    -0.001443,
+    -0.029612
+   ],
+   "density": [
+    0.709308,
+    0.723695,
+    0.807697
+   ],
+   "pdensity": [
+    0.666803,
+    0.583163,
+    0.482539
+   ],
+   "rgb": [
+    0.455782,
+    0.457378,
+    0.457713
+   ]
+  },
+  {
+   "stock": "kodak_vision3_250d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.35",
+   "loge": [
+    0.294087,
+    0.277808,
+    0.249639
+   ],
+   "density": [
+    0.831541,
+    0.842897,
+    0.946627
+   ],
+   "pdensity": [
+    0.379318,
+    0.349683,
+    0.291838
+   ],
+   "rgb": [
+    0.629872,
+    0.613943,
+    0.600096
+   ]
+  },
+  {
+   "stock": "kodak_vision3_250d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.6",
+   "loge": [
+    0.52817,
+    0.511891,
+    0.483722
+   ],
+   "density": [
+    0.936522,
+    0.945755,
+    1.068
+   ],
+   "pdensity": [
+    0.223451,
+    0.208243,
+    0.17842
+   ],
+   "rgb": [
+    0.745927,
+    0.727022,
+    0.700115
+   ]
+  },
+  {
+   "stock": "kodak_vision3_250d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.9",
+   "loge": [
+    0.704262,
+    0.687982,
+    0.659813
+   ],
+   "density": [
+    1.019492,
+    1.030407,
+    1.154966
+   ],
+   "pdensity": [
+    0.140947,
+    0.127579,
+    0.119311
+   ],
+   "rgb": [
+    0.805408,
+    0.789087,
+    0.748888
+   ]
+  },
+  {
+   "stock": "kodak_vision3_250d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "skin",
+   "loge": [
+    0.548873,
+    0.318907,
+    0.158507
+   ],
+   "density": [
+    0.978933,
+    0.846335,
+    0.843269
+   ],
+   "pdensity": [
+    0.185927,
+    0.349789,
+    0.426522
+   ],
+   "rgb": [
+    0.776574,
+    0.624353,
+    0.513662
+   ]
+  },
+  {
+   "stock": "kodak_vision3_250d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "sky",
+   "loge": [
+    0.097822,
+    0.290666,
+    0.525821
+   ],
+   "density": [
+    0.71234,
+    0.849806,
+    1.184997
+   ],
+   "pdensity": [
+    0.638759,
+    0.32583,
+    0.104735
+   ],
+   "rgb": [
+    0.448657,
+    0.613588,
+    0.732636
+   ]
+  },
+  {
+   "stock": "kodak_vision3_250d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "foliage",
+   "loge": [
+    -0.347601,
+    0.035951,
+    -0.369265
+   ],
+   "density": [
+    0.522588,
+    0.817883,
+    0.576728
+   ],
+   "pdensity": [
+    1.329661,
+    0.438808,
+    1.027841
+   ],
+   "rgb": [
+    0.193816,
+    0.438061,
+    0.236997
+   ]
+  },
+  {
+   "stock": "kodak_vision3_250d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "red",
+   "loge": [
+    0.418427,
+    -0.512576,
+    -0.665488
+   ],
+   "density": [
+    0.989566,
+    0.392856,
+    0.324542
+   ],
+   "pdensity": [
+    0.204997,
+    1.681869,
+    1.966065
+   ],
+   "rgb": [
+    0.573975,
+    0.167606,
+    0.057479
+   ]
+  },
+  {
+   "stock": "kodak_vision3_250d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "warm_highlight",
+   "loge": [
+    0.62707,
+    0.565498,
+    0.379887
+   ],
+   "density": [
+    0.998231,
+    0.981145,
+    0.96331
+   ],
+   "pdensity": [
+    0.160721,
+    0.1786,
+    0.273133
+   ],
+   "rgb": [
+    0.800488,
+    0.746435,
+    0.626185
+   ]
+  },
+  {
+   "stock": "kodak_vision3_250d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "teal_shadow",
+   "loge": [
+    -1.019622,
+    -0.825886,
+    -0.712568
+   ],
+   "density": [
+    0.209428,
+    0.36776,
+    0.514939
+   ],
+   "pdensity": [
+    2.863196,
+    1.776997,
+    1.240132
+   ],
+   "rgb": [
+    0.004869,
+    0.068452,
+    0.103957
+   ]
+  },
+  {
+   "stock": "kodak_vision3_500t",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.02",
+   "loge": [
+    -0.957516,
+    -0.964214,
+    -0.99618
+   ],
+   "density": [
+    0.30548,
+    0.297313,
+    0.290131
+   ],
+   "pdensity": [
+    2.66823,
+    2.08843,
+    1.992427
+   ],
+   "rgb": [
+    0.01913,
+    0.034507,
+    0.027184
+   ]
+  },
+  {
+   "stock": "kodak_vision3_500t",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.05",
+   "loge": [
+    -0.559576,
+    -0.566274,
+    -0.59824
+   ],
+   "density": [
+    0.49185,
+    0.464297,
+    0.491809
+   ],
+   "pdensity": [
+    1.770384,
+    1.358606,
+    1.258948
+   ],
+   "rgb": [
+    0.112857,
+    0.150306,
+    0.14079
+   ]
+  },
+  {
+   "stock": "kodak_vision3_500t",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.09",
+   "loge": [
+    -0.304304,
+    -0.311001,
+    -0.342967
+   ],
+   "density": [
+    0.613834,
+    0.567447,
+    0.630426
+   ],
+   "pdensity": [
+    1.189909,
+    0.95184,
+    0.825165
+   ],
+   "rgb": [
+    0.24551,
+    0.277447,
+    0.277668
+   ]
+  },
+  {
+   "stock": "kodak_vision3_500t",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.184",
+   "loge": [
+    0.006271,
+    -0.000426,
+    -0.032392
+   ],
+   "density": [
+    0.75877,
+    0.688812,
+    0.790179
+   ],
+   "pdensity": [
+    0.666115,
+    0.582704,
+    0.482146
+   ],
+   "rgb": [
+    0.456139,
+    0.457656,
+    0.457973
+   ]
+  },
+  {
+   "stock": "kodak_vision3_500t",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.35",
+   "loge": [
+    0.285522,
+    0.278824,
+    0.246859
+   ],
+   "density": [
+    0.883739,
+    0.79762,
+    0.929549
+   ],
+   "pdensity": [
+    0.377396,
+    0.348774,
+    0.29129
+   ],
+   "rgb": [
+    0.631224,
+    0.614705,
+    0.600609
+   ]
+  },
+  {
+   "stock": "kodak_vision3_500t",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.6",
+   "loge": [
+    0.519605,
+    0.512908,
+    0.480942
+   ],
+   "density": [
+    0.991859,
+    0.892673,
+    1.050833
+   ],
+   "pdensity": [
+    0.22054,
+    0.206132,
+    0.178233
+   ],
+   "rgb": [
+    0.748219,
+    0.728699,
+    0.700378
+   ]
+  },
+  {
+   "stock": "kodak_vision3_500t",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.9",
+   "loge": [
+    0.695696,
+    0.688999,
+    0.657033
+   ],
+   "density": [
+    1.077914,
+    0.970165,
+    1.137942
+   ],
+   "pdensity": [
+    0.137447,
+    0.126107,
+    0.119122
+   ],
+   "rgb": [
+    0.808108,
+    0.790199,
+    0.748848
+   ]
+  },
+  {
+   "stock": "kodak_vision3_500t",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "skin",
+   "loge": [
+    0.494566,
+    0.308162,
+    0.137546
+   ],
+   "density": [
+    1.007562,
+    0.800115,
+    0.821242
+   ],
+   "pdensity": [
+    0.210387,
+    0.351224,
+    0.435124
+   ],
+   "rgb": [
+    0.757573,
+    0.620654,
+    0.507773
+   ]
+  },
+  {
+   "stock": "kodak_vision3_500t",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "sky",
+   "loge": [
+    0.155096,
+    0.296591,
+    0.536246
+   ],
+   "density": [
+    0.794211,
+    0.799683,
+    1.166842
+   ],
+   "pdensity": [
+    0.557944,
+    0.323317,
+    0.105263
+   ],
+   "rgb": [
+    0.50025,
+    0.622863,
+    0.737814
+   ]
+  },
+  {
+   "stock": "kodak_vision3_500t",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "foliage",
+   "loge": [
+    -0.265218,
+    0.043323,
+    -0.392002
+   ],
+   "density": [
+    0.623925,
+    0.770088,
+    0.535148
+   ],
+   "pdensity": [
+    1.100527,
+    0.47964,
+    1.099086
+   ],
+   "rgb": [
+    0.285018,
+    0.436025,
+    0.206372
+   ]
+  },
+  {
+   "stock": "kodak_vision3_500t",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "red",
+   "loge": [
+    0.304371,
+    -0.570549,
+    -0.732045
+   ],
+   "density": [
+    0.984552,
+    0.369778,
+    0.283905
+   ],
+   "pdensity": [
+    0.271708,
+    1.713616,
+    2.064332
+   ],
+   "rgb": [
+    0.532806,
+    0.159055,
+    0.04795
+   ]
+  },
+  {
+   "stock": "kodak_vision3_500t",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "warm_highlight",
+   "loge": [
+    0.602765,
+    0.56503,
+    0.365834
+   ],
+   "density": [
+    1.047719,
+    0.927403,
+    0.941686
+   ],
+   "pdensity": [
+    0.164207,
+    0.178677,
+    0.277406
+   ],
+   "rgb": [
+    0.797854,
+    0.745878,
+    0.623019
+   ]
+  },
+  {
+   "stock": "kodak_vision3_500t",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "teal_shadow",
+   "loge": [
+    -0.965893,
+    -0.820126,
+    -0.708272
+   ],
+   "density": [
+    0.278997,
+    0.361984,
+    0.492155
+   ],
+   "pdensity": [
+    2.757557,
+    1.785299,
+    1.253247
+   ],
+   "rgb": [
+    0.006693,
+    0.069539,
+    0.106078
+   ]
+  },
+  {
+   "stock": "kodak_vision3_50d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.02",
+   "loge": [
+    -0.952214,
+    -0.964338,
+    -0.981341
+   ],
+   "density": [
+    0.276538,
+    0.276352,
+    0.299796
+   ],
+   "pdensity": [
+    2.769897,
+    2.096827,
+    1.993958
+   ],
+   "rgb": [
+    0.01404,
+    0.032692,
+    0.026746
+   ]
+  },
+  {
+   "stock": "kodak_vision3_50d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.05",
+   "loge": [
+    -0.554274,
+    -0.566398,
+    -0.583401
+   ],
+   "density": [
+    0.476966,
+    0.472847,
+    0.51939
+   ],
+   "pdensity": [
+    1.770665,
+    1.327385,
+    1.198896
+   ],
+   "rgb": [
+    0.110564,
+    0.157325,
+    0.15403
+   ]
+  },
+  {
+   "stock": "kodak_vision3_50d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.09",
+   "loge": [
+    -0.299001,
+    -0.311126,
+    -0.328129
+   ],
+   "density": [
+    0.594336,
+    0.585218,
+    0.650636
+   ],
+   "pdensity": [
+    1.182488,
+    0.937339,
+    0.799038
+   ],
+   "rgb": [
+    0.247039,
+    0.282936,
+    0.287613
+   ]
+  },
+  {
+   "stock": "kodak_vision3_50d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.184",
+   "loge": [
+    0.011574,
+    -0.000551,
+    -0.017553
+   ],
+   "density": [
+    0.730898,
+    0.717756,
+    0.801642
+   ],
+   "pdensity": [
+    0.663913,
+    0.581023,
+    0.480698
+   ],
+   "rgb": [
+    0.457285,
+    0.458652,
+    0.458922
+   ]
+  },
+  {
+   "stock": "kodak_vision3_50d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.35",
+   "loge": [
+    0.290824,
+    0.2787,
+    0.261697
+   ],
+   "density": [
+    0.853836,
+    0.845244,
+    0.946711
+   ],
+   "pdensity": [
+    0.367625,
+    0.338467,
+    0.28448
+   ],
+   "rgb": [
+    0.638179,
+    0.622286,
+    0.606504
+   ]
+  },
+  {
+   "stock": "kodak_vision3_50d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.6",
+   "loge": [
+    0.524908,
+    0.512783,
+    0.49578
+   ],
+   "density": [
+    0.961832,
+    0.958344,
+    1.081125
+   ],
+   "pdensity": [
+    0.207029,
+    0.191476,
+    0.163803
+   ],
+   "rgb": [
+    0.758102,
+    0.740435,
+    0.712785
+   ]
+  },
+  {
+   "stock": "kodak_vision3_50d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "gray_0.9",
+   "loge": [
+    0.700999,
+    0.688874,
+    0.671871
+   ],
+   "density": [
+    1.045968,
+    1.047227,
+    1.17789
+   ],
+   "pdensity": [
+    0.12666,
+    0.113957,
+    0.103412
+   ],
+   "rgb": [
+    0.814533,
+    0.799087,
+    0.761371
+   ]
+  },
+  {
+   "stock": "kodak_vision3_50d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "skin",
+   "loge": [
+    0.541907,
+    0.322201,
+    0.169931
+   ],
+   "density": [
+    1.006713,
+    0.850737,
+    0.832581
+   ],
+   "pdensity": [
+    0.174282,
+    0.335206,
+    0.430516
+   ],
+   "rgb": [
+    0.787106,
+    0.634159,
+    0.511906
+   ]
+  },
+  {
+   "stock": "kodak_vision3_50d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "sky",
+   "loge": [
+    0.092489,
+    0.285145,
+    0.535791
+   ],
+   "density": [
+    0.73037,
+    0.846496,
+    1.220881
+   ],
+   "pdensity": [
+    0.623899,
+    0.325458,
+    0.085597
+   ],
+   "rgb": [
+    0.456976,
+    0.61613,
+    0.749341
+   ]
+  },
+  {
+   "stock": "kodak_vision3_50d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "foliage",
+   "loge": [
+    -0.343799,
+    0.040529,
+    -0.356121
+   ],
+   "density": [
+    0.557588,
+    0.817754,
+    0.586416
+   ],
+   "pdensity": [
+    1.296337,
+    0.421324,
+    0.977278
+   ],
+   "rgb": [
+    0.201226,
+    0.451242,
+    0.253592
+   ]
+  },
+  {
+   "stock": "kodak_vision3_50d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "red",
+   "loge": [
+    0.402866,
+    -0.510465,
+    -0.662031
+   ],
+   "density": [
+    1.012974,
+    0.389727,
+    0.301576
+   ],
+   "pdensity": [
+    0.208731,
+    1.647123,
+    2.005932
+   ],
+   "rgb": [
+    0.573789,
+    0.173674,
+    0.056007
+   ]
+  },
+  {
+   "stock": "kodak_vision3_50d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "warm_highlight",
+   "loge": [
+    0.62476,
+    0.568706,
+    0.393172
+   ],
+   "density": [
+    1.026672,
+    0.99964,
+    0.959823
+   ],
+   "pdensity": [
+    0.146929,
+    0.158809,
+    0.269115
+   ],
+   "rgb": [
+    0.811101,
+    0.760731,
+    0.628672
+   ]
+  },
+  {
+   "stock": "kodak_vision3_50d",
+   "paper": "kodak_2383",
+   "scan": false,
+   "patch": "teal_shadow",
+   "loge": [
+    -1.022263,
+    -0.828235,
+    -0.700984
+   ],
+   "density": [
+    0.204043,
+    0.362467,
+    0.534186
+   ],
+   "pdensity": [
+    3.003623,
+    1.75014,
+    1.151056
+   ],
+   "rgb": [
+    0.003513,
+    0.070368,
+    0.110648
+   ]
+  }
+ ]
+}

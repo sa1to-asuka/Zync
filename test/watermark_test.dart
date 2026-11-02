@@ -12,8 +12,8 @@ import 'package:zync/ui/widgets/lightroom_histogram.dart';
 
 void main() {
   group('Watermark 模板与元数据模型单元测试', () {
-    test('16 款高质感摄影画廊模板枚举完整性与默认无水印查找', () {
-      expect(WatermarkTemplate.values.length, equals(16));
+    test('17 款高质感摄影画廊模板枚举完整性与默认无水印查找', () {
+      expect(WatermarkTemplate.values.length, equals(17));
       expect(WatermarkTemplate.fromId('none'), equals(WatermarkTemplate.none));
       expect(WatermarkTemplate.fromId('unknown_id'),
           equals(WatermarkTemplate.none));
@@ -410,16 +410,16 @@ void main() {
       await tester.pumpAndSettle();
 
       // 切到调色 Tab
-      await tester.tap(find.text('参数精调'));
+      await tester.tap(find.text('预设调节'));
       await tester.pumpAndSettle();
 
-      // 一级调色分组药丸（未选中）文字应为语义色，而非白色。
-      final groupLabel = find.text('白平衡');
+      // 一级调色分组标题文字应为语义色，而非白色。
+      final groupLabel = find.text('基础色调');
       expect(groupLabel, findsWidgets);
       final textWidget = tester.widgetList<Text>(groupLabel).first;
       expect(textWidget.style?.color, isNot(equals(Colors.white)),
-          reason: '浅色下未选中的一级调色菜单不能是白字');
-      expect(textWidget.style?.color, ZyncColors.textSecondary);
+          reason: '浅色下的一级调色分组标题不能是白字');
+      expect(textWidget.style?.color, ZyncColors.textPrimary);
     });
   });
 
@@ -438,8 +438,8 @@ void main() {
 
     test('模板线框缩略图不跟随主题文字色（浅色下会黑白反转糊掉）', () {
       // 线框已抽到共享组件（水印工坊与拼图水印页共用）。
-      final src =
-          File('lib/ui/widgets/watermark_template_card.dart').readAsStringSync();
+      final src = File('lib/ui/widgets/watermark_template_card.dart')
+          .readAsStringSync();
       final start = src.indexOf('static Widget _wireframe(');
       expect(start, greaterThan(0));
       final body = src.substring(start);

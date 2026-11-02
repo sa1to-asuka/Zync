@@ -17,7 +17,7 @@
 Zync 是一款使用 Flutter 开发的开源摄影工具，围绕尼康 Z 系列相机整理出一条紧凑的工作流：连接相机、浏览与传输照片，然后完成调色、水印和导出。应用可直接通过 Wi-Fi PTP/IP 或 USB PTP 与相机通信，不依赖厂商账号、云服务或专有 SDK。
 
 - 项目地址：<https://github.com/sa1to-asuka/Zync>
-- 当前版本：`1.0.0`
+- 当前版本：`2.4.0`
 - 许可证：MIT
 - 主要平台：Android
 
@@ -28,7 +28,7 @@ Zync 是一款使用 Flutter 开发的开源摄影工具，围绕尼康 Z 系列
 | 相机连接 | Wi-Fi PTP/IP 与 USB OTG PTP |
 | 相机浏览 | 浏览 JPG、NEF、NRW，并提取 RAW 内嵌预览 |
 | 文件传输 | 分块下载、任务队列、暂停、取消、重试与自动回传 |
-| 水印工坊 | 11 款模板、EXIF 参数、自定义文字、Logo 与导出质量 |
+| 水印工坊 | 11 款模板、EXIF 参数、自定义文字、Logo，统一的预设调节面板与物理胶片模拟（11 款底片、红光晕、银盐颗粒） |
 | 照片处理 | 调色预设、曝光与影调调整、裁剪、旋转、对比与拼图 |
 | 自适应界面 | 手机底部导航与大屏左侧导航栏 |
 | 应用更新 | GitHub Releases 检查与安装前 SHA-256 校验 |
@@ -77,6 +77,8 @@ Zync 是一款使用 Flutter 开发的开源摄影工具，围绕尼康 Z 系列
 - 支持最多两行自定义文字，以及从相册添加 Logo 图层。
 - 提供 95、92、85 三档 JPEG 导出质量。
 - 将尺寸、方向、机型、镜头、曝光、焦距与时间写回导出图片的 EXIF。
+- 将「胶片滤镜」与「参数精调」合并为统一的**预设调节**面板：顶部预设流、可折叠分组滑块、预设切换 250ms 平滑过渡，并支持自建预设的保存、重命名、覆盖与删除。
+- **胶片模拟**使用独立的原生 [spektrafilm](https://github.com/andreavolpato/spektrafilm) 光谱引擎移植：20 款真实底片、8 种印相纸、负片直扫，包含实测 H&D 密度曲线、DIR 抑制剂、红光晕、银盐颗粒与放大机滤色配光。
 
 ### 色彩优化工作室
 
@@ -247,6 +249,7 @@ Wi-Fi 与 USB 传输遵循公开的 Picture Transfer Protocol 模型：
 | --- | --- | --- |
 | [ImageToolbox](https://github.com/T8RIN/ImageToolbox) | 图像处理、滤镜与编辑交互参考 | Apache-2.0 |
 | [Recipe Lab](https://github.com/voxivoid/recipe-lab-sony-pmca) | 色彩配方与胶片外观数据结构参考 | GPL-3.0 |
+| [Spektrafilm](https://github.com/andreavolpato/spektrafilm) | 独立原生光谱胶片引擎：H&D 密度曲线、DIR 抑制剂、红光晕、银盐颗粒与印相纸冲印 | 代码 GPL-3.0 / 档案 CC BY-SA 4.0 |
 | [SnapBridge-Enhanced](https://github.com/MXWF0/SnapBridge-Enhanced) | 尼康连接流程与交互参考 | 仓库当前未声明许可证 |
 | [nsg](https://github.com/hurui200320/nsg) | 尼康协议与设备能力参考 | AGPL-3.0 |
 | [libgphoto2](https://github.com/gphoto/libgphoto2) | PTP/IP 与尼康操作码参考 | LGPL-2.1 |

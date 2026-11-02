@@ -17,7 +17,7 @@
 Zync is an open-source Flutter application built around a focused workflow for Nikon Z-series cameras: connect to the camera, browse and transfer photos, then finish and export them with a watermark or color treatment. It is designed to work directly with the camera over Wi-Fi PTP/IP or USB PTP without requiring a vendor account, cloud service, or proprietary SDK.
 
 - Project: <https://github.com/sa1to-asuka/Zync>
-- Version: `1.0.0`
+- Version: `2.4.0`
 - License: MIT
 - Primary platform: Android
 
@@ -28,7 +28,7 @@ Zync is an open-source Flutter application built around a focused workflow for N
 | Camera connection | Wi-Fi PTP/IP and USB PTP over OTG |
 | Camera browsing | JPG, NEF, and NRW browsing with embedded RAW previews |
 | Transfer | Chunked downloads, transfer queue, pause, cancel, retry, and auto-transfer |
-| Watermark studio | 11 templates, EXIF data, custom text, logo overlays, and quality controls |
+| Watermark studio | 11 templates, EXIF data, custom text, logo overlays, a unified presets panel, and physical film simulation with 11 film stocks, halation, and silver-halide grain |
 | Photo finishing | Color presets, exposure and tone controls, crop, rotate, compare, and collage |
 | Adaptive interface | Bottom navigation on phones and a navigation rail on larger screens |
 | Updates | GitHub Releases checks with SHA-256 verification before installation |
@@ -77,6 +77,8 @@ The Bluetooth Low Energy LSS path is experimental and hidden by default. It is n
 - Add up to two custom text lines and a logo image from the gallery.
 - Export a high-quality JPEG at 95, 92, or 85 quality.
 - Write dimensions, orientation, camera, lens, exposure, focal length, and timestamp back to the exported EXIF block.
+- Merge film presets and manual adjustments into one **Presets** panel: horizontal preset strip, collapsible slider groups, animated preset transitions, and personal presets with save, rename, overwrite, and delete.
+- **Film Simulation** uses a standalone native port of the [spektrafilm](https://github.com/andreavolpato/spektrafilm) spectral engine: 20 real film profiles, 8 print papers, negative direct scan, measured H&D density curves, DIR couplers, halation, silver-halide grain, and enlarger filter balance.
 
 ### Picture Control studio
 
@@ -247,6 +249,7 @@ Thank you to the maintainers and contributors of the projects below. Each projec
 | --- | --- | --- |
 | [ImageToolbox](https://github.com/T8RIN/ImageToolbox) | Image processing, filters, and editor interaction reference | Apache-2.0 |
 | [Recipe Lab](https://github.com/voxivoid/recipe-lab-sony-pmca) | Color-recipe and film-look data structure reference | GPL-3.0 |
+| [Spektrafilm](https://github.com/andreavolpato/spektrafilm) | Standalone native spectral film engine: H&D density curves, DIR couplers, halation, silver-halide grain, print paper rendering | Code GPL-3.0 / profiles CC BY-SA 4.0 |
 | [SnapBridge-Enhanced](https://github.com/MXWF0/SnapBridge-Enhanced) | Nikon connection flow and interaction reference | No license file currently declared |
 | [nsg](https://github.com/hurui200320/nsg) | Nikon protocol and device-capability reference | AGPL-3.0 |
 | [libgphoto2](https://github.com/gphoto/libgphoto2) | PTP/IP and Nikon operation-code reference | LGPL-2.1 |

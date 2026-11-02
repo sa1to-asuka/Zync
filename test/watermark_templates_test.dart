@@ -27,8 +27,8 @@ img.Image _photoLike(int w, int h) {
 }
 
 Future<ui.Image> _toUiImage(img.Image frame) async {
-  final codec = await ui.instantiateImageCodec(
-      Uint8List.fromList(img.encodePng(frame)));
+  final codec =
+      await ui.instantiateImageCodec(Uint8List.fromList(img.encodePng(frame)));
   try {
     return (await codec.getNextFrame()).image;
   } finally {
@@ -74,6 +74,7 @@ void main() {
       WatermarkTemplate.blurFloatingShadow,
       WatermarkTemplate.minimalCornerParam,
       WatermarkTemplate.retroTimestamp,
+      WatermarkTemplate.filmNegativeStrip,
       WatermarkTemplate.geoLocationEditorial,
     ];
     for (final t in templates) {
@@ -86,9 +87,14 @@ void main() {
       if (t == WatermarkTemplate.magazineCover ||
           t == WatermarkTemplate.brandClassicWhite ||
           t == WatermarkTemplate.brandEmblemCenter ||
+          t == WatermarkTemplate.filmNegativeStrip ||
           t == WatermarkTemplate.geoLocationEditorial) {
         expect(layout.totalHeight, greaterThan(layout.imageRect.height),
             reason: '${t.label} 应额外留出信息带');
+      }
+      if (t == WatermarkTemplate.filmNegativeStrip) {
+        expect(layout.totalWidth, greaterThan(layout.imageRect.width),
+            reason: '${t.label} 应留出左右片边');
       }
     }
     expect(
@@ -125,6 +131,7 @@ void main() {
       WatermarkTemplate.blurFloatingShadow,
       WatermarkTemplate.minimalCornerParam,
       WatermarkTemplate.retroTimestamp,
+      WatermarkTemplate.filmNegativeStrip,
       WatermarkTemplate.geoLocationEditorial,
     ];
     final gpsMeta = _meta.copyWith(
@@ -144,6 +151,9 @@ void main() {
             template: t,
             spacingScale: 1.0,
             showDetails: true,
+            filmStockName: t == WatermarkTemplate.filmNegativeStrip
+                ? 'Kodak Portra 400'
+                : null,
           );
           out.add(r.byteLength);
         }
@@ -157,6 +167,72 @@ void main() {
     for (final size in sizes!) {
       expect(size, greaterThan(1000), reason: '每个模板都应产出有效 JPEG');
     }
+  });
+
+  testWidgets('胶片齿孔模板输出深色片基边框', (tester) async {
+    final source = _photoLike(320, 240);
+    final result = await tester.runAsync(() async {
+      final image = await _toUiImage(source);
+      try {
+        final exported = await WatermarkRenderer.exportWatermarkedPhoto(
+          sourceImage: image,
+          metadata: _meta,
+          template: WatermarkTemplate.filmNegativeStrip,
+          filmStockName: 'Kodak Portra 400',
+        );
+        return (
+          width: exported.width,
+          height: exported.height,
+          decoded: img.decodeJpg(await exported.file.readAsBytes()),
+        );
+      } finally {
+        image.dispose();
+      }
+    });
+
+    expect(result, isNotNull);
+    expect(result!.width, greaterThan(320));
+    expect(result.height, greaterThan(240));
+
+    final decoded = result.decoded;
+    expect(decoded, isNotNull);
+    final corner = decoded!.getPixel(2, 2);
+    expect(corner.r, lessThan(80));
+    expect(corner.g, lessThan(80));
+    expect(corner.b, lessThan(80));
+  });
+
+  testWidgets('胶片齿孔模板绘制橙色拍摄日期', (tester) async {
+    final source = img.Image(width: 320, height: 240);
+    img.fill(source, color: img.ColorRgb8(120, 120, 120));
+    final decoded = await tester.runAsync(() async {
+      final image = await _toUiImage(source);
+      try {
+        final exported = await WatermarkRenderer.exportWatermarkedPhoto(
+          sourceImage: image,
+          metadata: _meta,
+          template: WatermarkTemplate.filmNegativeStrip,
+          filmStockName: 'Kodak Portra 400',
+        );
+        return img.decodeJpg(await exported.file.readAsBytes());
+      } finally {
+        image.dispose();
+      }
+    });
+
+    expect(decoded, isNotNull);
+    var foundStamp = false;
+    for (var y = (decoded!.height * 0.72).round(); y < decoded.height; y++) {
+      for (var x = (decoded.width * 0.68).round(); x < decoded.width; x++) {
+        final pixel = decoded.getPixel(x, y);
+        if (pixel.r > 170 && pixel.g > 55 && pixel.g < 190 && pixel.b < 120) {
+          foundStamp = true;
+          break;
+        }
+      }
+      if (foundStamp) break;
+    }
+    expect(foundStamp, isTrue, reason: '照片右下角应出现橙色日期戳');
   });
 
   testWidgets('内容开关与样式设置会改变成品', (tester) async {
@@ -206,9 +282,15 @@ void main() {
 
     expect(results, isNotNull);
     final base = results!['baseline']!;
-    for (final key in ['noModel', 'noExposure', 'faded', 'square', 'cyan', 'black']) {
-      expect(results[key], isNot(equals(base)),
-          reason: '$key 设置应改变成品像素');
+    for (final key in [
+      'noModel',
+      'noExposure',
+      'faded',
+      'square',
+      'cyan',
+      'black'
+    ]) {
+      expect(results[key], isNot(equals(base)), reason: '$key 设置应改变成品像素');
     }
   });
 }

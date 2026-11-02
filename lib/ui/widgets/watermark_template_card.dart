@@ -490,6 +490,69 @@ class WatermarkTemplateCard extends StatelessWidget {
             ),
           ),
         );
+      case WatermarkTemplate.filmNegativeStrip:
+        return Container(
+          margin: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            color: ZSwatch.pureBlack,
+            borderRadius: BorderRadius.circular(2),
+          ),
+          child: Column(
+            children: [
+              SizedBox(
+                height: 5,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    for (var i = 0; i < 3; i++)
+                      Container(
+                        width: 3,
+                        height: 3,
+                        decoration: BoxDecoration(
+                          color: ZSwatch.fromArgb32(0xFFF2E6D0),
+                          borderRadius: BorderRadius.circular(0.8),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Container(color: ZSwatch.wireframePhoto),
+                    Positioned(
+                      right: 2,
+                      bottom: 1,
+                      child: Container(
+                        width: 7,
+                        height: 1.5,
+                        color: ZSwatch.fromArgb32(0xFFFF8A3D),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(
+                height: 5,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    for (var i = 0; i < 3; i++)
+                      Container(
+                        width: 3,
+                        height: 3,
+                        decoration: BoxDecoration(
+                          color: ZSwatch.fromArgb32(0xFFF2E6D0),
+                          borderRadius: BorderRadius.circular(0.8),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
       case WatermarkTemplate.geoLocationEditorial:
         return Container(
           margin: const EdgeInsets.all(2),

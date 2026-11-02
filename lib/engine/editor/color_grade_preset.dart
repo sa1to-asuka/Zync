@@ -173,8 +173,23 @@ class ColorGradePresetStore {
     return presets;
   }
 
-  static Future<List<ColorGradePreset>> remove(String id) async {
+  /// 重命名用户预设（保留 id 与调色内容）。
+  static Future<List<ColorGradePreset>> rename(
+    String id,
+    String name,
+  ) async {
     final presets = await load();
+    final index = presets.indexWhere((e) => e.id == id);
+    if (index < 0) return presets;
+    presets[index] = presets[index].copyWith(
+      name: name,
+      updatedAtMs: DateTime.now().millisecondsSinceEpoch,
+    );
+    await save(presets);
+    return presets;
+  }
+
+  static Future<List<ColorGradePreset>> remove(String id) async {    final presets = await load();
     presets.removeWhere((e) => e.id == id);
     await save(presets);
     return presets;

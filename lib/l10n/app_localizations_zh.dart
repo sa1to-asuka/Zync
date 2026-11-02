@@ -2480,10 +2480,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get wmDockTemplate => '画框版式';
 
   @override
-  String get wmDockFilter => '胶片滤镜';
+  String get wmDockPresetGrade => '预设调节';
 
   @override
-  String get wmDockGrade => '参数精调';
+  String get wmDockSpektrafilm => '胶片模拟';
 
   @override
   String get wmDockGeometry => '裁切几何';
@@ -2870,4 +2870,112 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pcCompareEffectLabel => '效果';
+
+  @override
+  String get wmPresetMine => '我的预设';
+
+  @override
+  String get wmPresetBuiltin => '内置调色';
+
+  @override
+  String get wmPresetSaveNew => '保存为新预设';
+
+  @override
+  String get wmPresetOverwrite => '覆盖';
+
+  @override
+  String get wmPresetRename => '重命名';
+
+  @override
+  String get wmPresetRenameTitle => '重命名预设';
+
+  @override
+  String get wmPresetDeleteTitle => '删除预设';
+
+  @override
+  String wmPresetDeleteConfirm(String name) {
+    return '删除「$name」？此操作无法撤销。';
+  }
+
+  @override
+  String wmPresetRenamedToast(String name) {
+    return '已重命名为「$name」';
+  }
+
+  @override
+  String get wmPresetDeletedToast => '预设已删除';
+
+  @override
+  String wmPresetAppliedToast(String name) {
+    return '已应用「$name」';
+  }
+
+  @override
+  String get wmPresetFilmBypassHint => '胶片模拟已启用，参数调节暂不生效';
+
+  @override
+  String get wmPresetFilmDisabledToast => '已关闭胶片模拟，参数调节重新生效';
+
+  @override
+  String get wmGradeCatDetail => '细节润饰';
+
+  @override
+  String get wmGradeDetailRawOnly => '仅 RAW 导出生效';
+
+  @override
+  String get spektraRawTip => '建议使用 RAW 格式图片以获得最佳胶片模拟效果';
+
+  @override
+  String get spektraStockSection => '底片';
+
+  @override
+  String get spektraPaperSection => '冲印介质';
+
+  @override
+  String get spektraIntensity => '模拟浓度';
+
+  @override
+  String get spektraHalation => '红光晕';
+
+  @override
+  String get spektraHalationRadius => '光晕半径';
+
+  @override
+  String get spektraGrain => '银盐颗粒';
+
+  @override
+  String get spektraGrainSize => '颗粒粗细';
+
+  @override
+  String get spektraEnlargerWarmth => '放大机暖度';
+
+  @override
+  String get spektraEnlargerTint => '放大机色调';
+
+  @override
+  String get spektraExposure => '底片曝光';
+
+  @override
+  String get spektraDisable => '关闭胶片模拟';
+
+  @override
+  String get spektraActiveHint => '长按照片可与原图对比';
+
+  @override
+  String get wmPresetCustomActive => '手动调节';
+
+  @override
+  String get wmDetailSharpening => '锐化';
+
+  @override
+  String get wmDetailNoiseReduction => '降噪';
+
+  @override
+  String get spektraDirectScan => '负片直扫';
+
+  @override
+  String get spektraCatalogUnavailable => '此版本未包含 Spektrafilm 原生引擎，无法使用胶片模拟。';
+
+  @override
+  String get spektraPreviewFailed => '胶片预览渲染失败，已保留原图';
 }

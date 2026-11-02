@@ -17,7 +17,7 @@
 Zync は、Nikon Z シリーズでの撮影後ワークフローに焦点を当てた Flutter 製のオープンソースアプリです。カメラへの接続、写真の閲覧と転送、カラー調整、ウォーターマーク、書き出しまでを一つの流れで扱えます。Wi-Fi PTP/IP または USB PTP でカメラと直接通信し、メーカーアカウント、クラウドサービス、専用 SDK を必要としません。
 
 - プロジェクト: <https://github.com/sa1to-asuka/Zync>
-- バージョン: `1.0.0`
+- バージョン: `2.4.0`
 - ライセンス: MIT
 - 主な対象プラットフォーム: Android
 
@@ -28,7 +28,7 @@ Zync は、Nikon Z シリーズでの撮影後ワークフローに焦点を当�
 | カメラ接続 | Wi-Fi PTP/IP と USB OTG PTP |
 | カメラ閲覧 | JPG、NEF、NRW の閲覧と RAW 埋め込みプレビューの抽出 |
 | 転送 | 分割ダウンロード、転送キュー、一時停止、取消、再試行、自動転送 |
-| ウォーターマーク | 11 種類のテンプレート、EXIF、カスタム文字、ロゴ、画質設定 |
+| ウォーターマーク | 11 種類のテンプレート、EXIF、カスタム文字、ロゴ、統合プリセット調整パネル、物理フィルムシミュレーション（11 種のフィルム、ハレーション、銀塩粒子） |
 | 写真編集 | カラープリセット、露出・トーン調整、トリミング、回転、比較、コラージュ |
 | レスポンシブ UI | スマートフォンでは下部ナビゲーション、大画面では左側ナビゲーション |
 | アプリ更新 | GitHub Releases の確認とインストール前の SHA-256 検証 |
@@ -77,6 +77,8 @@ Bluetooth Low Energy の LSS 経路は実験的機能で、既定では非表示
 - 最大 2 行のカスタム文字と、ギャラリーから選択したロゴ画像を追加できます。
 - JPEG 画質は 95、92、85 の 3 段階から選択できます。
 - 書き出し時にサイズ、向き、機種、レンズ、露出、焦点距離、日時を EXIF に書き戻します。
+- 「フィルムプリセット」と「パラメーター調整」を統合した**プリセット調整**パネル：上部プリセットストリップ、折りたたみ式のパラメーターグループ、250ms のスムーズなプリセット遷移、自作プリセットの保存・名前変更・上書き・削除に対応。
+- **フィルムシミュレーション**は [spektrafilm](https://github.com/andreavolpato/spektrafilm) の物理エンジンを独立ネイティブ移植：20 種類の実フィルム、8 種類の印画紙、ネガ直接スキャン、実測 H&D 濃度曲線、DIR カプラー、ハレーション、銀塩粒子、引き伸ばし機のフィルターバランスに対応。
 
 ### ピクチャーコントロール
 
@@ -247,6 +249,7 @@ Wi-Fi と USB の転送は、公開されている Picture Transfer Protocol の
 | --- | --- | --- |
 | [ImageToolbox](https://github.com/T8RIN/ImageToolbox) | 画像処理、フィルター、編集 UI の参考 | Apache-2.0 |
 | [Recipe Lab](https://github.com/voxivoid/recipe-lab-sony-pmca) | カラーレシピとフィルムルックのデータ構造の参考 | GPL-3.0 |
+| [Spektrafilm](https://github.com/andreavolpato/spektrafilm) | 独立ネイティブ分光フィルムエンジン：H&D 濃度曲線、DIR カプラー、ハレーション、銀塩粒子、印画紙処理 | コード GPL-3.0 / プロファイル CC BY-SA 4.0 |
 | [SnapBridge-Enhanced](https://github.com/MXWF0/SnapBridge-Enhanced) | Nikon の接続フローと操作の参考 | 現在ライセンスファイルなし |
 | [nsg](https://github.com/hurui200320/nsg) | Nikon プロトコルとデバイス機能の参考 | AGPL-3.0 |
 | [libgphoto2](https://github.com/gphoto/libgphoto2) | PTP/IP と Nikon 操作コードの参考 | LGPL-2.1 |

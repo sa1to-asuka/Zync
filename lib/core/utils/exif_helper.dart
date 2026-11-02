@@ -1,5 +1,6 @@
 import 'package:exif/exif.dart';
 import 'package:flutter/services.dart';
+import '../../engine/editor/raw_processor_bridge.dart';
 import '../../protocol/nikon_ble_lss.dart';
 import 'capture_date.dart';
 
@@ -248,6 +249,39 @@ class ExifHelper {
       }
     } catch (_) {}
     return null;
+  }
+
+  /// LibRaw 探测到的拍摄参数优先于内嵌预览 JPEG 的 EXIF。
+  /// RAW probe 不提供 GPS，因此经纬度继续沿用传入的预览/回退元数据。
+  static PhotoMetadata applyRawProbe(
+    PhotoMetadata base,
+    RawProbeResult probe,
+  ) {
+    if (!probe.supported) return base;
+    final shutter = probe.shutter.trim();
+    final shutterSeconds = double.tryParse(shutter) ?? 0;
+    return base.copyWith(
+      cameraMake: probe.cameraMake.trim().isNotEmpty
+          ? probe.cameraMake.trim()
+          : null,
+      cameraModel: probe.cameraModel.trim().isNotEmpty
+          ? probe.cameraModel.trim()
+          : null,
+      lensModel:
+          probe.lensModel.trim().isNotEmpty ? probe.lensModel.trim() : null,
+      shutterSpeed:
+          shutter.isNotEmpty && shutterSeconds > 0 ? _formatShutterSpeed(shutter) : null,
+      aperture: probe.aperture > 0
+          ? _formatAperture(probe.aperture.toStringAsFixed(1))
+          : null,
+      iso: probe.iso > 0 ? 'ISO ${probe.iso}' : null,
+      focalLength: probe.focalLength > 0
+          ? _formatFocalLength(probe.focalLength.toStringAsFixed(1))
+          : null,
+      capturedDate: probe.capturedAt.trim().isNotEmpty
+          ? _formatDateTime(probe.capturedAt)
+          : null,
+    );
   }
 
   static double? _parseGpsCoord(IfdTag? coordTag, String? ref) {

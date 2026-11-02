@@ -51,5 +51,9 @@ void main() {
     expect(byName['camera-watermark']?.url,
         'https://github.com/myWsq/camera-watermark');
     expect(byName['camera-watermark']?.license, 'MIT');
+
+    expect(byName['Spektrafilm']?.url,
+        'https://github.com/andreavolpato/spektrafilm');
+    expect(byName['Spektrafilm']?.license, 'GPL-3.0 / CC BY-SA 4.0');
   });
 }

@@ -58,6 +58,10 @@ class RawProcessorBridge(
             lutPath: String,
             lutStrength: Float,
         ): Map<String, Any>?
+        @JvmStatic private external fun nativeExtractLinear(
+            path: String,
+            outputPath: String,
+        ): Map<String, Any>?
         @JvmStatic private external fun nativeCancel()
     }
 
@@ -171,6 +175,15 @@ class RawProcessorBridge(
                     ))
                 } else {
                     runRawAsync(result) { nativeProbe(path) }
+                }
+            }
+            "extractLinear" -> {
+                val path = call.argument<String>("path").orEmpty()
+                val outputPath = call.argument<String>("outputPath").orEmpty()
+                if (!ensureNative()) {
+                    result.error("RAW_UNAVAILABLE", "当前构建未包含 LibRaw RAW 解码器", null)
+                } else {
+                    runRawAsync(result) { nativeExtractLinear(path, outputPath) }
                 }
             }
             "renderPreview" -> {

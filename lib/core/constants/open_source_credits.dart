@@ -151,6 +151,12 @@ const List<OpenSourceCredit> openSourceProjectCredits = [
     url: 'https://www.ysjf.com/index',
     license: '免费样片素材许可',
   ),
+  OpenSourceCredit(
+    name: 'Spektrafilm',
+    description: '物理光谱胶片引擎：H&D 密度曲线、DIR 抑制剂、红光晕、银盐颗粒与印相纸冲印（独立原生实现）',
+    url: 'https://github.com/andreavolpato/spektrafilm',
+    license: 'GPL-3.0 / CC BY-SA 4.0',
+  ),
 ];
 
 const List<OpenSourceCredit> openSourceRuntimeCredits = [

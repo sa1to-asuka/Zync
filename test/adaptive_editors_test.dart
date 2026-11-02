@@ -42,7 +42,7 @@ Future<void> _settle(WidgetTester tester) async {
 /// 按标签文字点击 TabBar 上的对应页签（Tab 内文字与选中态文字会重复，故按坐标点击）。
 Future<void> _tapTab(WidgetTester tester, String label) async {
   final tabBar = tester.getRect(find.byType(TabBar));
-  final tabs = ['画框版式', '胶片滤镜', '参数精调', '裁切几何'];
+  final tabs = ['画框版式', '预设调节', '胶片模拟', '裁切几何'];
   final index = tabs.indexOf(label);
   final width = tabBar.width / tabs.length;
   await tester.tapAt(Offset(tabBar.left + width * (index + 0.5), tabBar.center.dy));
@@ -66,7 +66,7 @@ void main() {
     expect(panel.width, inInclusiveRange(300, 400));
     expect(panel.right, closeTo(tester.view.physicalSize.width, 1.0));
     // TabBar 在侧栏内继续可用。
-    await _tapTab(tester, '胶片滤镜');
+    await _tapTab(tester, '预设调节');
     await _settle(tester);
 
     await _tapTab(tester, '裁切几何');

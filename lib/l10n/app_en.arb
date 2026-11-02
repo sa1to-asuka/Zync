@@ -1366,8 +1366,8 @@
   "connectUsbDetectedHeader": "USB Camera Detected",
   "connectWifiDetectedHeader": "Current Wi-Fi Network",
   "wmDockTemplate": "Frame Style",
-  "wmDockFilter": "Film Preset",
-  "wmDockGrade": "Adjustments",
+  "wmDockPresetGrade": "Presets",
+  "wmDockSpektrafilm": "Film Simulation",
   "wmDockGeometry": "Geometry",
   "wmSubPalette": "Colors & Margin",
   "wmSubToggles": "Display & Text",
@@ -1489,5 +1489,60 @@
   "pcApproxBadge": "Approx Fit",
   "pcCompareSplitHint": "Drag divider to compare",
   "pcCompareOriginalLabel": "Original",
-  "pcCompareEffectLabel": "Effect"
+  "pcCompareEffectLabel": "Effect",
+  "wmPresetMine": "My Presets",
+  "wmPresetBuiltin": "Built-in Looks",
+  "wmPresetSaveNew": "Save as New Preset",
+  "wmPresetOverwrite": "Overwrite",
+  "wmPresetRename": "Rename",
+  "wmPresetRenameTitle": "Rename Preset",
+  "wmPresetDeleteTitle": "Delete Preset",
+  "wmPresetDeleteConfirm": "Delete \"{name}\"? This cannot be undone.",
+  "@wmPresetDeleteConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "wmPresetRenamedToast": "Renamed to \"{name}\"",
+  "@wmPresetRenamedToast": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "wmPresetDeletedToast": "Preset deleted",
+  "wmPresetAppliedToast": "Applied \"{name}\"",
+  "@wmPresetAppliedToast": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "wmPresetFilmBypassHint": "Film Simulation is on — adjustments are ignored until you turn it off.",
+  "wmPresetFilmDisabledToast": "Film Simulation turned off",
+  "wmGradeCatDetail": "Detail & Finish",
+  "wmGradeDetailRawOnly": "RAW export only",
+  "spektraRawTip": "For the best film simulation, using RAW is recommended",
+  "spektraStockSection": "Film Stock",
+  "spektraPaperSection": "Print & Scan",
+  "spektraIntensity": "Simulation Strength",
+  "spektraHalation": "Halation",
+  "spektraHalationRadius": "Halation Radius",
+  "spektraGrain": "Silver Grain",
+  "spektraGrainSize": "Grain Size",
+  "spektraEnlargerWarmth": "Enlarger Warmth",
+  "spektraEnlargerTint": "Enlarger Tint",
+  "spektraExposure": "Film Exposure",
+  "spektraDisable": "Turn Off",
+  "spektraActiveHint": "Long-press the photo to compare with the original",
+  "wmPresetCustomActive": "Manual adjustments",
+  "wmDetailSharpening": "Sharpening",
+  "wmDetailNoiseReduction": "Noise Reduction",
+  "spektraDirectScan": "Negative Scan",
+  "spektraCatalogUnavailable": "Spektrafilm native engine unavailable on this build.",
+  "spektraPreviewFailed": "Film preview failed; showing the original photo"
 }

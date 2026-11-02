@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstring>
+#include <ctime>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -650,6 +651,18 @@ Java_com_zync_app_RawProcessorBridge_nativeProbe(JNIEnv* env, jobject, jstring j
     shutter << raw.imgdata.other.shutter;
     putString(env, map, put, "shutter", shutter.str());
     putFloat(env, map, put, "focalLength", raw.imgdata.other.focal_len);
+    std::string capturedAt;
+    const std::time_t captured = raw.imgdata.other.timestamp;
+    if (captured > 0) {
+        std::tm local{};
+        if (localtime_r(&captured, &local) != nullptr) {
+            char buffer[32];
+            if (std::strftime(buffer, sizeof(buffer), "%Y:%m:%d %H:%M:%S", &local) > 0) {
+                capturedAt = buffer;
+            }
+        }
+    }
+    putString(env, map, put, "capturedAt", capturedAt);
     putInt(env, map, put, "orientation", raw.imgdata.sizes.flip);
     putBool(env, map, put, "hasEmbeddedPreview", raw.imgdata.thumbs_list.thumbcount > 0);
     putString(env, map, put, "reason", "");
@@ -701,6 +714,72 @@ Java_com_zync_app_RawProcessorBridge_nativeRenderFull(
     putInt(env, map, put, "width", rendered.width);
     putInt(env, map, put, "height", rendered.height);
     putBool(env, map, put, "isProxy", false);
+    return map;
+}
+
+extern "C" JNIEXPORT jobject JNICALL
+Java_com_zync_app_RawProcessorBridge_nativeExtractLinear(
+    JNIEnv* env, jobject, jstring jpath, jstring joutput) {
+    gCancel.store(false);
+    const std::string path = jstringToStd(env, jpath);
+    const std::string output = jstringToStd(env, joutput);
+    jobject map = makeMap(env);
+    const jmethodID put = mapPut(env);
+
+    LibRaw raw;
+    int ret = raw.open_file(path.c_str());
+    if (ret != LIBRAW_SUCCESS) {
+        putString(env, map, put, "error", libraw_strerror(ret));
+        return map;
+    }
+    raw.imgdata.params.use_camera_wb = 1;
+    raw.imgdata.params.output_bps = 16;
+    raw.imgdata.params.output_color = 4; // linear ProPhoto RGB
+    raw.imgdata.params.gamm[0] = 1.0;
+    raw.imgdata.params.gamm[1] = 1.0;
+    raw.imgdata.params.no_auto_bright = 1;
+    ret = raw.unpack();
+    if (ret != LIBRAW_SUCCESS) {
+        putString(env, map, put, "error", libraw_strerror(ret));
+        return map;
+    }
+    ret = raw.dcraw_process();
+    if (ret != LIBRAW_SUCCESS) {
+        putString(env, map, put, "error", libraw_strerror(ret));
+        return map;
+    }
+    int err = 0;
+    libraw_processed_image_t* image = raw.dcraw_make_mem_image(&err);
+    if (image == nullptr || image->type != LIBRAW_IMAGE_BITMAP || image->colors < 3) {
+        putString(env, map, put, "error", "LibRaw 无法生成线性位图");
+        if (image != nullptr) LibRaw::dcraw_clear_mem(image);
+        return map;
+    }
+    if (image->bits != 16) {
+        putString(env, map, put, "error", "线性输出不是 16-bit");
+        LibRaw::dcraw_clear_mem(image);
+        return map;
+    }
+    std::ofstream out(output, std::ios::binary);
+    if (!out) {
+        putString(env, map, put, "error", "无法写入线性缓存");
+        LibRaw::dcraw_clear_mem(image);
+        return map;
+    }
+    const size_t rowBytes = static_cast<size_t>(image->width) * 3 * 2;
+    const auto* data = reinterpret_cast<const uint8_t*>(image->data);
+    bool writeOk = true;
+    for (int y = 0; y < image->height; ++y) {
+        out.write(reinterpret_cast<const char*>(data + rowBytes * y), rowBytes);
+        if (!out) { writeOk = false; break; }
+    }
+    out.close();
+    putInt(env, map, put, "width", image->width);
+    putInt(env, map, put, "height", image->height);
+    putString(env, map, put, "path", output);
+    putBool(env, map, put, "ok", writeOk);
+    if (!writeOk) putString(env, map, put, "error", "线性缓存写入失败");
+    LibRaw::dcraw_clear_mem(image);
     return map;
 }
 

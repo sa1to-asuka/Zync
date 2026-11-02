@@ -122,6 +122,37 @@ class PhotoEditAdjustments {
 
   static const PhotoEditAdjustments initial = PhotoEditAdjustments();
 
+  /// 在两个参数集之间线性插值，用于预设切换时的滑块平滑过渡。
+  static PhotoEditAdjustments lerp(
+    PhotoEditAdjustments a,
+    PhotoEditAdjustments b,
+    double t,
+  ) {
+    final k = t.clamp(0.0, 1.0);
+    double mix(double x, double y) => x + (y - x) * k;
+    return PhotoEditAdjustments(
+      temperature: mix(a.temperature, b.temperature),
+      tint: mix(a.tint, b.tint),
+      exposure: mix(a.exposure, b.exposure),
+      contrast: mix(a.contrast, b.contrast),
+      highlights: mix(a.highlights, b.highlights),
+      shadows: mix(a.shadows, b.shadows),
+      whites: mix(a.whites, b.whites),
+      blacks: mix(a.blacks, b.blacks),
+      texture: mix(a.texture, b.texture),
+      clarity: mix(a.clarity, b.clarity),
+      dehaze: mix(a.dehaze, b.dehaze),
+      vibrance: mix(a.vibrance, b.vibrance),
+      saturation: mix(a.saturation, b.saturation),
+      highlightHue: mix(a.highlightHue, b.highlightHue),
+      highlightSat: mix(a.highlightSat, b.highlightSat),
+      shadowHue: mix(a.shadowHue, b.shadowHue),
+      shadowSat: mix(a.shadowSat, b.shadowSat),
+      vignette: mix(a.vignette, b.vignette),
+      grain: mix(a.grain, b.grain),
+    );
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

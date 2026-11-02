@@ -544,6 +544,7 @@ class MainActivity: FlutterActivity() {
         }
         // 专业照片/视频原生桥：RAW 解码与 Media3 视频导出。
         RawProcessorBridge(flutterEngine.dartExecutor.binaryMessenger)
+        SpektrafilmBridge(flutterEngine.dartExecutor.binaryMessenger)
         VideoEditorBridge(applicationContext, flutterEngine.dartExecutor.binaryMessenger)
     }
     // ==================== USB PTP over OTG ====================

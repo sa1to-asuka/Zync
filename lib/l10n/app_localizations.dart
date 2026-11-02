@@ -4698,17 +4698,17 @@ abstract class AppLocalizations {
   /// **'Frame Style'**
   String get wmDockTemplate;
 
-  /// No description provided for @wmDockFilter.
+  /// No description provided for @wmDockPresetGrade.
   ///
   /// In en, this message translates to:
-  /// **'Film Preset'**
-  String get wmDockFilter;
+  /// **'Presets'**
+  String get wmDockPresetGrade;
 
-  /// No description provided for @wmDockGrade.
+  /// No description provided for @wmDockSpektrafilm.
   ///
   /// In en, this message translates to:
-  /// **'Adjustments'**
-  String get wmDockGrade;
+  /// **'Film Simulation'**
+  String get wmDockSpektrafilm;
 
   /// No description provided for @wmDockGeometry.
   ///
@@ -5400,6 +5400,210 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Effect'**
   String get pcCompareEffectLabel;
+
+  /// No description provided for @wmPresetMine.
+  ///
+  /// In en, this message translates to:
+  /// **'My Presets'**
+  String get wmPresetMine;
+
+  /// No description provided for @wmPresetBuiltin.
+  ///
+  /// In en, this message translates to:
+  /// **'Built-in Looks'**
+  String get wmPresetBuiltin;
+
+  /// No description provided for @wmPresetSaveNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as New Preset'**
+  String get wmPresetSaveNew;
+
+  /// No description provided for @wmPresetOverwrite.
+  ///
+  /// In en, this message translates to:
+  /// **'Overwrite'**
+  String get wmPresetOverwrite;
+
+  /// No description provided for @wmPresetRename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get wmPresetRename;
+
+  /// No description provided for @wmPresetRenameTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename Preset'**
+  String get wmPresetRenameTitle;
+
+  /// No description provided for @wmPresetDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Preset'**
+  String get wmPresetDeleteTitle;
+
+  /// No description provided for @wmPresetDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete \"{name}\"? This cannot be undone.'**
+  String wmPresetDeleteConfirm(String name);
+
+  /// No description provided for @wmPresetRenamedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Renamed to \"{name}\"'**
+  String wmPresetRenamedToast(String name);
+
+  /// No description provided for @wmPresetDeletedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Preset deleted'**
+  String get wmPresetDeletedToast;
+
+  /// No description provided for @wmPresetAppliedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Applied \"{name}\"'**
+  String wmPresetAppliedToast(String name);
+
+  /// No description provided for @wmPresetFilmBypassHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Film Simulation is on — adjustments are ignored until you turn it off.'**
+  String get wmPresetFilmBypassHint;
+
+  /// No description provided for @wmPresetFilmDisabledToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Film Simulation turned off'**
+  String get wmPresetFilmDisabledToast;
+
+  /// No description provided for @wmGradeCatDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Detail & Finish'**
+  String get wmGradeCatDetail;
+
+  /// No description provided for @wmGradeDetailRawOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'RAW export only'**
+  String get wmGradeDetailRawOnly;
+
+  /// No description provided for @spektraRawTip.
+  ///
+  /// In en, this message translates to:
+  /// **'For the best film simulation, using RAW is recommended'**
+  String get spektraRawTip;
+
+  /// No description provided for @spektraStockSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Film Stock'**
+  String get spektraStockSection;
+
+  /// No description provided for @spektraPaperSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Print & Scan'**
+  String get spektraPaperSection;
+
+  /// No description provided for @spektraIntensity.
+  ///
+  /// In en, this message translates to:
+  /// **'Simulation Strength'**
+  String get spektraIntensity;
+
+  /// No description provided for @spektraHalation.
+  ///
+  /// In en, this message translates to:
+  /// **'Halation'**
+  String get spektraHalation;
+
+  /// No description provided for @spektraHalationRadius.
+  ///
+  /// In en, this message translates to:
+  /// **'Halation Radius'**
+  String get spektraHalationRadius;
+
+  /// No description provided for @spektraGrain.
+  ///
+  /// In en, this message translates to:
+  /// **'Silver Grain'**
+  String get spektraGrain;
+
+  /// No description provided for @spektraGrainSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Grain Size'**
+  String get spektraGrainSize;
+
+  /// No description provided for @spektraEnlargerWarmth.
+  ///
+  /// In en, this message translates to:
+  /// **'Enlarger Warmth'**
+  String get spektraEnlargerWarmth;
+
+  /// No description provided for @spektraEnlargerTint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enlarger Tint'**
+  String get spektraEnlargerTint;
+
+  /// No description provided for @spektraExposure.
+  ///
+  /// In en, this message translates to:
+  /// **'Film Exposure'**
+  String get spektraExposure;
+
+  /// No description provided for @spektraDisable.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn Off'**
+  String get spektraDisable;
+
+  /// No description provided for @spektraActiveHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Long-press the photo to compare with the original'**
+  String get spektraActiveHint;
+
+  /// No description provided for @wmPresetCustomActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual adjustments'**
+  String get wmPresetCustomActive;
+
+  /// No description provided for @wmDetailSharpening.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharpening'**
+  String get wmDetailSharpening;
+
+  /// No description provided for @wmDetailNoiseReduction.
+  ///
+  /// In en, this message translates to:
+  /// **'Noise Reduction'**
+  String get wmDetailNoiseReduction;
+
+  /// No description provided for @spektraDirectScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Negative Scan'**
+  String get spektraDirectScan;
+
+  /// No description provided for @spektraCatalogUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Spektrafilm native engine unavailable on this build.'**
+  String get spektraCatalogUnavailable;
+
+  /// No description provided for @spektraPreviewFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Film preview failed; showing the original photo'**
+  String get spektraPreviewFailed;
 }
 
 class _AppLocalizationsDelegate

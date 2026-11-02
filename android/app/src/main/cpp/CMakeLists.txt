@@ -30,3 +30,18 @@ target_link_libraries(zync_raw
     log
     jnigraphics
 )
+# Spektrafilm spectral engine (GPL-3.0, see third_party/spektrafilm_native).
+# Kept as its own shared library so the license boundary is explicit.
+set(SPEKTRAFILM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../third_party/spektrafilm_native)
+add_library(spektrafilm SHARED
+    ${SPEKTRAFILM_DIR}/src/engine.cpp
+    ${SPEKTRAFILM_DIR}/src/math.cpp
+    ${SPEKTRAFILM_DIR}/jni/jni_bridge.cpp
+)
+target_compile_features(spektrafilm PRIVATE cxx_std_17)
+# Profiles use null (NaN) as a "missing measurement" sentinel and the engine
+# filters them with std::isfinite; -ffast-math invalidates those checks and
+# collapses the print stage to a flat gray image.
+target_compile_options(spektrafilm PRIVATE -O2 -fvisibility=hidden)
+target_include_directories(spektrafilm PRIVATE ${SPEKTRAFILM_DIR}/include)
+target_link_libraries(spektrafilm android log)

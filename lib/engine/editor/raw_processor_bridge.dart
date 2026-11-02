@@ -17,6 +17,7 @@ class RawProbeResult {
   final double aperture;
   final String shutter;
   final double focalLength;
+  final String capturedAt;
   final int orientation;
   final bool hasEmbeddedPreview;
   final String colorMatrix;
@@ -35,6 +36,7 @@ class RawProbeResult {
     this.aperture = 0,
     this.shutter = '',
     this.focalLength = 0,
+    this.capturedAt = '',
     this.orientation = 1,
     this.hasEmbeddedPreview = false,
     this.colorMatrix = '',
@@ -54,12 +56,26 @@ class RawProbeResult {
         aperture: (map['aperture'] as num?)?.toDouble() ?? 0,
         shutter: map['shutter'] as String? ?? '',
         focalLength: (map['focalLength'] as num?)?.toDouble() ?? 0,
+        capturedAt: map['capturedAt'] as String? ?? '',
         orientation: (map['orientation'] as num?)?.toInt() ?? 1,
         hasEmbeddedPreview: map['hasEmbeddedPreview'] as bool? ?? false,
         colorMatrix: map['colorMatrix'] as String? ?? '',
         asShotWhiteBalance: map['asShotWhiteBalance'] as String? ?? '',
         reason: map['reason'] as String? ?? '',
       );
+}
+
+/// LibRaw 线性 ProPhoto RGB 缓存（16-bit，无 gamma、无自动增亮）。
+class RawLinearResult {
+  final String path;
+  final int width;
+  final int height;
+
+  const RawLinearResult({
+    required this.path,
+    required this.width,
+    required this.height,
+  });
 }
 
 class RawRenderResult {
@@ -182,6 +198,28 @@ class RawProcessorBridge {
       timeout: const Duration(seconds: 120),
     );
     return RawRenderResult.fromMap(map ?? const {});
+  }
+
+  /// 输出 scene-linear ProPhoto RGB，供 Spektrafilm 光谱引擎直接使用。
+  static Future<RawLinearResult?> extractLinear({
+    required String path,
+    required String outputPath,
+  }) async {
+    try {
+      final map = await _channel.invokeMethod<Map<dynamic, dynamic>>(
+        'extractLinear',
+        <String, Object?>{'path': path, 'outputPath': outputPath},
+      );
+      if (map == null) return null;
+      final outPath = map['path'] as String? ?? '';
+      final width = (map['width'] as num?)?.toInt() ?? 0;
+      final height = (map['height'] as num?)?.toInt() ?? 0;
+      final ok = map['ok'] as bool? ?? (map['error'] == null);
+      if (!ok || outPath.isEmpty || width <= 0 || height <= 0) return null;
+      return RawLinearResult(path: outPath, width: width, height: height);
+    } catch (_) {
+      return null;
+    }
   }
 
   static Future<void> cancel() async {
