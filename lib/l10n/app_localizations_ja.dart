@@ -3206,10 +3206,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get errorScreenBody => '画面を描画できませんでした。詳細はログに記録されています。設定から書き出せます。';
 
   @override
-  String get hubBentoColorImportTitle => 'カラーを取り込む';
+  String get hubBentoColorImportTitle => 'カラーレシピ';
 
   @override
-  String get hubBentoColorImportSub => 'NP3/NCP レシピをライブラリへ';
+  String get hubBentoColorImportSub => 'ピクチャーコントロールを開く';
 
   @override
   String get hubBentoLiveViewTitle => 'ライブビュー';

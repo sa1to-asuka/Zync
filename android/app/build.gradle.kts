@@ -42,6 +42,11 @@ android {
                 keyPassword = keystoreProperties["keyPassword"] as String
                 storeFile = keystoreProperties["storeFile"]?.let { file(it) }
                 storePassword = keystoreProperties["storePassword"] as String
+                // 同时写入 v1/v2/v3：部分国产 ROM 的安装校验只认旧方案，
+                // 只签 v2 时会被判成「签名异常」。
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
             }
         }
     }

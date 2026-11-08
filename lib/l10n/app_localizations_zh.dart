@@ -3183,10 +3183,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get errorScreenBody => '界面渲染失败。详细信息已写入日志，可在设置中导出。';
 
   @override
-  String get hubBentoColorImportTitle => '导入色彩';
+  String get hubBentoColorImportTitle => '色彩配方';
 
   @override
-  String get hubBentoColorImportSub => '把 NP3/NCP 配方导进本地库';
+  String get hubBentoColorImportSub => '打开色彩优化工作室';
 
   @override
   String get hubBentoLiveViewTitle => '实时取景';

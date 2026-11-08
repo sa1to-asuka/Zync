@@ -208,6 +208,25 @@ cp android/key.properties.example android/key.properties
 
 Fill in the generated passwords and paths in `android/key.properties`. Both the properties file and `*.jks` files are ignored by Git.
 
+### Installation troubleshooting
+
+Two APKs are published: `Zync-release-<ver>.apk` (arm64, recommended) and
+`Zync-release-<ver>-armeabi-v7a.apk` (older 32-bit devices). Installing the
+32-bit build on a 64-bit-only phone fails because no matching ABI exists.
+
+If Android refuses to install:
+
+1. Uninstall any older Zync build first. Without a release keystore, builds
+   fall back to debug signing, and a debug key belongs to the machine that
+   built the APK - a build from another computer cannot update one installed
+   here.
+2. Allow "Install unknown apps" for the browser or file manager you use.
+3. If the error mentions a signature conflict, the installed copy was signed
+   with a different key; uninstalling is the only fix.
+
+Release builds fall back to debug signing when `android/key.properties` is
+absent. Configure a keystore before distributing an APK.
+
 ### Release assets and update integrity
 
 Zync checks releases at <https://github.com/sa1to-asuka/Zync/releases>. Publish the APK and a SHA-256 file with a matching name:

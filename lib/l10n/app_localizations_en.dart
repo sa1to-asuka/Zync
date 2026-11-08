@@ -3307,11 +3307,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'The screen could not be drawn. Details were written to the log; you can export them from Settings.';
 
   @override
-  String get hubBentoColorImportTitle => 'Import color';
+  String get hubBentoColorImportTitle => 'Color recipes';
 
   @override
-  String get hubBentoColorImportSub =>
-      'Bring an NP3/NCP recipe into the library';
+  String get hubBentoColorImportSub => 'Open the Picture Control studio';
 
   @override
   String get hubBentoLiveViewTitle => 'Live view';

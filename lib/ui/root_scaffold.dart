@@ -375,12 +375,8 @@ class _RootScaffoldState extends State<RootScaffold>
           );
         },
         onOpenCapture: () => _onTabSelected(_captureTabIndex),
-        onImportColor: () {
-          _onTabSelected(_pictureControlTabIndex);
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _pictureControlKey.currentState?.pickAndImport();
-          });
-        },
+        // 只负责跳转；导入动作由色彩优化页自己的「导入」按钮发起。
+        onImportColor: () => _onTabSelected(_pictureControlTabIndex),
       ),
       CaptureScreen(
         key: _captureKey,

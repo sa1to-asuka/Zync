@@ -5965,13 +5965,13 @@ abstract class AppLocalizations {
   /// No description provided for @hubBentoColorImportTitle.
   ///
   /// In en, this message translates to:
-  /// **'Import color'**
+  /// **'Color recipes'**
   String get hubBentoColorImportTitle;
 
   /// No description provided for @hubBentoColorImportSub.
   ///
   /// In en, this message translates to:
-  /// **'Bring an NP3/NCP recipe into the library'**
+  /// **'Open the Picture Control studio'**
   String get hubBentoColorImportSub;
 
   /// No description provided for @hubBentoLiveViewTitle.

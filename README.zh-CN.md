@@ -208,6 +208,21 @@ cp android/key.properties.example android/key.properties
 
 然后在 `android/key.properties` 中填写密码和路径。该文件与 `*.jks` 均已加入 Git 忽略列表。
 
+### 安装失败排查
+
+发布两种 APK：`Zync-release-<ver>.apk`（arm64，推荐）和
+`Zync-release-<ver>-armeabi-v7a.apk`（老旧 32 位设备）。在只支持 64 位的手机上
+装 32 位包会因为「没有匹配的 ABI」直接失败。
+
+如果 Android 拒绝安装：
+
+1. 先卸载旧的 Zync。没有配置正式密钥库时构建会退回调试签名，而调试密钥属于
+   打包的那台电脑——换一台电脑打的包无法覆盖安装。
+2. 为你使用的浏览器或文件管理器打开「安装未知应用」权限。
+3. 若提示签名冲突，说明已安装的副本是另一把密钥签的，只能先卸载。
+
+`android/key.properties` 缺失时构建会退回调试签名，正式分发前请先配置密钥库。
+
 ### Release 资产与更新校验
 
 Zync 从 <https://github.com/sa1to-asuka/Zync/releases> 检查更新。发布时请上传 APK 和同名 SHA-256 文件：
