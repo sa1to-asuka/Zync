@@ -17,7 +17,7 @@
 Zync is an open-source Flutter application built around a focused workflow for Nikon Z-series cameras: connect to the camera, browse and transfer photos, then finish and export them with a watermark or color treatment. It is designed to work directly with the camera over Wi-Fi PTP/IP or USB PTP without requiring a vendor account, cloud service, or proprietary SDK.
 
 - Project: <https://github.com/sa1to-asuka/Zync>
-- Version: `2.5.0`
+- Version: `2.5.1`
 - License: MIT
 - Primary platform: Android
 
