@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../core/settings/app_settings.dart';
 import '../../core/utils/exif_helper.dart';
+import '../../engine/capture/capture_controller.dart';
+import '../../engine/capture/interval_shooting_controller.dart';
+import '../../engine/capture/exposure_settings_controller.dart';
+import '../../engine/liveview/live_view_analyzer.dart';
+import '../../engine/liveview/live_view_analysis.dart';
+import '../../engine/liveview/live_view_controller.dart';
+import '../../engine/liveview/manual_focus_drive_controller.dart';
 import '../../engine/transfer/download_manager.dart';
 import '../../engine/transfer/shoot_and_transfer.dart';
 import '../../engine/update/app_update_manager.dart';
@@ -8,6 +16,7 @@ import '../../l10n/l10n.dart';
 import '../../protocol/camera_native_bridge.dart';
 import '../../protocol/nikon_driver.dart';
 import 'design/design.dart';
+import 'screens/capture_screen.dart';
 import 'screens/connect_screen.dart';
 import 'screens/gallery_screen.dart';
 import 'screens/picture_control_screen.dart';
@@ -21,7 +30,12 @@ class _NavTab {
   final IconData icon;
   final IconData activeIcon;
   final String label;
-  const _NavTab(this.icon, this.activeIcon, this.label);
+
+  /// 是否出现在手机底部胶囊栏。平板 Rail 始终显示全部页签。
+  final bool showInBottomBar;
+
+  const _NavTab(this.icon, this.activeIcon, this.label,
+      {this.showInBottomBar = true});
 }
 
 /// Zync 主界面自适应导航壳：
@@ -37,16 +51,41 @@ class RootScaffold extends StatefulWidget {
 
 class _RootScaffoldState extends State<RootScaffold>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+  static const int _connectTabIndex = 0;
+  static const int _captureTabIndex = 1;
+  static const int _galleryTabIndex = 2;
+  static const int _pictureControlTabIndex = 3;
+  static const int _watermarkTabIndex = 4;
+  static const int _settingsTabIndex = 5;
+
+  /// 底栏位置 → screens 索引。拍摄台只在平板 Rail 里出现。
+  static const List<int> _bottomToScreen = <int>[
+    _connectTabIndex,
+    _galleryTabIndex,
+    _pictureControlTabIndex,
+    _watermarkTabIndex,
+    _settingsTabIndex,
+  ];
+
   int _currentIndex = 0;
   bool? _manualSidebarExpanded;
+  String? _liveViewSignature;
 
   late final NikonDriver _driver;
   late final DownloadManager _downloadManager;
   late final ShootAndTransferController _shootAndTransferController;
+  late final LiveViewAnalyzer _liveViewAnalyzer;
+  late final LiveViewController _liveViewController;
+  late final ManualFocusDriveController _manualFocusController;
+  late final CaptureController _captureController;
+  late final ExposureSettingsController _exposureController;
+  late final IntervalShootingController _intervalController;
   late final AnimationController _tabFadeController;
   late final Animation<double> _tabFadeAnimation;
   late final Animation<double> _tabScaleAnimation;
 
+  final GlobalKey<CaptureScreenState> _captureKey =
+      GlobalKey<CaptureScreenState>();
   final GlobalKey<GalleryScreenState> _galleryKey =
       GlobalKey<GalleryScreenState>();
   final GlobalKey<PictureControlScreenState> _pictureControlKey =
@@ -67,6 +106,32 @@ class _RootScaffoldState extends State<RootScaffold>
       driver: _driver,
       downloadManager: _downloadManager,
     );
+    _liveViewAnalyzer = LiveViewAnalyzer(
+      settings: _analysisSettingsFromApp(),
+    );
+    _liveViewController = LiveViewController(
+      driver: _driver,
+      analysis: _liveViewAnalyzer,
+      frameInterval: AppSettings.instance.liveViewFrameInterval,
+    );
+    _manualFocusController = ManualFocusDriveController(
+      driver: _driver,
+      liveView: _liveViewController,
+    );
+    _captureController = CaptureController(
+      driver: _driver,
+      liveView: _liveViewController,
+      // 必须经过 ShootAndTransferController：它负责「边拍边传开关」与 RAW 过滤。
+      onCaptured: _shootAndTransferController.handleCaptured,
+    );
+    _exposureController = ExposureSettingsController(
+      driver: _driver,
+      liveView: _liveViewController,
+    );
+    _intervalController = IntervalShootingController(
+      capture: () => _captureController.capture(),
+    );
+    AppSettings.instance.addListener(_syncLiveViewSettings);
 
     _tabFadeController = AnimationController(
       vsync: this,
@@ -97,13 +162,19 @@ class _RootScaffoldState extends State<RootScaffold>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _checkIncomingExternalFiles();
+      if (_currentIndex == _captureTabIndex) {
+        _captureKey.currentState?.onTabVisible();
+      }
+    } else {
+      // 退到后台时相机热点可能被系统断开，先主动退出取景。
+      _captureKey.currentState?.onTabHidden();
     }
   }
 
   Future<void> _checkIncomingExternalFiles() async {
     final paths = await CameraNativeBridge.consumeIncomingFiles();
     if (!mounted || paths.isEmpty) return;
-    _onTabSelected(2);
+    _onTabSelected(_pictureControlTabIndex);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _pictureControlKey.currentState?.importExternalFiles(paths);
     });
@@ -113,15 +184,68 @@ class _RootScaffoldState extends State<RootScaffold>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _tabFadeController.dispose();
+    AppSettings.instance.removeListener(_syncLiveViewSettings);
+    _intervalController.dispose();
+    _manualFocusController.dispose();
+    _liveViewController.dispose();
+    _liveViewAnalyzer.dispose();
+    _captureController.dispose();
+    _exposureController.dispose();
     _shootAndTransferController.dispose();
     _driver.dispose();
     super.dispose();
   }
 
+  LiveViewAnalysisSettings _analysisSettingsFromApp() {
+    final s = AppSettings.instance;
+    return LiveViewAnalysisSettings(
+      focusPeaking: s.liveViewFocusPeaking,
+      peakThreshold: s.liveViewPeakingThreshold,
+      peakColor: s.liveViewPeakingColor,
+      zebra: s.liveViewZebra,
+      zebraThreshold: s.liveViewZebraThreshold,
+      histogram: s.liveViewHistogram,
+    );
+  }
+
+  /// 设置页改了取景相关开关后，同步给分析器与取景循环。
+  ///
+  /// 只在**取景相关**设置真的变了才重建：AppSettings 是全局的，
+  /// 水印滑条每动一下都会通知，无差别 setState 会把整个导航壳一起拖慢。
+  void _syncLiveViewSettings() {
+    if (!mounted) return;
+    final settings = AppSettings.instance;
+    final signature = _liveViewSettingsSignature(settings);
+    if (signature == _liveViewSignature) return;
+    _liveViewSignature = signature;
+    _liveViewAnalyzer.updateSettings(_analysisSettingsFromApp());
+    _liveViewController.updateFrameInterval(settings.liveViewFrameInterval);
+    setState(() {});
+  }
+
+  String _liveViewSettingsSignature(AppSettings s) => [
+        s.liveViewFpsCap,
+        s.liveViewAutoStart,
+        s.liveViewShowFps,
+        s.liveViewKeepScreenOn,
+        s.liveViewGridMode,
+        s.liveViewGuideLines,
+        s.liveViewFocusPeaking,
+        s.liveViewPeakingColor,
+        s.liveViewPeakingThreshold,
+        s.liveViewZebra,
+        s.liveViewZebraThreshold,
+        s.liveViewHistogram,
+        s.liveViewAfDrive,
+        s.liveViewMfStep,
+      ].join('|');
+
   List<_NavTab> _buildNavTabs(BuildContext context) {
     final l10n = context.l10n;
     return [
       _NavTab(Icons.wifi_tethering, Icons.wifi_tethering, l10n.navConnect),
+      _NavTab(Icons.camera_outlined, Icons.camera, l10n.navCapture,
+          showInBottomBar: false),
       _NavTab(
           Icons.photo_library_outlined, Icons.photo_library, l10n.navGallery),
       _NavTab(Icons.palette_outlined, Icons.palette, l10n.navPictureControl),
@@ -134,10 +258,18 @@ class _RootScaffoldState extends State<RootScaffold>
   /// 切换页签的共用逻辑（底部导航与左侧导航栏一致）。
   void _onTabSelected(int index) {
     if (index == _currentIndex) return;
-    if (index == 1 && _driver.isConnected) {
+
+    // 离开拍摄台时立即退出取景，否则相机会一直保持在取景模式。
+    if (_currentIndex == _captureTabIndex) {
+      _captureKey.currentState?.onTabHidden();
+    }
+
+    if (index == _galleryTabIndex && _driver.isConnected) {
       _galleryKey.currentState?.reloadFilesIfEmpty();
-    } else if (index == 2 && _driver.isConnected) {
+    } else if (index == _pictureControlTabIndex && _driver.isConnected) {
       _pictureControlKey.currentState?.refreshCameraSlots();
+    } else if (index == _captureTabIndex) {
+      _captureKey.currentState?.onTabVisible();
     }
 
     final duration = ZMotion.of(context, ZMotion.medium);
@@ -153,8 +285,9 @@ class _RootScaffoldState extends State<RootScaffold>
   /// 系统返回（返回键 / 返回手势）的统一入口：手机底部导航与平板左侧导航栏行为一致。
   bool _handleSystemBack() {
     final consumedByTab = switch (_currentIndex) {
-      0 => _connectKey.currentState?.handleSystemBack() ?? false,
-      1 => _galleryKey.currentState?.handleSystemBack() ?? false,
+      _connectTabIndex => _connectKey.currentState?.handleSystemBack() ?? false,
+      _captureTabIndex => _captureKey.currentState?.handleSystemBack() ?? false,
+      _galleryTabIndex => _galleryKey.currentState?.handleSystemBack() ?? false,
       _ => false,
     };
     if (consumedByTab) return true;
@@ -217,14 +350,14 @@ class _RootScaffoldState extends State<RootScaffold>
           } else {
             _galleryKey.currentState?.reloadFilesIfEmpty();
           }
-          _onTabSelected(1);
+          _onTabSelected(2);
         },
         onOpenWatermark: ({
           Uint8List? initialBytes,
           PhotoMetadata? meta,
           bool openFilter = false,
         }) {
-          _onTabSelected(3);
+          _onTabSelected(4);
           if (initialBytes != null && initialBytes.isNotEmpty) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               _watermarkKey.currentState
@@ -241,6 +374,23 @@ class _RootScaffoldState extends State<RootScaffold>
             ),
           );
         },
+        onOpenCapture: () => _onTabSelected(_captureTabIndex),
+        onImportColor: () {
+          _onTabSelected(_pictureControlTabIndex);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _pictureControlKey.currentState?.pickAndImport();
+          });
+        },
+      ),
+      CaptureScreen(
+        key: _captureKey,
+        driver: _driver,
+        liveViewController: _liveViewController,
+        captureController: _captureController,
+        exposureController: _exposureController,
+        manualFocusController: _manualFocusController,
+        intervalController: _intervalController,
+        onNavigateToConnect: () => _onTabSelected(_connectTabIndex),
       ),
       GalleryScreen(
         key: _galleryKey,
@@ -250,7 +400,7 @@ class _RootScaffoldState extends State<RootScaffold>
         onOpenWatermark: (file, cachedBytes,
             {bool openFilter = false, String? rawPath}) async {
           if (cachedBytes == null || cachedBytes.isEmpty) return;
-          _onTabSelected(3);
+          _onTabSelected(4);
           if (openFilter) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               _watermarkKey.currentState?.showFilterTab();
@@ -419,14 +569,23 @@ class _RootScaffoldState extends State<RootScaffold>
     }
 
     // 窄屏（< 600dp）：底部悬浮胶囊导航栏 + 滑动高光指示器
+    // 拍摄页在手机上占满全屏：底栏整条隐藏，退出后再出现。
+    final hideBottomBar = _currentIndex == _captureTabIndex;
+    final bottomTabs =
+        tabs.where((tab) => tab.showInBottomBar).toList(growable: false);
+    final bottomIndex = _bottomToScreen.indexOf(_currentIndex);
+
     return _withSystemBackGuard(Scaffold(
       backgroundColor: zc.bg,
       body: body,
-      bottomNavigationBar: _FloatingPillBottomBar(
-        currentIndex: _currentIndex,
-        tabs: tabs,
-        onTap: _onTabSelected,
-      ),
+      bottomNavigationBar: hideBottomBar
+          ? null
+          : _FloatingPillBottomBar(
+              currentIndex: bottomIndex < 0 ? 0 : bottomIndex,
+              tabs: bottomTabs,
+              onTap: (localIndex) =>
+                  _onTabSelected(_bottomToScreen[localIndex]),
+            ),
     ));
   }
 }

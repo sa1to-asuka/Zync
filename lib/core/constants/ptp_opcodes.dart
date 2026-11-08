@@ -34,11 +34,17 @@ class PtpOpCodes {
   // ==========================================
   static const int nikonGetLargeThumb = 0x90C4; // 37060 获取大尺寸预览缩略图 (640x480)
   static const int nikonDeviceReady = 0x90C8; // 37064 设备就绪探测
+  static const int nikonAfDrive = 0x90C1; // 37057 触发自动对焦（无参数）
+  static const int nikonStartLiveView = 0x9201; // 37377 进入实时取景
+  static const int nikonEndLiveView = 0x9202; // 37378 退出实时取景
+  static const int nikonGetLiveViewImage = 0x9203; // 37379 拉取一帧取景画面
   static const int nikonGetPicCtrlData = 0x90CC; // 37068 读取优化校准数据 [profileId, mode]
   static const int nikonSetPicCtrlData = 0x90CD; // 37069 写入自定义优化校准数据 [slotProfileId, 0]
   static const int nikonDeleteCustomPicCtrl = 0x90CE; // 37070 删除自定义优化校准 [slotProfileId]
   static const int nikonGetPicCtrlCapability = 0x90CF; // 37071 查询优化校准能力 [profileId]
+  static const int nikonMfDrive = 0x9204; // 37380 手动对焦步进 [方向, 步数]
   static const int nikonChangeAfArea = 0x9205; // 37381 修改对焦区域坐标
+  static const int nikonAfDriveCancel = 0x9206; // 37382 取消进行中的自动对焦
   static const int nikonCaptureToCard = 0x9207; // 37383 拍照并存入机身卡
   static const int nikonStartMovieRecInCard = 0x920A; // 37386 启动机内录像
   static const int nikonEndMovieRec = 0x920B; // 37387 结束机内录像
@@ -58,6 +64,18 @@ class PtpOpCodes {
   // ==========================================
   static const int nikonPropActivePicCtrlItem = 0xD200; // 当前激活的优化校准项 (1..8, 101..120, 201..209)
   static const int nikonPropChangePicCtrlItem = 0xD201; // 优化校准变更通知项
+  static const int nikonPropCameraOrientation = 0xD10E; // 机身朝向 (0=水平, 1=顺时针 90°...)
+
+  // ==========================================
+  // 2c. 曝光相关设备属性 (拍摄台读写)
+  // ==========================================
+  static const int devicePropFNumber = 0x5007; // 光圈 (值 / 100)
+  static const int devicePropExposureTime = 0x500D; // 标准快门速度 (100 µs)
+  static const int devicePropExposureMode = 0x500E; // 曝光模式
+  static const int devicePropExposureIndex = 0x500F; // 标准 ISO
+  static const int devicePropExposureBias = 0x5010; // 曝光补偿 (1/1000 EV)
+  static const int nikonPropShutterSpeed = 0xD100; // Nikon 快门速度 (分子/分母打包)
+  static const int nikonPropIso = 0xD0B4; // Nikon ISO
 
   // ==========================================
   // 3. PTP/IP 协议包类型编号 (PacketType)
@@ -88,4 +106,14 @@ class PtpOpCodes {
   static const int responseSessionAlreadyOpen = 0x201E; // 会话已开启 (可复用)
   static const int responseStoreFull = 0x200C; // 存储卡已满
   static const int responseAccessDenied = 0x200F; // 拒绝访问/写入 (如相机未处于 P/S/A/M 档)
+  static const int responseNotLiveView = 0xA00B; // 相机已不在实时取景模式
+
+  // ==========================================
+  // 5. Nikon 厂商响应码 (0xA0xx)
+  // ==========================================
+  static const int responseNikonOutOfFocus = 0xA002; // 自动对焦未合焦
+  static const int responseNikonChangeModeFailed = 0xA003; // 切换相机模式失败
+  static const int responseNikonModeNotAdjustFNumber = 0xA00A; // 当前模式不允许调整光圈
+  static const int responseNikonMfDriveStepEnd = 0xA00C; // 手动对焦已到行程尽头
+  static const int responseNikonMfDriveStepInsufficiency = 0xA00E; // 手动对焦步长不足
 }

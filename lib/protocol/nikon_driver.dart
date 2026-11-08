@@ -3,8 +3,10 @@ import 'dart:typed_data';
 import '../core/constants/ptp_opcodes.dart';
 import '../core/settings/app_settings.dart';
 import '../core/utils/byte_buffer_ext.dart';
+import '../core/utils/camera_error_mapper.dart';
 import '../engine/picture_control/np3_codec.dart';
 import 'camera_driver.dart';
+import 'camera_io_coordinator.dart';
 import 'camera_native_bridge.dart';
 import 'ptp_ip_client.dart';
 import 'ptp_transport.dart';
@@ -222,6 +224,13 @@ class NikonDriver implements CameraDriver {
   final Map<int, CameraFileItem> _objectInfoCache = {};
   final Map<int, Uint8List> _thumbCache = {};
 
+  final CameraIoCoordinator _io = CameraIoCoordinator();
+  CameraTransportKind _transportKind = CameraTransportKind.wifi;
+  bool _liveViewActive = false;
+
+  /// 会话内已被相机明确拒绝 (0x2005) 的操作码，避免逐帧重复尝试。
+  final Set<int> _unsupportedOps = <int>{};
+
   @override
   CameraConnectionState get state => _state;
 
@@ -351,7 +360,8 @@ class NikonDriver implements CameraDriver {
       {void Function(String msg)? onLog}) async {
     final transport = UsbPtpTransport(deviceName: deviceName, onLog: onLog);
     try {
-      await connectTransport(transport, onLog: onLog);
+      await connectTransport(transport,
+          onLog: onLog, kind: CameraTransportKind.usb);
     } catch (e) {
       await transport.disconnect();
       transport.dispose();
@@ -359,10 +369,12 @@ class NikonDriver implements CameraDriver {
     }
   }
 
-  /// 使用给定传输层（如 USB）建立连接，复用与 Wi-Fi 完全相同的上层逻辑。
+  /// 使用给定传输层建立连接，复用与 Wi-Fi 完全相同的上层逻辑。
   Future<void> connectTransport(PtpTransport transport,
-      {void Function(String msg)? onLog}) async {
+      {void Function(String msg)? onLog,
+      CameraTransportKind kind = CameraTransportKind.wifi}) async {
     _logCallback = onLog;
+    _transportKind = kind;
     _state = CameraConnectionState.connecting;
     _stateController.add(_state);
     try {
@@ -389,9 +401,16 @@ class NikonDriver implements CameraDriver {
 
   @override
   Future<void> disconnect() async {
+    // 先退出取景，避免相机停留在取景模式无法休眠。
+    try {
+      await endLiveView();
+    } catch (_) {}
+    _io.reset();
     await _client?.disconnect();
     _client = null;
     _state = CameraConnectionState.disconnected;
+    _transportKind = CameraTransportKind.wifi;
+    _unsupportedOps.clear();
     // dispose 场景下控制器可能已关闭，避免向已关闭的 StreamController 发送事件
     if (!_stateController.isClosed) {
       _stateController.add(_state);
@@ -956,7 +975,10 @@ class NikonDriver implements CameraDriver {
       }
 
       if (chunk.isEmpty) {
-        throw StateError('GetPartialObject 在偏移 $currentOffset 处连续返回空数据块');
+        throw CameraFailure(
+          CameraFailureKind.emptyChunk,
+          details: <String, Object?>{'offset': currentOffset},
+        );
       }
 
       builder.add(chunk);
@@ -966,7 +988,10 @@ class NikonDriver implements CameraDriver {
 
     final bytes = builder.toBytes();
     if (bytes.length != totalSize) {
-      throw StateError('对象 $handle 下载不完整：${bytes.length} / $totalSize 字节');
+      throw CameraFailure(
+        CameraFailureKind.incomplete,
+        details: <String, Object?>{'actual': bytes.length, 'total': totalSize},
+      );
     }
     return bytes;
   }
@@ -1051,6 +1076,256 @@ class NikonDriver implements CameraDriver {
     disconnect();
     _photoCapturedController.close();
     _stateController.close();
+  }
+
+  // ==========================================
+  // 实时取景与遥控拍摄 (0x9201 / 0x9203 / 0x9202 / 0x100E / 0x9205)
+  // ==========================================
+
+  @override
+  CameraIoCoordinator get io => _io;
+
+  @override
+  CameraTransportKind get transportKind => _transportKind;
+
+  /// 能力判定：优先看 DeviceInfo 的操作码表。
+  /// 若 DeviceInfo 走了启发式字符串回退、操作码表为空，则乐观允许尝试，
+  /// 但把相机明确拒绝过的操作码记下来，避免逐帧重试。
+  bool _supports(int opCode) {
+    if (!isConnected) return false;
+    if (_unsupportedOps.contains(opCode)) return false;
+    final ops = _deviceInfo.operationsSupported;
+    if (ops.isEmpty) return true;
+    return ops.contains(opCode);
+  }
+
+  void _markUnsupported(int opCode, Object error) {
+    if (error is! PtpException) return;
+    if (error.responseCode == PtpOpCodes.responseOperationNotSupported ||
+        error.responseCode == 0x2006) {
+      _unsupportedOps.add(opCode);
+    }
+  }
+
+  @override
+  bool get supportsLiveView =>
+      _supports(PtpOpCodes.nikonStartLiveView) &&
+      _supports(PtpOpCodes.nikonGetLiveViewImage);
+
+  @override
+  bool get supportsRemoteCapture =>
+      _supports(PtpOpCodes.initiateCapture) ||
+      _supports(PtpOpCodes.nikonCaptureToCard);
+
+  @override
+  bool get supportsTapToFocus => _supports(PtpOpCodes.nikonChangeAfArea);
+
+  @override
+  bool get supportsAfDrive => _supports(PtpOpCodes.nikonAfDrive);
+
+  @override
+  bool get supportsManualFocus => _supports(PtpOpCodes.nikonMfDrive);
+
+  @override
+  bool get supportsExposureWrite => _supports(PtpOpCodes.setDevicePropValue);
+
+  @override
+  bool get isVerifiedBody =>
+      _cameraModel.toUpperCase().replaceAll(' ', '').contains('Z30');
+
+  /// 相机返回 `0x2019` 时短暂等待后重试；其余错误直接抛出。
+  Future<void> _retryOnBusy(
+    Future<void> Function() action, {
+    int attempts = 3,
+  }) async {
+    var remaining = attempts;
+    while (true) {
+      try {
+        await action();
+        return;
+      } on PtpException catch (e) {
+        if (e.responseCode != PtpOpCodes.responseDeviceBusy || remaining <= 1) {
+          rethrow;
+        }
+        remaining--;
+        await Future<void>.delayed(const Duration(milliseconds: 300));
+      }
+    }
+  }
+
+  @override
+  Future<void> startLiveView() async {
+    final client = _client;
+    if (client == null || !isConnected) {
+      throw StateError('相机未连接');
+    }
+    if (_liveViewActive) return;
+    if (!supportsLiveView) {
+      throw PtpException(PtpOpCodes.nikonStartLiveView,
+          PtpOpCodes.responseOperationNotSupported, '当前相机不支持实时取景');
+    }
+    try {
+      await _retryOnBusy(
+          () => client.executeOperation(PtpOpCodes.nikonStartLiveView));
+      _liveViewActive = true;
+    } catch (e) {
+      _markUnsupported(PtpOpCodes.nikonStartLiveView, e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Uint8List> fetchLiveViewFrame() async {
+    final client = _client;
+    if (client == null || !isConnected) {
+      throw StateError('相机未连接');
+    }
+    return client.executeDataIn(PtpOpCodes.nikonGetLiveViewImage);
+  }
+
+  @override
+  Future<void> endLiveView() async {
+    final client = _client;
+    final wasActive = _liveViewActive;
+    _liveViewActive = false;
+    if (client == null || !wasActive) return;
+    try {
+      await client.executeOperation(PtpOpCodes.nikonEndLiveView);
+    } catch (_) {
+      // 退出取景是尽力而为：相机可能已经自行退出或链路已断。
+    }
+  }
+
+  @override
+  Future<void> initiateCapture() async {
+    final client = _client;
+    if (client == null || !isConnected) {
+      throw StateError('相机未连接');
+    }
+    try {
+      await _retryOnBusy(
+        () => client.executeOperation(
+            PtpOpCodes.initiateCapture, const <int>[0, 0]),
+        attempts: 2,
+      );
+      return;
+    } on PtpException catch (e) {
+      _markUnsupported(PtpOpCodes.initiateCapture, e);
+      // 部分固件只接受尼康私有的「拍照并存入卡」。
+      if (e.responseCode == PtpOpCodes.responseOperationNotSupported &&
+          _supports(PtpOpCodes.nikonCaptureToCard)) {
+        await _retryOnBusy(
+          () => client.executeOperation(
+              PtpOpCodes.nikonCaptureToCard, const <int>[0, 0]),
+          attempts: 2,
+        );
+        return;
+      }
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> moveAfArea(int x, int y) async {
+    final client = _client;
+    if (client == null || !isConnected) {
+      throw StateError('相机未连接');
+    }
+    try {
+      await client.executeOperation(
+          PtpOpCodes.nikonChangeAfArea, <int>[x, y]);
+    } catch (e) {
+      _markUnsupported(PtpOpCodes.nikonChangeAfArea, e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> afDrive() async {
+    final client = _client;
+    if (client == null || !isConnected) {
+      throw StateError('相机未连接');
+    }
+    try {
+      await client.executeOperation(PtpOpCodes.nikonAfDrive);
+    } catch (e) {
+      _markUnsupported(PtpOpCodes.nikonAfDrive, e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<int> deviceReady() async {
+    final client = _client;
+    if (client == null || !isConnected) {
+      throw StateError('相机未连接');
+    }
+    try {
+      await client.executeOperation(PtpOpCodes.nikonDeviceReady);
+      return PtpOpCodes.responseOk;
+    } on PtpException catch (e) {
+      // 这里的「失败」本身就是结果：0xA002 未合焦、0x2019 仍在忙。
+      return e.responseCode;
+    }
+  }
+
+  @override
+  Future<void> mfDrive(MfDirection direction, int steps) async {
+    final client = _client;
+    if (client == null || !isConnected) {
+      throw StateError('相机未连接');
+    }
+    final clamped = steps.clamp(1, 32767);
+    try {
+      await client.executeOperation(
+        PtpOpCodes.nikonMfDrive,
+        <int>[direction.opCode, clamped],
+      );
+    } catch (e) {
+      _markUnsupported(PtpOpCodes.nikonMfDrive, e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> cancelFocusDrive() async {
+    final client = _client;
+    if (client == null || !isConnected) return;
+    try {
+      await client.executeOperation(PtpOpCodes.nikonAfDriveCancel);
+    } catch (_) {
+      // 部分固件不接受取消；小步进本身也会很快结束，忽略即可。
+    }
+  }
+
+  @override
+  Future<Uint8List> fetchDevicePropDesc(int propertyId) async {
+    final client = _client;
+    if (client == null || !isConnected) {
+      throw StateError('相机未连接');
+    }
+    return client.executeDataIn(
+        PtpOpCodes.getDevicePropDesc, <int>[propertyId]);
+  }
+
+  @override
+  Future<Uint8List> fetchDevicePropValue(int propertyId) async {
+    final client = _client;
+    if (client == null || !isConnected) {
+      throw StateError('相机未连接');
+    }
+    return client.executeDataIn(
+        PtpOpCodes.getDevicePropValue, <int>[propertyId]);
+  }
+
+  @override
+  Future<void> writeDevicePropValue(int propertyId, Uint8List payload) async {
+    final client = _client;
+    if (client == null || !isConnected) {
+      throw StateError('相机未连接');
+    }
+    await client.executeDataOut(
+        PtpOpCodes.setDevicePropValue, payload, <int>[propertyId]);
   }
 
   // ==========================================

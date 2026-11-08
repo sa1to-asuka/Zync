@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -639,7 +640,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String galleryCollageDownloadPrompt(
-      int missing, String reusablePart, String skippedPart) {
+    int missing,
+    String reusablePart,
+    String skippedPart,
+  ) {
     return 'コラージュ用に $missing 枚の写真をダウンロードします$reusablePart$skippedPart。完了後に自動でコラージュ画面を開きます。';
   }
 
@@ -750,7 +754,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String galleryDeletedGroupsPartialLocalFailToast(
-      int handled, int failed, int localFailed) {
+    int handled,
+    int failed,
+    int localFailed,
+  ) {
     return '$handled 組を処理、$failed 組が失敗（うち $localFailed 組はカメラ側削除済み・ローカル削除失敗）';
   }
 
@@ -2750,7 +2757,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String pcImportReportToast(
-      Object duplicates, Object imported, Object invalid) {
+    Object duplicates,
+    Object imported,
+    Object invalid,
+  ) {
     return '$imported 件のレシピを読み込みました（重複スキップ $duplicates 件、無効 $invalid 件）';
   }
 
@@ -2999,4 +3009,458 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get spektraPreviewFailed => 'フィルムプレビューの生成に失敗しました。元画像を表示します';
+
+  @override
+  String get navCapture => '撮影台';
+
+  @override
+  String get captureTitle => '撮影台';
+
+  @override
+  String get captureNotConnectedTitle => 'カメラ未接続';
+
+  @override
+  String get captureNotConnectedBody =>
+      'Wi-Fi PTP/IP または USB-C OTG で接続するとライブビューを開始できます。';
+
+  @override
+  String get captureGoConnect => '接続へ移動';
+
+  @override
+  String get captureLiveViewUnsupported => 'このカメラはライブビューに対応していません。';
+
+  @override
+  String get captureUnverifiedBody =>
+      'ライブビューとリモート撮影は Nikon Z 30 で検証済みです。他の機種では動作が異なる場合があります。';
+
+  @override
+  String get captureLiveViewStarting => 'ライブビューを起動中…';
+
+  @override
+  String get captureLiveViewRunning => 'ライブビュー';
+
+  @override
+  String get captureLiveViewIdle => 'ライブビュー停止';
+
+  @override
+  String get captureLiveViewSuspended => '一時停止';
+
+  @override
+  String get captureLiveViewExited => 'カメラがライブビューモードを終了しました。';
+
+  @override
+  String get captureLiveViewLost => 'ライブビューが予期せず停止しました。';
+
+  @override
+  String get captureShutter => 'シャッター';
+
+  @override
+  String get captureFocus => 'フォーカス';
+
+  @override
+  String get captureTapToFocus => '画面をタップしてフォーカスポイントを移動';
+
+  @override
+  String get captureExposureMode => 'モード';
+
+  @override
+  String get captureAperture => '絞り';
+
+  @override
+  String get captureShutterSpeed => 'シャッタースピード';
+
+  @override
+  String get captureIso => 'ISO';
+
+  @override
+  String get captureExposureComp => '露出補正';
+
+  @override
+  String captureFps(String fps) {
+    return '$fps fps';
+  }
+
+  @override
+  String get captureChannelWifi => 'Wi-Fi';
+
+  @override
+  String get captureChannelUsb => 'USB';
+
+  @override
+  String captureSuccess(String fileName) {
+    return '$fileName を撮影しました';
+  }
+
+  @override
+  String captureQueued(String fileName) {
+    return '$fileName を転送キューに追加しました';
+  }
+
+  @override
+  String get captureUnconfirmedTitle => '撮影が完了していない可能性があります';
+
+  @override
+  String captureUnconfirmedBody(int seconds) {
+    return '$seconds 秒以内に新しいファイルが現れませんでした。再度撮影する前にカメラを確認してください。';
+  }
+
+  @override
+  String get captureRejectedBusy => 'カメラがビジー状態です。少し待ってから再試行してください。';
+
+  @override
+  String get captureRejectedAccess => 'カメラがシャッター指示を拒否しました。';
+
+  @override
+  String get captureRejectedUnsupported => 'このカメラはリモートシャッターに対応していません。';
+
+  @override
+  String get captureFailed => '撮影に失敗しました';
+
+  @override
+  String captureSettingApplied(String value) {
+    return '$value に設定しました';
+  }
+
+  @override
+  String get captureSettingRejectedDial =>
+      'カメラが変更を受け付けませんでした。モードダイヤルを M にして再試行してください。';
+
+  @override
+  String get captureSettingRejectedBusy => 'カメラがビジー状態です。再試行してください。';
+
+  @override
+  String get captureSettingRejectedNotWritable => 'この設定はカメラ側で変更できません。';
+
+  @override
+  String captureSettingRejectedMismatch(String value) {
+    return 'カメラは $value のままにしました。';
+  }
+
+  @override
+  String get captureSettingRejectedUnsupported => 'この設定はカメラが対応していません。';
+
+  @override
+  String get captureSettingRejectedUnavailable => 'カメラがこの設定を公開していません。';
+
+  @override
+  String get captureDialNotManualHint => '絞り・シャッター速度・ISO は M モードでのみ変更できます。';
+
+  @override
+  String get captureAfFailed => 'フォーカスポイントを移動できませんでした。';
+
+  @override
+  String get errDeviceBusy => 'カメラがビジー状態です。';
+
+  @override
+  String get errOperationNotSupported => 'カメラがこの操作に対応していません。';
+
+  @override
+  String get errAccessDenied => 'カメラが要求を拒否しました。モードダイヤル（P/A/S/M）を確認してください。';
+
+  @override
+  String get errTimeout => 'カメラが時間内に応答しませんでした。';
+
+  @override
+  String get errDisconnected => 'カメラとの接続が切断されました。';
+
+  @override
+  String get errGeneric => 'カメラ操作でエラーが発生しました。';
+
+  @override
+  String get errTransferInterrupted => '転送が中断されました（接続切断または一時停止）。後で再開できます。';
+
+  @override
+  String errTransferEmptyChunk(int offset) {
+    return 'カメラが $offset バイト目で空のデータを返しました。';
+  }
+
+  @override
+  String errTransferIncomplete(int actual, int total) {
+    return 'ダウンロードが不完全です：$actual / $total バイト。';
+  }
+
+  @override
+  String errSaveToGalleryFailed(String fileName) {
+    return '$fileName をギャラリーに保存できませんでした。';
+  }
+
+  @override
+  String get settingsExportLogsTitle => 'ログを書き出す';
+
+  @override
+  String get settingsExportLogsDescription => '最近のログと端末情報を含むテキストファイルを共有します。';
+
+  @override
+  String get settingsExportLogsSuccess => 'ログファイルを作成しました';
+
+  @override
+  String get settingsExportLogsFailed => 'ログファイルを作成できませんでした';
+
+  @override
+  String get settingsExportLogsEmpty => '書き出せるログがまだありません';
+
+  @override
+  String get errorScreenTitle => '問題が発生しました';
+
+  @override
+  String get errorScreenBody => '画面を描画できませんでした。詳細はログに記録されています。設定から書き出せます。';
+
+  @override
+  String get hubBentoColorImportTitle => 'カラーを取り込む';
+
+  @override
+  String get hubBentoColorImportSub => 'NP3/NCP レシピをライブラリへ';
+
+  @override
+  String get hubBentoLiveViewTitle => 'ライブビュー';
+
+  @override
+  String get hubBentoLiveViewSub => 'Wi-Fi / USB でスマートフォンから撮影';
+
+  @override
+  String get hubBentoLiveViewOffline => 'カメラを接続してください';
+
+  @override
+  String get captureFocusNear => '近側へフォーカス';
+
+  @override
+  String get captureFocusFar => '遠側へフォーカス';
+
+  @override
+  String get captureManualFocus => 'マニュアルフォーカス';
+
+  @override
+  String get captureAfDone => '合焦しました';
+
+  @override
+  String get captureAfNotFocus => '合焦できませんでした';
+
+  @override
+  String get captureMfStepEnd => 'フォーカスが限界まで達しました';
+
+  @override
+  String get captureMfStepInsufficient => 'フォーカス移動量が不足しています';
+
+  @override
+  String get captureMfRequiresManualLens => 'レンズをマニュアルフォーカスに切り替えてください';
+
+  @override
+  String get captureParamsTitle => 'パラメータ';
+
+  @override
+  String get captureGridOff => 'グリッドなし';
+
+  @override
+  String get captureGridThirds => '三分割';
+
+  @override
+  String get captureGridNine => '九分割';
+
+  @override
+  String get captureGuideLines => '構図ガイド';
+
+  @override
+  String get captureOverlayPeaking => 'フォーカスピーキング';
+
+  @override
+  String get captureOverlayZebra => 'ゼブラ';
+
+  @override
+  String get captureOverlayHistogram => 'ヒストグラム';
+
+  @override
+  String get captureOverlayGrid => 'グリッド';
+
+  @override
+  String get captureClose => '閉じる';
+
+  @override
+  String get captureShowParameters => 'パラメータ';
+
+  @override
+  String captureModeLockedHint(String mode, String params) {
+    return '$mode モード：$params はカメラ側で決まります。M に切り替えると手動設定できます。';
+  }
+
+  @override
+  String get captureModeLockedShort => 'オート';
+
+  @override
+  String get captureIntervalTitle => 'インターバル撮影';
+
+  @override
+  String get captureIntervalStart => '開始';
+
+  @override
+  String get captureIntervalStop => '停止';
+
+  @override
+  String get captureIntervalPause => '一時停止';
+
+  @override
+  String get captureIntervalResume => '再開';
+
+  @override
+  String captureIntervalSeconds(int seconds) {
+    return '$seconds 秒間隔';
+  }
+
+  @override
+  String captureIntervalCount(int count) {
+    return '$count 枚';
+  }
+
+  @override
+  String captureIntervalDelay(int seconds) {
+    return '$seconds 秒後に開始';
+  }
+
+  @override
+  String captureIntervalProgress(int done, int total) {
+    return '$done / $total';
+  }
+
+  @override
+  String captureIntervalProgressUnlimited(int done) {
+    return '$done 枚撮影';
+  }
+
+  @override
+  String captureIntervalNextIn(String time) {
+    return '次まで $time';
+  }
+
+  @override
+  String captureIntervalDone(int count) {
+    return 'インターバル完了：$count 枚';
+  }
+
+  @override
+  String get captureIntervalFailed => 'カメラが撮影を拒否したため停止しました';
+
+  @override
+  String get captureIntervalTooShort => 'インターバルが 1 枚の所要時間より短いため、間隔がずれます';
+
+  @override
+  String get captureIntervalKeepLiveView => '撮影中もライブビューを維持';
+
+  @override
+  String get captureIntervalUnlimitedShots => '枚数制限なし';
+
+  @override
+  String get settingsLiveViewTitle => 'ライブビュー';
+
+  @override
+  String get settingsLiveViewSub => 'フレームレート・オーバーレイ・フォーカス';
+
+  @override
+  String get settingsLiveViewCaptureSection => '撮影';
+
+  @override
+  String get settingsLiveViewFpsTitle => 'フレームレート上限';
+
+  @override
+  String get settingsLiveViewFpsSub => 'プレビューが重いときに下げてください';
+
+  @override
+  String settingsLiveViewFpsValue(int fps) {
+    return '$fps fps';
+  }
+
+  @override
+  String get settingsLiveViewAutoStartTitle => '画面を開いたら自動で開始';
+
+  @override
+  String get settingsLiveViewAutoStartSub => 'オフの場合はボタンで開始します';
+
+  @override
+  String get settingsLiveViewShowFpsTitle => 'フレームレートを表示';
+
+  @override
+  String get settingsLiveViewKeepAwakeTitle => '画面をスリープさせない';
+
+  @override
+  String get settingsLiveViewKeepAwakeSub => 'ライブビュー中のみ有効';
+
+  @override
+  String get settingsLiveViewOverlaySection => 'オーバーレイ';
+
+  @override
+  String get settingsLiveViewGridTitle => '構図グリッド';
+
+  @override
+  String get settingsLiveViewPeakingTitle => 'フォーカスピーキング';
+
+  @override
+  String get settingsLiveViewPeakingSub => 'プレビューで合焦部分を強調します';
+
+  @override
+  String get settingsLiveViewPeakingColorTitle => 'ピーキング色';
+
+  @override
+  String get settingsLiveViewPeakingSensitivityTitle => 'ピーキング感度';
+
+  @override
+  String get settingsLiveViewPeakingLow => '低';
+
+  @override
+  String get settingsLiveViewPeakingMedium => '中';
+
+  @override
+  String get settingsLiveViewPeakingHigh => '高';
+
+  @override
+  String get settingsLiveViewZebraTitle => 'ゼブラ';
+
+  @override
+  String get settingsLiveViewZebraSub => '白飛び領域を斜線で表示します';
+
+  @override
+  String get settingsLiveViewZebraThresholdTitle => 'ゼブラしきい値';
+
+  @override
+  String settingsLiveViewZebraThresholdValue(int value) {
+    return '$value 以上';
+  }
+
+  @override
+  String get settingsLiveViewHistogramTitle => 'ヒストグラム';
+
+  @override
+  String get settingsLiveViewHistogramSub => '隅に輝度ヒストグラムを表示';
+
+  @override
+  String get settingsLiveViewFocusSection => 'フォーカス';
+
+  @override
+  String get settingsLiveViewAfDriveTitle => 'AF ボタンで実際にピント合わせ';
+
+  @override
+  String get settingsLiveViewAfDriveSub => 'オフの場合はフォーカスポイントのみ移動';
+
+  @override
+  String get settingsLiveViewMfStepTitle => 'マニュアルフォーカス量';
+
+  @override
+  String settingsLiveViewMfStepValue(int steps) {
+    return '$steps ステップ';
+  }
+
+  @override
+  String get settingsLiveViewIntervalSection => 'インターバル撮影の既定値';
+
+  @override
+  String get settingsLiveViewIntervalSecondsTitle => '既定の間隔';
+
+  @override
+  String get settingsLiveViewIntervalCountTitle => '既定の枚数';
+
+  @override
+  String get settingsLiveViewUnavailable => 'この端末ではプレビュー解析を実行できません';
+
+  @override
+  String get settingsShootAndTransferTitle => '撮影と同時に転送';
+
+  @override
+  String get settingsShootAndTransferSub => '撮影した写真を自動でスマートフォンへ転送します';
 }

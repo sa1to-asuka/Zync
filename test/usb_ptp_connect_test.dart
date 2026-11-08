@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zync/protocol/camera_native_bridge.dart';
+import 'package:zync/protocol/ptp_ip_client.dart' show PtpException;
 import 'package:zync/protocol/usb_ptp_transport.dart';
 
 /// USB PTP 连接链路：原生失败原因必须原样回传到连接页日志，
@@ -12,6 +13,64 @@ void main() {
   tearDown(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, null);
+  });
+
+  test('USB 操作失败时把响应码归一化成 PtpException', () async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+      switch (call.method) {
+        case 'requestUsbPermission':
+          return true;
+        case 'usbOpenSession':
+          return 'usb:1200:1106:/dev/bus/usb/001/002';
+        case 'usbExecuteOperation':
+          throw PlatformException(
+            code: 'USB_OPERATION_FAILED',
+            message: 'PTP USB 操作 0x90c1 失败，响应码 0x2005（Unknown）',
+          );
+      }
+      return null;
+    });
+
+    final transport = UsbPtpTransport(deviceName: '/dev/bus/usb/001/002');
+    await transport.connect();
+
+    await expectLater(
+      transport.executeOperation(0x90C1),
+      throwsA(
+        isA<PtpException>()
+            .having((e) => e.opCode, 'opCode', 0x90C1)
+            .having((e) => e.responseCode, 'responseCode', 0x2005),
+      ),
+    );
+    transport.dispose();
+  });
+
+  test('没有响应码的原生错误保持 PlatformException', () async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+      switch (call.method) {
+        case 'requestUsbPermission':
+          return true;
+        case 'usbOpenSession':
+          return 'usb:1200:1106:/dev/bus/usb/001/002';
+        case 'usbExecuteOperation':
+          throw PlatformException(
+            code: 'USB_DETACHED',
+            message: '设备已断开',
+          );
+      }
+      return null;
+    });
+
+    final transport = UsbPtpTransport(deviceName: '/dev/bus/usb/001/002');
+    await transport.connect();
+
+    await expectLater(
+      transport.executeOperation(0x9203),
+      throwsA(isA<PlatformException>()),
+    );
+    transport.dispose();
   });
 
   test('USB 连接失败时把原生失败原因带回日志', () async {

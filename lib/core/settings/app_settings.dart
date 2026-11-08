@@ -20,6 +20,7 @@ class AppSettings extends ChangeNotifier {
   static const bool defaultAutoBindNetwork = true;
   static const bool defaultAutoKeepAlive = true;
   static const bool defaultDownloadRaw = false;
+  static const bool defaultShootAndTransferEnabled = false;
   static const bool defaultPowerProtectionEnabled = true;
   static const int defaultPowerThreshold = 15;
   static const AppThemeMode defaultThemeMode = AppThemeMode.system;
@@ -41,6 +42,34 @@ class AppSettings extends ChangeNotifier {
   static const String defaultWatermarkTextAlign = 'left';
   static const Object watermarkUnset = Object();
 
+  // 实时取景默认值
+  static const int defaultLiveViewFpsCap = 30;
+  static const bool defaultLiveViewAutoStart = true;
+  static const bool defaultLiveViewShowFps = true;
+  static const bool defaultLiveViewKeepScreenOn = true;
+  static const int defaultLiveViewGridMode = 1;
+  static const bool defaultLiveViewGuideLines = false;
+  static const bool defaultLiveViewFocusPeaking = false;
+  static const int defaultLiveViewPeakingColor = 0xFFFF1744;
+  static const int defaultLiveViewPeakingThreshold = 400;
+  static const bool defaultLiveViewZebra = false;
+  static const int defaultLiveViewZebraThreshold = 235;
+  static const bool defaultLiveViewHistogram = false;
+  static const bool defaultLiveViewAfDrive = true;
+  static const int defaultLiveViewMfStep = 32;
+  static const int defaultIntervalSeconds = 5;
+  static const int defaultIntervalCount = 10;
+
+  static const List<int> liveViewFpsOptions = [10, 15, 20, 30];
+  static const List<int> liveViewPeakingThresholdOptions = [340, 400, 460];
+  static const List<int> liveViewPeakingColorOptions = [
+    0xFFFF1744,
+    0xFFFFEA00,
+    0xFF2979FF,
+    0xFFFFFFFF,
+  ];
+  static const Object liveViewUnset = Object();
+
   static const List<int> powerThresholdOptions = [10, 15, 20, 30];
   static const List<int> exportQualityOptions = [95, 92, 85];
 
@@ -59,6 +88,7 @@ class AppSettings extends ChangeNotifier {
   bool autoBindNetwork = defaultAutoBindNetwork;
   bool autoKeepAlive = defaultAutoKeepAlive;
   bool downloadRaw = defaultDownloadRaw;
+  bool shootAndTransferEnabled = defaultShootAndTransferEnabled;
   bool powerProtectionEnabled = defaultPowerProtectionEnabled;
   int powerThreshold = defaultPowerThreshold;
   AppThemeMode themeMode = defaultThemeMode;
@@ -99,6 +129,24 @@ class AppSettings extends ChangeNotifier {
   bool tabletWatermarkViewPaged = false;
   bool tabletFilterViewPaged = false;
 
+  // 实时取景
+  int liveViewFpsCap = defaultLiveViewFpsCap;
+  bool liveViewAutoStart = defaultLiveViewAutoStart;
+  bool liveViewShowFps = defaultLiveViewShowFps;
+  bool liveViewKeepScreenOn = defaultLiveViewKeepScreenOn;
+  int liveViewGridMode = defaultLiveViewGridMode;
+  bool liveViewGuideLines = defaultLiveViewGuideLines;
+  bool liveViewFocusPeaking = defaultLiveViewFocusPeaking;
+  int liveViewPeakingColor = defaultLiveViewPeakingColor;
+  int liveViewPeakingThreshold = defaultLiveViewPeakingThreshold;
+  bool liveViewZebra = defaultLiveViewZebra;
+  int liveViewZebraThreshold = defaultLiveViewZebraThreshold;
+  bool liveViewHistogram = defaultLiveViewHistogram;
+  bool liveViewAfDrive = defaultLiveViewAfDrive;
+  int liveViewMfStep = defaultLiveViewMfStep;
+  int intervalDefaultSeconds = defaultIntervalSeconds;
+  int intervalDefaultCount = defaultIntervalCount;
+
   File? _file;
   bool _suppressSave = false;
 
@@ -122,6 +170,8 @@ class AppSettings extends ChangeNotifier {
       autoBindNetwork = _readBool(m, 'autoBindNetwork', defaultAutoBindNetwork);
       autoKeepAlive = _readBool(m, 'autoKeepAlive', defaultAutoKeepAlive);
       downloadRaw = _readBool(m, 'downloadRaw', defaultDownloadRaw);
+      shootAndTransferEnabled = _readBool(
+          m, 'shootAndTransferEnabled', defaultShootAndTransferEnabled);
       powerProtectionEnabled =
           _readBool(m, 'powerProtectionEnabled', defaultPowerProtectionEnabled);
       powerThreshold = _normalizeThreshold(
@@ -134,6 +184,41 @@ class AppSettings extends ChangeNotifier {
       exportQuality = _normalizeExportQuality(
           _readInt(m, 'exportQuality', defaultExportQuality));
       ptpClientGuid = _readString(m, 'ptpClientGuid', '');
+      liveViewFpsCap = _normalizeChoice(_readInt(m, 'liveViewFpsCap',
+          defaultLiveViewFpsCap), liveViewFpsOptions, defaultLiveViewFpsCap);
+      liveViewAutoStart =
+          _readBool(m, 'liveViewAutoStart', defaultLiveViewAutoStart);
+      liveViewShowFps = _readBool(m, 'liveViewShowFps', defaultLiveViewShowFps);
+      liveViewKeepScreenOn =
+          _readBool(m, 'liveViewKeepScreenOn', defaultLiveViewKeepScreenOn);
+      liveViewGridMode = _readInt(m, 'liveViewGridMode', defaultLiveViewGridMode)
+          .clamp(0, 2);
+      liveViewGuideLines =
+          _readBool(m, 'liveViewGuideLines', defaultLiveViewGuideLines);
+      liveViewFocusPeaking =
+          _readBool(m, 'liveViewFocusPeaking', defaultLiveViewFocusPeaking);
+      liveViewPeakingColor = _normalizeColor(
+          _readInt(m, 'liveViewPeakingColor', defaultLiveViewPeakingColor));
+      liveViewPeakingThreshold = _normalizeChoice(
+          _readInt(m, 'liveViewPeakingThreshold',
+              defaultLiveViewPeakingThreshold),
+          liveViewPeakingThresholdOptions,
+          defaultLiveViewPeakingThreshold);
+      liveViewZebra = _readBool(m, 'liveViewZebra', defaultLiveViewZebra);
+      liveViewZebraThreshold = _readInt(m, 'liveViewZebraThreshold',
+              defaultLiveViewZebraThreshold)
+          .clamp(200, 250);
+      liveViewHistogram =
+          _readBool(m, 'liveViewHistogram', defaultLiveViewHistogram);
+      liveViewAfDrive = _readBool(m, 'liveViewAfDrive', defaultLiveViewAfDrive);
+      liveViewMfStep =
+          _readInt(m, 'liveViewMfStep', defaultLiveViewMfStep).clamp(1, 32767);
+      intervalDefaultSeconds = _readInt(
+              m, 'intervalDefaultSeconds', defaultIntervalSeconds)
+          .clamp(2, 86400);
+      intervalDefaultCount = _readInt(
+              m, 'intervalDefaultCount', defaultIntervalCount)
+          .clamp(1, 9999);
       watermarkCardColorValue = _readNullableInt(m, 'watermarkCardColorValue');
       watermarkTextColorValue = _readNullableInt(m, 'watermarkTextColorValue');
       watermarkAccentColorValue = _normalizeColor(_readInt(
@@ -220,6 +305,7 @@ class AppSettings extends ChangeNotifier {
         'autoBindNetwork': autoBindNetwork,
         'autoKeepAlive': autoKeepAlive,
         'downloadRaw': downloadRaw,
+        'shootAndTransferEnabled': shootAndTransferEnabled,
         'powerProtectionEnabled': powerProtectionEnabled,
         'powerThreshold': powerThreshold,
         'themeMode': themeMode.name,
@@ -258,6 +344,22 @@ class AppSettings extends ChangeNotifier {
         'tabletWatermarkViewPaged': tabletWatermarkViewPaged,
         'tabletFilterViewPaged': tabletFilterViewPaged,
         'galleryFilter': galleryFilter,
+        'liveViewFpsCap': liveViewFpsCap,
+        'liveViewAutoStart': liveViewAutoStart,
+        'liveViewShowFps': liveViewShowFps,
+        'liveViewKeepScreenOn': liveViewKeepScreenOn,
+        'liveViewGridMode': liveViewGridMode,
+        'liveViewGuideLines': liveViewGuideLines,
+        'liveViewFocusPeaking': liveViewFocusPeaking,
+        'liveViewPeakingColor': liveViewPeakingColor,
+        'liveViewPeakingThreshold': liveViewPeakingThreshold,
+        'liveViewZebra': liveViewZebra,
+        'liveViewZebraThreshold': liveViewZebraThreshold,
+        'liveViewHistogram': liveViewHistogram,
+        'liveViewAfDrive': liveViewAfDrive,
+        'liveViewMfStep': liveViewMfStep,
+        'intervalDefaultSeconds': intervalDefaultSeconds,
+        'intervalDefaultCount': intervalDefaultCount,
       }));
     } catch (_) {
       // 落盘失败不中断用户操作
@@ -300,6 +402,13 @@ class AppSettings extends ChangeNotifier {
   void setAutoKeepAlive(bool value) {
     if (value == autoKeepAlive) return;
     autoKeepAlive = value;
+    notifyListeners();
+    _scheduleSave();
+  }
+
+  void setShootAndTransferEnabled(bool value) {
+    if (value == shootAndTransferEnabled) return;
+    shootAndTransferEnabled = value;
     notifyListeners();
     _scheduleSave();
   }
@@ -528,6 +637,132 @@ class AppSettings extends ChangeNotifier {
     _scheduleSave();
   }
 
+  /// 实时取景设置的批量更新入口（与 [updateWatermarkStyle] 同一套哨兵值写法）。
+  void updateLiveView({
+    Object? fpsCap = liveViewUnset,
+    Object? autoStart = liveViewUnset,
+    Object? showFps = liveViewUnset,
+    Object? keepScreenOn = liveViewUnset,
+    Object? gridMode = liveViewUnset,
+    Object? guideLines = liveViewUnset,
+    Object? focusPeaking = liveViewUnset,
+    Object? peakingColor = liveViewUnset,
+    Object? peakingThreshold = liveViewUnset,
+    Object? zebra = liveViewUnset,
+    Object? zebraThreshold = liveViewUnset,
+    Object? histogram = liveViewUnset,
+    Object? afDrive = liveViewUnset,
+    Object? mfStep = liveViewUnset,
+    Object? intervalSeconds = liveViewUnset,
+    Object? intervalCount = liveViewUnset,
+  }) {
+    var changed = false;
+
+    if (fpsCap != liveViewUnset) {
+      final v = _normalizeChoice(fpsCap as int, liveViewFpsOptions,
+          defaultLiveViewFpsCap);
+      if (v != liveViewFpsCap) {
+        liveViewFpsCap = v;
+        changed = true;
+      }
+    }
+    if (autoStart != liveViewUnset && autoStart != liveViewAutoStart) {
+      liveViewAutoStart = autoStart as bool;
+      changed = true;
+    }
+    if (showFps != liveViewUnset && showFps != liveViewShowFps) {
+      liveViewShowFps = showFps as bool;
+      changed = true;
+    }
+    if (keepScreenOn != liveViewUnset && keepScreenOn != liveViewKeepScreenOn) {
+      liveViewKeepScreenOn = keepScreenOn as bool;
+      changed = true;
+    }
+    if (guideLines != liveViewUnset && guideLines != liveViewGuideLines) {
+      liveViewGuideLines = guideLines as bool;
+      changed = true;
+    }
+    if (gridMode != liveViewUnset) {
+      final v = (gridMode as int).clamp(0, 2);
+      if (v != liveViewGridMode) {
+        liveViewGridMode = v;
+        changed = true;
+      }
+    }
+    if (focusPeaking != liveViewUnset &&
+        focusPeaking != liveViewFocusPeaking) {
+      liveViewFocusPeaking = focusPeaking as bool;
+      changed = true;
+    }
+    if (peakingColor != liveViewUnset) {
+      final v = _normalizeColor(peakingColor as int);
+      if (v != liveViewPeakingColor) {
+        liveViewPeakingColor = v;
+        changed = true;
+      }
+    }
+    if (peakingThreshold != liveViewUnset) {
+      final v = _normalizeChoice(peakingThreshold as int,
+          liveViewPeakingThresholdOptions, defaultLiveViewPeakingThreshold);
+      if (v != liveViewPeakingThreshold) {
+        liveViewPeakingThreshold = v;
+        changed = true;
+      }
+    }
+    if (zebra != liveViewUnset && zebra != liveViewZebra) {
+      liveViewZebra = zebra as bool;
+      changed = true;
+    }
+    if (zebraThreshold != liveViewUnset) {
+      final v = (zebraThreshold as int).clamp(200, 250);
+      if (v != liveViewZebraThreshold) {
+        liveViewZebraThreshold = v;
+        changed = true;
+      }
+    }
+    if (histogram != liveViewUnset && histogram != liveViewHistogram) {
+      liveViewHistogram = histogram as bool;
+      changed = true;
+    }
+    if (afDrive != liveViewUnset && afDrive != liveViewAfDrive) {
+      liveViewAfDrive = afDrive as bool;
+      changed = true;
+    }
+    if (mfStep != liveViewUnset) {
+      final v = (mfStep as int).clamp(1, 32767);
+      if (v != liveViewMfStep) {
+        liveViewMfStep = v;
+        changed = true;
+      }
+    }
+    if (intervalSeconds != liveViewUnset) {
+      final v = (intervalSeconds as int).clamp(2, 86400);
+      if (v != intervalDefaultSeconds) {
+        intervalDefaultSeconds = v;
+        changed = true;
+      }
+    }
+    if (intervalCount != liveViewUnset) {
+      final v = (intervalCount as int).clamp(1, 9999);
+      if (v != intervalDefaultCount) {
+        intervalDefaultCount = v;
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      notifyListeners();
+      _scheduleSave();
+    }
+  }
+
+  /// 取景循环的最小帧间隔（由设置里的帧率上限换算）。
+  Duration get liveViewFrameInterval =>
+      Duration(milliseconds: (1000 / liveViewFpsCap).round());
+
+  static int _normalizeChoice(int value, List<int> options, int fallback) =>
+      options.contains(value) ? value : fallback;
+
   @visibleForTesting
   void resetForTest() {
     cameraIp = defaultCameraIp;
@@ -535,6 +770,7 @@ class AppSettings extends ChangeNotifier {
     autoBindNetwork = defaultAutoBindNetwork;
     autoKeepAlive = defaultAutoKeepAlive;
     downloadRaw = defaultDownloadRaw;
+    shootAndTransferEnabled = defaultShootAndTransferEnabled;
     powerProtectionEnabled = defaultPowerProtectionEnabled;
     powerThreshold = defaultPowerThreshold;
     themeMode = defaultThemeMode;
@@ -572,6 +808,22 @@ class AppSettings extends ChangeNotifier {
     watermarkLogoOpacity = defaultWatermarkLogoOpacity;
     watermarkLogoCorner = defaultWatermarkLogoCorner;
     watermarkTextAlign = defaultWatermarkTextAlign;
+    liveViewFpsCap = defaultLiveViewFpsCap;
+    liveViewAutoStart = defaultLiveViewAutoStart;
+    liveViewShowFps = defaultLiveViewShowFps;
+    liveViewKeepScreenOn = defaultLiveViewKeepScreenOn;
+    liveViewGridMode = defaultLiveViewGridMode;
+    liveViewGuideLines = defaultLiveViewGuideLines;
+    liveViewFocusPeaking = defaultLiveViewFocusPeaking;
+    liveViewPeakingColor = defaultLiveViewPeakingColor;
+    liveViewPeakingThreshold = defaultLiveViewPeakingThreshold;
+    liveViewZebra = defaultLiveViewZebra;
+    liveViewZebraThreshold = defaultLiveViewZebraThreshold;
+    liveViewHistogram = defaultLiveViewHistogram;
+    liveViewAfDrive = defaultLiveViewAfDrive;
+    liveViewMfStep = defaultLiveViewMfStep;
+    intervalDefaultSeconds = defaultIntervalSeconds;
+    intervalDefaultCount = defaultIntervalCount;
     _file = null;
   }
 

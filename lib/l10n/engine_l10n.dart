@@ -57,6 +57,36 @@ abstract final class EngineL10n {
   }
 
   static const Map<String, ({String en, String ja})> kPhraseTable = {
+    // ==================== 开源致谢 ====================
+    'USB 实时取景、AF/MF 驱动、对焦点与峰值对焦参考': (
+      en: 'USB live view, AF/MF drive, focus point and focus peaking reference',
+      ja: 'USB ライブビュー、AF/MF 駆動、フォーカスポイント、ピーキングの参考'
+    ),
+    'Wi-Fi PTP/IP 导入行为参考': (
+      en: 'Wi-Fi PTP/IP import behavior reference',
+      ja: 'Wi-Fi PTP/IP 取り込み動作の参考'
+    ),
+    'Android 遥控与传输流程参考': (
+      en: 'Android remote-control and transfer flow reference',
+      ja: 'Android リモート操作と転送フローの参考'
+    ),
+    '取景循环与拍摄落盘确认行为参考': (
+      en: 'Live-view loop and capture confirmation behavior reference',
+      ja: 'ライブビューループと撮影確定動作の参考'
+    ),
+    'PTP/IP 取景与连接边界参考': (
+      en: 'PTP/IP live view and connection boundary reference',
+      ja: 'PTP/IP ライブビューと接続境界の参考'
+    ),
+    'Z 30 影调曲线负载结构参考': (
+      en: 'Z 30 tone-curve payload structure reference',
+      ja: 'Z 30 トーンカーブペイロード構造の参考'
+    ),
+    'PTP/IP、尼康操作码与响应码表参考': (
+      en: 'PTP/IP, Nikon opcode and response-code table reference',
+      ja: 'PTP/IP、Nikon オペコードとレスポンスコード表の参考'
+    ),
+
     // ==================== 水印模板与枚举 ====================
     '跟随模板': (en: 'Follow Template', ja: 'テンプレートに従う'),
     '纯白': (en: 'Pure White', ja: 'ピュアホワイト'),

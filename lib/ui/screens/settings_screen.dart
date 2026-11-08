@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/constants/open_source_credits.dart';
 import '../../core/settings/app_settings.dart';
+import '../../core/utils/app_log_file_store.dart';
 import '../../core/utils/app_log_manager.dart';
 import '../../engine/update/app_update_manager.dart';
 import '../../l10n/l10n.dart';
@@ -14,6 +17,7 @@ enum _SettingsSectionId {
   appearance,
   language,
   camera,
+  liveView,
   wireless,
   battery,
   logs,
@@ -153,6 +157,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _SettingsSectionId.appearance => l10n.settingsAppearanceTitle,
       _SettingsSectionId.language => l10n.settingsLanguageTitle,
       _SettingsSectionId.camera => l10n.settingsCameraTitle,
+      _SettingsSectionId.liveView => l10n.settingsLiveViewTitle,
       _SettingsSectionId.wireless => l10n.settingsWirelessTitle,
       _SettingsSectionId.battery => l10n.settingsBatteryTitle,
       _SettingsSectionId.logs => l10n.settingsLogsTitle,
@@ -173,6 +178,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onEditPort: () => _showPortEditDialog(context),
           ),
         ],
+      _SettingsSectionId.liveView => [const _LiveViewDetailContent()],
       _SettingsSectionId.wireless => [const _WirelessDetailContent()],
       _SettingsSectionId.battery => [const _PowerProtectionDetailContent()],
       _SettingsSectionId.logs => [const _DiagnosticsDetailContent()],
@@ -230,6 +236,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
               value: '${settings.cameraIp}:${settings.cameraPort}',
               isLink: true,
               onTap: () => _openSection(_SettingsSectionId.camera, isTwoPane),
+            ),
+            ZTile(
+              key: const ValueKey<String>('settings_tile_live_view'),
+              leadingIcon: Icons.videocam_outlined,
+              leadingColor: activeIconColor(_SettingsSectionId.liveView),
+              title: l10n.settingsLiveViewTitle,
+              subtitle: l10n.settingsLiveViewSub,
+              value: l10n.settingsLiveViewFpsValue(settings.liveViewFpsCap),
+              isLink: true,
+              onTap: () => _openSection(_SettingsSectionId.liveView, isTwoPane),
             ),
             ZTile(
               key: const ValueKey<String>('settings_tile_wireless'),
@@ -710,6 +726,14 @@ class _WirelessDetailContent extends StatelessWidget {
               title: l10n.settingsShootTransferSection,
               children: [
                 ZTile(
+                  title: l10n.settingsShootAndTransferTitle,
+                  subtitle: l10n.settingsShootAndTransferSub,
+                  trailing: Switch(
+                    value: settings.shootAndTransferEnabled,
+                    onChanged: settings.setShootAndTransferEnabled,
+                  ),
+                ),
+                ZTile(
                   title: l10n.settingsDownloadRawTitle,
                   subtitle: l10n.settingsDownloadRawSub,
                   showDivider: false,
@@ -787,6 +811,250 @@ class _PowerProtectionDetailContent extends StatelessWidget {
   }
 }
 
+class _LiveViewDetailContent extends StatelessWidget {
+  const _LiveViewDetailContent();
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: AppSettings.instance,
+      builder: (context, _) {
+        final l10n = context.l10n;
+        final zc = context.zc;
+        final settings = AppSettings.instance;
+
+        final peakingLabel = switch (settings.liveViewPeakingThreshold) {
+          340 => l10n.settingsLiveViewPeakingHigh,
+          460 => l10n.settingsLiveViewPeakingLow,
+          _ => l10n.settingsLiveViewPeakingMedium,
+        };
+        final gridLabel = switch (settings.liveViewGridMode) {
+          0 => l10n.captureGridOff,
+          1 => l10n.captureGridThirds,
+          _ => l10n.captureGridNine,
+        };
+
+        return Column(
+          children: <Widget>[
+            ZSection(
+              title: l10n.settingsLiveViewCaptureSection,
+              children: <Widget>[
+                ZTile(
+                  title: l10n.settingsLiveViewFpsTitle,
+                  subtitle: l10n.settingsLiveViewFpsSub,
+                  value: l10n.settingsLiveViewFpsValue(settings.liveViewFpsCap),
+                  isLink: true,
+                  onTap: () {
+                    const options = AppSettings.liveViewFpsOptions;
+                    final index = options.indexOf(settings.liveViewFpsCap);
+                    settings.updateLiveView(
+                      fpsCap: options[(index + 1) % options.length],
+                    );
+                  },
+                ),
+                ZTile(
+                  title: l10n.settingsLiveViewAutoStartTitle,
+                  subtitle: l10n.settingsLiveViewAutoStartSub,
+                  trailing: Switch(
+                    value: settings.liveViewAutoStart,
+                    onChanged: (v) => settings.updateLiveView(autoStart: v),
+                  ),
+                ),
+                ZTile(
+                  title: l10n.settingsLiveViewShowFpsTitle,
+                  trailing: Switch(
+                    value: settings.liveViewShowFps,
+                    onChanged: (v) => settings.updateLiveView(showFps: v),
+                  ),
+                ),
+                ZTile(
+                  title: l10n.settingsLiveViewKeepAwakeTitle,
+                  subtitle: l10n.settingsLiveViewKeepAwakeSub,
+                  trailing: Switch(
+                    value: settings.liveViewKeepScreenOn,
+                    onChanged: (v) => settings.updateLiveView(keepScreenOn: v),
+                  ),
+                ),
+              ],
+            ),
+            ZSection(
+              title: l10n.settingsLiveViewOverlaySection,
+              children: <Widget>[
+                ZTile(
+                  title: l10n.settingsLiveViewGridTitle,
+                  value: gridLabel,
+                  isLink: true,
+                  onTap: () => settings.updateLiveView(
+                    gridMode: (settings.liveViewGridMode + 1) % 3,
+                  ),
+                ),
+                ZTile(
+                  title: l10n.captureGuideLines,
+                  trailing: Switch(
+                    value: settings.liveViewGuideLines,
+                    onChanged: (v) => settings.updateLiveView(guideLines: v),
+                  ),
+                ),
+                ZTile(
+                  title: l10n.settingsLiveViewPeakingTitle,
+                  subtitle: l10n.settingsLiveViewPeakingSub,
+                  trailing: Switch(
+                    value: settings.liveViewFocusPeaking,
+                    onChanged: (v) => settings.updateLiveView(focusPeaking: v),
+                  ),
+                ),
+                ZTile(
+                  title: l10n.settingsLiveViewPeakingSensitivityTitle,
+                  value: peakingLabel,
+                  isLink: true,
+                  onTap: () {
+                    final current = settings.liveViewPeakingThreshold;
+                    final next = current == 340
+                        ? 400
+                        : current == 400
+                            ? 460
+                            : 340;
+                    settings.updateLiveView(peakingThreshold: next);
+                  },
+                ),
+                ZTile(
+                  title: l10n.settingsLiveViewPeakingColorTitle,
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      for (final color
+                          in AppSettings.liveViewPeakingColorOptions)
+                        Padding(
+                          padding: const EdgeInsets.only(left: ZSpace.xs),
+                          child: GestureDetector(
+                            onTap: () =>
+                                settings.updateLiveView(peakingColor: color),
+                            child: Container(
+                              width: 22,
+                              height: 22,
+                              decoration: BoxDecoration(
+                                color: Color(color),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: settings.liveViewPeakingColor == color
+                                      ? zc.textPrimary
+                                      : zc.outline,
+                                  width: settings.liveViewPeakingColor == color
+                                      ? 2
+                                      : 1,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                ZTile(
+                  title: l10n.settingsLiveViewZebraTitle,
+                  subtitle: l10n.settingsLiveViewZebraSub,
+                  trailing: Switch(
+                    value: settings.liveViewZebra,
+                    onChanged: (v) => settings.updateLiveView(zebra: v),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: ZSpace.md),
+                  child: ZSlider(
+                    label: l10n.settingsLiveViewZebraThresholdTitle,
+                    value: settings.liveViewZebraThreshold.toDouble(),
+                    min: 200,
+                    max: 250,
+                    defaultValue: AppSettings.defaultLiveViewZebraThreshold
+                        .toDouble(),
+                    divisions: 50,
+                    valueText: l10n.settingsLiveViewZebraThresholdValue(
+                        settings.liveViewZebraThreshold),
+                    onChanged: (v) =>
+                        settings.updateLiveView(zebraThreshold: v.round()),
+                  ),
+                ),
+                ZTile(
+                  title: l10n.settingsLiveViewHistogramTitle,
+                  subtitle: l10n.settingsLiveViewHistogramSub,
+                  showDivider: false,
+                  trailing: Switch(
+                    value: settings.liveViewHistogram,
+                    onChanged: (v) => settings.updateLiveView(histogram: v),
+                  ),
+                ),
+              ],
+            ),
+            ZSection(
+              title: l10n.settingsLiveViewFocusSection,
+              children: <Widget>[
+                ZTile(
+                  title: l10n.settingsLiveViewAfDriveTitle,
+                  subtitle: l10n.settingsLiveViewAfDriveSub,
+                  trailing: Switch(
+                    value: settings.liveViewAfDrive,
+                    onChanged: (v) => settings.updateLiveView(afDrive: v),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: ZSpace.md),
+                  child: ZSlider(
+                    label: l10n.settingsLiveViewMfStepTitle,
+                    value: settings.liveViewMfStep.toDouble(),
+                    min: 8,
+                    max: 256,
+                    defaultValue: AppSettings.defaultLiveViewMfStep.toDouble(),
+                    divisions: 31,
+                    valueText: l10n.settingsLiveViewMfStepValue(
+                        settings.liveViewMfStep),
+                    onChanged: (v) => settings.updateLiveView(mfStep: v.round()),
+                  ),
+                ),
+              ],
+            ),
+            ZSection(
+              title: l10n.settingsLiveViewIntervalSection,
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: ZSpace.md),
+                  child: ZSlider(
+                    label: l10n.settingsLiveViewIntervalSecondsTitle,
+                    value: settings.intervalDefaultSeconds.toDouble(),
+                    min: 2,
+                    max: 120,
+                    defaultValue: AppSettings.defaultIntervalSeconds.toDouble(),
+                    divisions: 118,
+                    valueText: l10n.captureIntervalSeconds(
+                        settings.intervalDefaultSeconds),
+                    onChanged: (v) =>
+                        settings.updateLiveView(intervalSeconds: v.round()),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: ZSpace.md),
+                  child: ZSlider(
+                    label: l10n.settingsLiveViewIntervalCountTitle,
+                    value: settings.intervalDefaultCount.toDouble(),
+                    min: 1,
+                    max: 200,
+                    defaultValue: AppSettings.defaultIntervalCount.toDouble(),
+                    divisions: 199,
+                    valueText: l10n.captureIntervalCount(
+                        settings.intervalDefaultCount),
+                    onChanged: (v) =>
+                        settings.updateLiveView(intervalCount: v.round()),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: ZSpace.xxl),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _DiagnosticsDetailContent extends StatelessWidget {
   const _DiagnosticsDetailContent();
 
@@ -799,6 +1067,12 @@ class _DiagnosticsDetailContent extends StatelessWidget {
         return ZSection(
           title: l10n.settingsLogsSection,
           children: [
+            ZTile(
+              title: l10n.settingsExportLogsTitle,
+              value: l10n.settingsExportLogsDescription,
+              isLink: true,
+              onTap: () => _exportLogs(context),
+            ),
             ZTile(
               title: l10n.settingsViewLogsTile,
               value: l10n.settingsLogsCountValue(
@@ -1027,6 +1301,28 @@ class _OpenSourceCreditTile extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 把磁盘日志打包成文本并交给系统分享。
+Future<void> _exportLogs(BuildContext context) async {
+  final l10n = context.l10n;
+  final file = await AppLogFileStore.instance.exportBundle(
+    appVersion:
+        '${AppUpdateManager.currentVersion}+${AppUpdateManager.currentVersionCode}',
+    deviceSummary: Platform.operatingSystemVersion,
+  );
+  if (!context.mounted) return;
+  if (file == null) {
+    showZToast(context, l10n.settingsExportLogsEmpty);
+    return;
+  }
+  final ok = await CameraNativeBridge.shareFile(file.path, title: 'Zync Logs');
+  if (!context.mounted) return;
+  showZToast(
+    context,
+    ok ? l10n.settingsExportLogsSuccess : l10n.settingsExportLogsFailed,
+    isError: !ok,
+  );
 }
 
 void _showLogsViewerSheet(BuildContext context) {

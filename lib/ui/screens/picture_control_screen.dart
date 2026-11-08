@@ -231,6 +231,9 @@ class PictureControlScreenState extends State<PictureControlScreen>
     );
   }
 
+  /// 供主页「导入色彩」磁贴直接拉起文件选择，复用同一套导入与提示逻辑。
+  Future<void> pickAndImport() => _pickAndImportFiles();
+
   Future<void> _pickAndImportFiles() async {
     final paths = await CameraNativeBridge.pickMultipleFiles();
     if (paths.isEmpty) return;

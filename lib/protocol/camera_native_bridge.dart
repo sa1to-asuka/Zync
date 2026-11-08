@@ -305,6 +305,16 @@ class CameraNativeBridge {
   }
 
   /// 调用系统分享面板分享本地文件（如导出的 .NP3 配方文件）。
+  /// 取景期间保持屏幕常亮。失败静默——这只是体验优化，不该影响取景。
+  static Future<void> setKeepScreenOn(bool enabled) async {
+    try {
+      await _channel.invokeMethod<bool>(
+        'setKeepScreenOn',
+        <String, dynamic>{'enabled': enabled},
+      );
+    } catch (_) {}
+  }
+
   static Future<bool> shareFile(String filePath, {String title = 'NP3'}) async {
     try {
       final ok = await _channel.invokeMethod<bool>(

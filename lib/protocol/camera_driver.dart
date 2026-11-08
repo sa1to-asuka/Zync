@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import '../core/utils/capture_date.dart';
+import 'camera_io_coordinator.dart';
 
 /// 相机连接状态枚举
 enum CameraConnectionState {
@@ -8,6 +9,46 @@ enum CameraConnectionState {
   connecting,
   connected,
   error,
+}
+
+/// 当前会话使用的传输方式，仅供界面显示与能力提示，不影响协议逻辑。
+enum CameraTransportKind { wifi, usb }
+
+/// 手动对焦方向。参数值直接对应 `0x9204` 的第一个参数。
+enum MfDirection {
+  near(1),
+  far(2);
+
+  const MfDirection(this.opCode);
+  final int opCode;
+}
+
+/// 一次遥控快门的结果。
+///
+/// 关键在于把「相机接收了快门指令」与「照片确实落到卡上」区分开：
+/// 超时不等于失败，快门可能已经释放，界面不能提示用户重拍。
+sealed class CaptureOutcome {
+  const CaptureOutcome();
+}
+
+/// 已经在对象列表里看到新文件。
+class CaptureConfirmed extends CaptureOutcome {
+  final CameraFileItem file;
+  const CaptureConfirmed(this.file);
+}
+
+/// 快门指令被接受，但在超时时间内没有观察到新文件。
+///
+/// 常见于大文件写入、双卡切换或相机正在处理降噪。只能提示用户去相册确认，
+/// **不能**自动重试，否则可能连拍两张。
+class CaptureUnconfirmed extends CaptureOutcome {
+  const CaptureUnconfirmed();
+}
+
+/// 相机明确拒绝了快门指令。
+class CaptureRejected extends CaptureOutcome {
+  final int responseCode;
+  const CaptureRejected(this.responseCode);
 }
 
 /// 相机文件描述项
@@ -127,6 +168,63 @@ abstract class CameraDriver {
   // 新拍照事件流 (边拍边传)
   // ------------------------------------
   Stream<CameraFileItem> get onPhotoCaptured;
+
+  // ------------------------------------
+  // 实时取景与遥控拍摄 (拍摄台)
+  // ------------------------------------
+
+  /// 相机通道的准入控制，用于在独占操作前排空在途的取景事务。
+  CameraIoCoordinator get io;
+
+  CameraTransportKind get transportKind;
+
+  bool get supportsLiveView;
+  bool get supportsRemoteCapture;
+  bool get supportsTapToFocus;
+  bool get supportsExposureWrite;
+  bool get supportsAfDrive;
+  bool get supportsManualFocus;
+
+  /// 是否为经过真机验证的机型（当前只有 Z 30）。
+  bool get isVerifiedBody;
+
+  /// 进入实时取景 (0x9201)。
+  Future<void> startLiveView();
+
+  /// 拉取一帧取景负载 (0x9203)。返回值包含厂商头部，需自行提取 JPEG。
+  Future<Uint8List> fetchLiveViewFrame();
+
+  /// 退出实时取景 (0x9202)。任何退出路径都应调用。
+  Future<void> endLiveView();
+
+  /// 释放快门 (0x100E)。被相机拒绝时抛出 [PtpException]，
+  /// 便于调用方区分「忙」与「不支持」。
+  Future<void> initiateCapture();
+
+  /// 移动对焦点 (0x9205)，坐标为机身对焦区域坐标系。
+  Future<void> moveAfArea(int x, int y);
+
+  /// 触发一次真正的自动对焦 (0x90C1)。
+  Future<void> afDrive();
+
+  /// 设备就绪探测 (0x90C8)，返回相机响应码：
+  /// `0x2001` 空闲、`0xA002` 未合焦、`0x2019` 仍在忙。
+  Future<int> deviceReady();
+
+  /// 手动对焦步进 (0x9204)。必须在实时取景中调用。
+  Future<void> mfDrive(MfDirection direction, int steps);
+
+  /// 取消进行中的对焦 (0x9206)，失败时静默。
+  Future<void> cancelFocusDrive();
+
+  /// 读取设备属性描述 (0x1014)，返回原始数据集。
+  Future<Uint8List> fetchDevicePropDesc(int propertyId);
+
+  /// 读取设备属性当前值 (0x1015)。
+  Future<Uint8List> fetchDevicePropValue(int propertyId);
+
+  /// 写入设备属性 (0x1016)。是否真正生效必须由调用方回读确认。
+  Future<void> writeDevicePropValue(int propertyId, Uint8List payload);
 }
 
 /// 相机实时曝光与镜头参数实体。

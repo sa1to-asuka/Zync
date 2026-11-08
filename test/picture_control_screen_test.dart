@@ -80,7 +80,7 @@ void main() {
     );
   });
 
-  testWidgets('RootScaffold 底部与平板侧栏包含 5 个导航项：连接 / 相机相册 / 色彩优化 / 水印工坊 / 设置',
+  testWidgets('RootScaffold 底部包含 5 个导航项（拍摄台改为全屏入口）',
       (tester) async {
     tester.view.physicalSize = const Size(430, 900);
     tester.view.devicePixelRatio = 1.0;

@@ -17,6 +17,7 @@ import '../../protocol/nikon_ble_lss.dart';
 import '../../protocol/nikon_driver.dart';
 import '../design/design.dart';
 import '../widgets/adaptive_layout.dart';
+import '../widgets/bento_card.dart';
 import 'gallery_screen.dart';
 
 enum _ConnectionTransport { wifi, usb }
@@ -36,6 +37,12 @@ class ConnectScreen extends StatefulWidget {
     bool openFilter,
   })? onOpenWatermark;
   final VoidCallback? onOpenTransferCenter;
+
+  /// 打开实时取景（手机端会全屏进入，平板端切到拍摄页）。
+  final VoidCallback? onOpenCapture;
+
+  /// 切到色彩优化页并直接拉起配方导入。
+  final VoidCallback? onImportColor;
   final DownloadManager? downloadManager;
   final ShootAndTransferController? shootAndTransferController;
 
@@ -46,6 +53,8 @@ class ConnectScreen extends StatefulWidget {
     this.onNavigateToGallery,
     this.onOpenWatermark,
     this.onOpenTransferCenter,
+    this.onOpenCapture,
+    this.onImportColor,
     this.downloadManager,
     this.shootAndTransferController,
   });
@@ -1035,9 +1044,11 @@ class ConnectScreenState extends State<ConnectScreen>
   Widget _buildBentoActionGrid(BuildContext context) {
     final l10n = context.l10n;
     final zc = context.zc;
+    final liveViewReady =
+        widget.driver.isConnected && widget.driver.supportsLiveView;
 
     final cards = [
-      _BentoCard(
+      ZBentoCard(
         title: l10n.hubBentoQuickTransferTitle,
         subtitle: l10n.hubBentoQuickTransferSub,
         icon: Icons.photo_library_outlined,
@@ -1045,14 +1056,14 @@ class ConnectScreenState extends State<ConnectScreen>
         badgeText: widget.driver.isConnected ? 'LIVE' : null,
         onTap: () => widget.onNavigateToGallery?.call(),
       ),
-      _BentoCard(
+      ZBentoCard(
         title: l10n.hubBentoWatermarkTitle,
         subtitle: l10n.hubBentoWatermarkSub,
         icon: Icons.branding_watermark_outlined,
         accentColor: ZSwatch.nikonGold,
         onTap: () => widget.onOpenWatermark?.call(),
       ),
-      _BentoCard(
+      ZBentoCard(
         title: l10n.hubBentoCollageTitle,
         subtitle: l10n.hubBentoCollageSub,
         icon: Icons.auto_awesome_mosaic_outlined,
@@ -1065,7 +1076,7 @@ class ConnectScreenState extends State<ConnectScreen>
           final dm = widget.downloadManager;
           final pending = dm?.pendingCount ?? 0;
           final active = pending > 0;
-          return _BentoCard(
+          return ZBentoCard(
             title: l10n.hubBentoTransfersTitle,
             subtitle: active
                 ? l10n.hubBentoTransfersActive(pending)
@@ -1078,17 +1089,37 @@ class ConnectScreenState extends State<ConnectScreen>
           );
         },
       ),
+      ZBentoCard(
+        title: l10n.hubBentoColorImportTitle,
+        subtitle: l10n.hubBentoColorImportSub,
+        icon: Icons.color_lens_outlined,
+        accentColor: zc.accent,
+        onTap: () => widget.onImportColor?.call(),
+      ),
+      ZBentoCard(
+        title: l10n.hubBentoLiveViewTitle,
+        subtitle: liveViewReady
+            ? l10n.hubBentoLiveViewSub
+            : l10n.hubBentoLiveViewOffline,
+        icon: Icons.videocam_outlined,
+        accentColor: liveViewReady ? zc.success : zc.textSecondary,
+        badgeText: liveViewReady ? 'LIVE' : null,
+        dimmed: !liveViewReady,
+        onTap: () => widget.onOpenCapture?.call(),
+      ),
     ];
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        // 宽屏放 3 列，手机 2 列；磁贴宽高比随列数微调，避免被拉扁。
+        final columns = constraints.maxWidth >= 840 ? 3 : 2;
         return GridView.count(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 2,
+          crossAxisCount: columns,
           crossAxisSpacing: ZSpace.md,
           mainAxisSpacing: ZSpace.md,
-          childAspectRatio: 1.45,
+          childAspectRatio: columns == 3 ? 1.6 : 1.45,
           children: cards,
         );
       },
@@ -1701,101 +1732,3 @@ class ConnectScreenState extends State<ConnectScreen>
   }
 }
 
-class _BentoCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final Color accentColor;
-  final double? progress;
-  final String? badgeText;
-  final VoidCallback onTap;
-
-  const _BentoCard({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.accentColor,
-    this.progress,
-    this.badgeText,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final zc = context.zc;
-    final zt = context.zt;
-
-    return ZCard(
-      elevated: true,
-      onTap: onTap,
-      padding: const EdgeInsets.all(ZSpace.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: accentColor.withAlpha(35),
-                  borderRadius: ZRadius.brSm,
-                ),
-                child: Icon(icon, color: accentColor, size: 20),
-              ),
-              if (badgeText != null)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: accentColor,
-                    borderRadius: ZRadius.brPill,
-                  ),
-                  child: Text(
-                    badgeText!,
-                    style: TextStyle(
-                      color: zc.onAccent,
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: zt.titleMedium,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: zt.caption.copyWith(color: zc.textSecondary),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              if (progress != null) ...[
-                const SizedBox(height: 4),
-                ClipRRect(
-                  borderRadius: ZRadius.brPill,
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 3,
-                    backgroundColor: zc.outline,
-                    valueColor: AlwaysStoppedAnimation(accentColor),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}

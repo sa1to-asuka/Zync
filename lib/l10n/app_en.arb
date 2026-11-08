@@ -1544,5 +1544,291 @@
   "wmDetailNoiseReduction": "Noise Reduction",
   "spektraDirectScan": "Negative Scan",
   "spektraCatalogUnavailable": "Spektrafilm native engine unavailable on this build.",
-  "spektraPreviewFailed": "Film preview failed; showing the original photo"
+  "spektraPreviewFailed": "Film preview failed; showing the original photo",
+  "navCapture": "Capture",
+  "captureTitle": "Capture",
+  "captureNotConnectedTitle": "Camera not connected",
+  "captureNotConnectedBody": "Connect over Wi-Fi PTP/IP or USB-C OTG to start live view.",
+  "captureGoConnect": "Go to Connect",
+  "captureLiveViewUnsupported": "This camera does not support live view.",
+  "captureUnverifiedBody": "Live view and remote capture are verified on the Nikon Z 30. Other bodies may behave differently.",
+  "captureLiveViewStarting": "Starting live view…",
+  "captureLiveViewRunning": "Live view",
+  "captureLiveViewIdle": "Live view off",
+  "captureLiveViewSuspended": "Paused",
+  "captureLiveViewExited": "The camera left live view mode.",
+  "captureLiveViewLost": "Live view stopped unexpectedly.",
+  "captureShutter": "Shutter",
+  "captureFocus": "Focus",
+  "captureTapToFocus": "Tap the frame to move the focus point",
+  "captureExposureMode": "Mode",
+  "captureAperture": "Aperture",
+  "captureShutterSpeed": "Shutter speed",
+  "captureIso": "ISO",
+  "captureExposureComp": "Exposure comp.",
+  "captureFps": "{fps} fps",
+  "@captureFps": {
+    "placeholders": {
+      "fps": {
+        "type": "String"
+      }
+    }
+  },
+  "captureChannelWifi": "Wi-Fi",
+  "captureChannelUsb": "USB",
+  "captureSuccess": "Captured {fileName}",
+  "@captureSuccess": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "captureQueued": "Queued {fileName} for transfer",
+  "@captureQueued": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "captureUnconfirmedTitle": "Shot may not have completed",
+  "captureUnconfirmedBody": "No new file appeared within {seconds} seconds. Check the camera before shooting again.",
+  "@captureUnconfirmedBody": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "captureRejectedBusy": "The camera is busy. Try again in a moment.",
+  "captureRejectedAccess": "The camera refused the shutter release.",
+  "captureRejectedUnsupported": "This camera does not support remote shutter release.",
+  "captureFailed": "Capture failed",
+  "captureSettingApplied": "Set to {value}",
+  "@captureSettingApplied": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "captureSettingRejectedDial": "The camera ignored the change. Turn the mode dial to M and try again.",
+  "captureSettingRejectedBusy": "The camera is busy. Try again.",
+  "captureSettingRejectedNotWritable": "The camera does not allow changing this setting.",
+  "captureSettingRejectedMismatch": "The camera kept {value} instead.",
+  "@captureSettingRejectedMismatch": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "captureSettingRejectedUnsupported": "This setting is not supported by the camera.",
+  "captureSettingRejectedUnavailable": "The camera did not report this setting.",
+  "captureDialNotManualHint": "Aperture, shutter and ISO are only writable in M mode.",
+  "captureAfFailed": "Could not move the focus point.",
+  "errDeviceBusy": "The camera is busy.",
+  "errOperationNotSupported": "The camera does not support this operation.",
+  "errAccessDenied": "The camera denied the request. Check the mode dial (P/A/S/M).",
+  "errTimeout": "The camera did not respond in time.",
+  "errDisconnected": "The camera connection was lost.",
+  "errGeneric": "Something went wrong with the camera.",
+  "errTransferInterrupted": "Transfer interrupted (connection lost or paused). You can resume later.",
+  "errTransferEmptyChunk": "The camera returned an empty chunk at byte {offset}.",
+  "@errTransferEmptyChunk": {
+    "placeholders": {
+      "offset": {
+        "type": "int"
+      }
+    }
+  },
+  "errTransferIncomplete": "Download incomplete: {actual} / {total} bytes.",
+  "@errTransferIncomplete": {
+    "placeholders": {
+      "actual": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "errSaveToGalleryFailed": "Could not save {fileName} to the gallery.",
+  "@errSaveToGalleryFailed": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsExportLogsTitle": "Export logs",
+  "settingsExportLogsDescription": "Share a text file with recent logs and device info.",
+  "settingsExportLogsSuccess": "Log file ready",
+  "settingsExportLogsFailed": "Could not create the log file",
+  "settingsExportLogsEmpty": "No logs to export yet",
+  "errorScreenTitle": "Something went wrong",
+  "errorScreenBody": "The screen could not be drawn. Details were written to the log; you can export them from Settings.",
+  "hubBentoColorImportTitle": "Import color",
+  "hubBentoColorImportSub": "Bring an NP3/NCP recipe into the library",
+  "hubBentoLiveViewTitle": "Live view",
+  "hubBentoLiveViewSub": "Shoot from the phone over Wi-Fi or USB",
+  "hubBentoLiveViewOffline": "Connect a camera first",
+  "captureFocusNear": "Focus near",
+  "captureFocusFar": "Focus far",
+  "captureManualFocus": "Manual focus",
+  "captureAfDone": "In focus",
+  "captureAfNotFocus": "Could not lock focus",
+  "captureMfStepEnd": "Focus reached the end of its range",
+  "captureMfStepInsufficient": "Focus step too small to move",
+  "captureMfRequiresManualLens": "Switch the lens to manual focus first",
+  "captureParamsTitle": "Parameters",
+  "captureGridOff": "Grid off",
+  "captureGridThirds": "Thirds",
+  "captureGridNine": "Nine grid",
+  "captureGuideLines": "Composition guides",
+  "captureOverlayPeaking": "Focus peaking",
+  "captureOverlayZebra": "Zebra",
+  "captureOverlayHistogram": "Histogram",
+  "captureOverlayGrid": "Grid",
+  "captureClose": "Close",
+  "captureShowParameters": "Parameters",
+  "captureModeLockedHint": "{mode} mode: {params} is controlled by the camera. Switch to M to set it manually.",
+  "@captureModeLockedHint": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      },
+      "params": {
+        "type": "String"
+      }
+    }
+  },
+  "captureModeLockedShort": "Auto",
+  "captureIntervalTitle": "Interval shooting",
+  "captureIntervalStart": "Start",
+  "captureIntervalStop": "Stop",
+  "captureIntervalPause": "Pause",
+  "captureIntervalResume": "Resume",
+  "captureIntervalSeconds": "{seconds} s interval",
+  "@captureIntervalSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "captureIntervalCount": "{count} shots",
+  "@captureIntervalCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "captureIntervalDelay": "Start after {seconds} s",
+  "@captureIntervalDelay": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "captureIntervalProgress": "{done} / {total}",
+  "@captureIntervalProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "captureIntervalProgressUnlimited": "{done} shots taken",
+  "@captureIntervalProgressUnlimited": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      }
+    }
+  },
+  "captureIntervalNextIn": "Next in {time}",
+  "@captureIntervalNextIn": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "captureIntervalDone": "Interval finished: {count} shots",
+  "@captureIntervalDone": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "captureIntervalFailed": "Interval stopped because the camera rejected a shot",
+  "captureIntervalTooShort": "Interval is shorter than one shot takes; shots will drift",
+  "captureIntervalKeepLiveView": "Keep live view running",
+  "captureIntervalUnlimitedShots": "Unlimited",
+  "settingsLiveViewTitle": "Live view",
+  "settingsLiveViewSub": "Frame rate, overlays and focus",
+  "settingsLiveViewCaptureSection": "Capture",
+  "settingsLiveViewFpsTitle": "Frame rate cap",
+  "settingsLiveViewFpsSub": "Lower this if the preview stutters",
+  "settingsLiveViewFpsValue": "{fps} fps",
+  "@settingsLiveViewFpsValue": {
+    "placeholders": {
+      "fps": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsLiveViewAutoStartTitle": "Start live view on open",
+  "settingsLiveViewAutoStartSub": "Otherwise tap the live view button",
+  "settingsLiveViewShowFpsTitle": "Show frame rate",
+  "settingsLiveViewKeepAwakeTitle": "Keep screen awake",
+  "settingsLiveViewKeepAwakeSub": "Only while live view is running",
+  "settingsLiveViewOverlaySection": "Overlays",
+  "settingsLiveViewGridTitle": "Composition grid",
+  "settingsLiveViewPeakingTitle": "Focus peaking",
+  "settingsLiveViewPeakingSub": "Highlight sharp edges in the preview",
+  "settingsLiveViewPeakingColorTitle": "Peaking color",
+  "settingsLiveViewPeakingSensitivityTitle": "Peaking sensitivity",
+  "settingsLiveViewPeakingLow": "Low",
+  "settingsLiveViewPeakingMedium": "Medium",
+  "settingsLiveViewPeakingHigh": "High",
+  "settingsLiveViewZebraTitle": "Zebra stripes",
+  "settingsLiveViewZebraSub": "Mark overexposed areas with diagonal stripes",
+  "settingsLiveViewZebraThresholdTitle": "Zebra threshold",
+  "settingsLiveViewZebraThresholdValue": "Above {value}",
+  "@settingsLiveViewZebraThresholdValue": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsLiveViewHistogramTitle": "Histogram",
+  "settingsLiveViewHistogramSub": "Luminance histogram in the corner",
+  "settingsLiveViewFocusSection": "Focus",
+  "settingsLiveViewAfDriveTitle": "Focus when tapping the AF button",
+  "settingsLiveViewAfDriveSub": "Off: only moves the focus point",
+  "settingsLiveViewMfStepTitle": "Manual focus step",
+  "settingsLiveViewMfStepValue": "{steps} steps",
+  "@settingsLiveViewMfStepValue": {
+    "placeholders": {
+      "steps": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsLiveViewIntervalSection": "Interval shooting defaults",
+  "settingsLiveViewIntervalSecondsTitle": "Default interval",
+  "settingsLiveViewIntervalCountTitle": "Default shot count",
+  "settingsLiveViewUnavailable": "This device cannot run preview analysis",
+  "settingsShootAndTransferTitle": "Shoot & Transfer",
+  "settingsShootAndTransferSub": "Download each shot automatically while shooting"
 }

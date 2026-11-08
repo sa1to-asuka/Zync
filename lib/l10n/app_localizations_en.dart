@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -658,7 +659,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String galleryCollageDownloadPrompt(
-      int missing, String reusablePart, String skippedPart) {
+    int missing,
+    String reusablePart,
+    String skippedPart,
+  ) {
     return 'Collage requires downloading $missing photo(s) first$reusablePart$skippedPart. Collage will open automatically once finished.';
   }
 
@@ -775,7 +779,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String galleryDeletedGroupsPartialLocalFailToast(
-      int handled, int failed, int localFailed) {
+    int handled,
+    int failed,
+    int localFailed,
+  ) {
     return 'Processed $handled group(s), $failed failed ($localFailed deleted on camera but failed locally)';
   }
 
@@ -2834,7 +2841,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String pcImportReportToast(
-      Object duplicates, Object imported, Object invalid) {
+    Object duplicates,
+    Object imported,
+    Object invalid,
+  ) {
     return 'Imported $imported recipes ($duplicates duplicates skipped, $invalid invalid)';
   }
 
@@ -3088,4 +3098,480 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get spektraPreviewFailed =>
       'Film preview failed; showing the original photo';
+
+  @override
+  String get navCapture => 'Capture';
+
+  @override
+  String get captureTitle => 'Capture';
+
+  @override
+  String get captureNotConnectedTitle => 'Camera not connected';
+
+  @override
+  String get captureNotConnectedBody =>
+      'Connect over Wi-Fi PTP/IP or USB-C OTG to start live view.';
+
+  @override
+  String get captureGoConnect => 'Go to Connect';
+
+  @override
+  String get captureLiveViewUnsupported =>
+      'This camera does not support live view.';
+
+  @override
+  String get captureUnverifiedBody =>
+      'Live view and remote capture are verified on the Nikon Z 30. Other bodies may behave differently.';
+
+  @override
+  String get captureLiveViewStarting => 'Starting live view…';
+
+  @override
+  String get captureLiveViewRunning => 'Live view';
+
+  @override
+  String get captureLiveViewIdle => 'Live view off';
+
+  @override
+  String get captureLiveViewSuspended => 'Paused';
+
+  @override
+  String get captureLiveViewExited => 'The camera left live view mode.';
+
+  @override
+  String get captureLiveViewLost => 'Live view stopped unexpectedly.';
+
+  @override
+  String get captureShutter => 'Shutter';
+
+  @override
+  String get captureFocus => 'Focus';
+
+  @override
+  String get captureTapToFocus => 'Tap the frame to move the focus point';
+
+  @override
+  String get captureExposureMode => 'Mode';
+
+  @override
+  String get captureAperture => 'Aperture';
+
+  @override
+  String get captureShutterSpeed => 'Shutter speed';
+
+  @override
+  String get captureIso => 'ISO';
+
+  @override
+  String get captureExposureComp => 'Exposure comp.';
+
+  @override
+  String captureFps(String fps) {
+    return '$fps fps';
+  }
+
+  @override
+  String get captureChannelWifi => 'Wi-Fi';
+
+  @override
+  String get captureChannelUsb => 'USB';
+
+  @override
+  String captureSuccess(String fileName) {
+    return 'Captured $fileName';
+  }
+
+  @override
+  String captureQueued(String fileName) {
+    return 'Queued $fileName for transfer';
+  }
+
+  @override
+  String get captureUnconfirmedTitle => 'Shot may not have completed';
+
+  @override
+  String captureUnconfirmedBody(int seconds) {
+    return 'No new file appeared within $seconds seconds. Check the camera before shooting again.';
+  }
+
+  @override
+  String get captureRejectedBusy =>
+      'The camera is busy. Try again in a moment.';
+
+  @override
+  String get captureRejectedAccess => 'The camera refused the shutter release.';
+
+  @override
+  String get captureRejectedUnsupported =>
+      'This camera does not support remote shutter release.';
+
+  @override
+  String get captureFailed => 'Capture failed';
+
+  @override
+  String captureSettingApplied(String value) {
+    return 'Set to $value';
+  }
+
+  @override
+  String get captureSettingRejectedDial =>
+      'The camera ignored the change. Turn the mode dial to M and try again.';
+
+  @override
+  String get captureSettingRejectedBusy => 'The camera is busy. Try again.';
+
+  @override
+  String get captureSettingRejectedNotWritable =>
+      'The camera does not allow changing this setting.';
+
+  @override
+  String captureSettingRejectedMismatch(String value) {
+    return 'The camera kept $value instead.';
+  }
+
+  @override
+  String get captureSettingRejectedUnsupported =>
+      'This setting is not supported by the camera.';
+
+  @override
+  String get captureSettingRejectedUnavailable =>
+      'The camera did not report this setting.';
+
+  @override
+  String get captureDialNotManualHint =>
+      'Aperture, shutter and ISO are only writable in M mode.';
+
+  @override
+  String get captureAfFailed => 'Could not move the focus point.';
+
+  @override
+  String get errDeviceBusy => 'The camera is busy.';
+
+  @override
+  String get errOperationNotSupported =>
+      'The camera does not support this operation.';
+
+  @override
+  String get errAccessDenied =>
+      'The camera denied the request. Check the mode dial (P/A/S/M).';
+
+  @override
+  String get errTimeout => 'The camera did not respond in time.';
+
+  @override
+  String get errDisconnected => 'The camera connection was lost.';
+
+  @override
+  String get errGeneric => 'Something went wrong with the camera.';
+
+  @override
+  String get errTransferInterrupted =>
+      'Transfer interrupted (connection lost or paused). You can resume later.';
+
+  @override
+  String errTransferEmptyChunk(int offset) {
+    return 'The camera returned an empty chunk at byte $offset.';
+  }
+
+  @override
+  String errTransferIncomplete(int actual, int total) {
+    return 'Download incomplete: $actual / $total bytes.';
+  }
+
+  @override
+  String errSaveToGalleryFailed(String fileName) {
+    return 'Could not save $fileName to the gallery.';
+  }
+
+  @override
+  String get settingsExportLogsTitle => 'Export logs';
+
+  @override
+  String get settingsExportLogsDescription =>
+      'Share a text file with recent logs and device info.';
+
+  @override
+  String get settingsExportLogsSuccess => 'Log file ready';
+
+  @override
+  String get settingsExportLogsFailed => 'Could not create the log file';
+
+  @override
+  String get settingsExportLogsEmpty => 'No logs to export yet';
+
+  @override
+  String get errorScreenTitle => 'Something went wrong';
+
+  @override
+  String get errorScreenBody =>
+      'The screen could not be drawn. Details were written to the log; you can export them from Settings.';
+
+  @override
+  String get hubBentoColorImportTitle => 'Import color';
+
+  @override
+  String get hubBentoColorImportSub =>
+      'Bring an NP3/NCP recipe into the library';
+
+  @override
+  String get hubBentoLiveViewTitle => 'Live view';
+
+  @override
+  String get hubBentoLiveViewSub => 'Shoot from the phone over Wi-Fi or USB';
+
+  @override
+  String get hubBentoLiveViewOffline => 'Connect a camera first';
+
+  @override
+  String get captureFocusNear => 'Focus near';
+
+  @override
+  String get captureFocusFar => 'Focus far';
+
+  @override
+  String get captureManualFocus => 'Manual focus';
+
+  @override
+  String get captureAfDone => 'In focus';
+
+  @override
+  String get captureAfNotFocus => 'Could not lock focus';
+
+  @override
+  String get captureMfStepEnd => 'Focus reached the end of its range';
+
+  @override
+  String get captureMfStepInsufficient => 'Focus step too small to move';
+
+  @override
+  String get captureMfRequiresManualLens =>
+      'Switch the lens to manual focus first';
+
+  @override
+  String get captureParamsTitle => 'Parameters';
+
+  @override
+  String get captureGridOff => 'Grid off';
+
+  @override
+  String get captureGridThirds => 'Thirds';
+
+  @override
+  String get captureGridNine => 'Nine grid';
+
+  @override
+  String get captureGuideLines => 'Composition guides';
+
+  @override
+  String get captureOverlayPeaking => 'Focus peaking';
+
+  @override
+  String get captureOverlayZebra => 'Zebra';
+
+  @override
+  String get captureOverlayHistogram => 'Histogram';
+
+  @override
+  String get captureOverlayGrid => 'Grid';
+
+  @override
+  String get captureClose => 'Close';
+
+  @override
+  String get captureShowParameters => 'Parameters';
+
+  @override
+  String captureModeLockedHint(String mode, String params) {
+    return '$mode mode: $params is controlled by the camera. Switch to M to set it manually.';
+  }
+
+  @override
+  String get captureModeLockedShort => 'Auto';
+
+  @override
+  String get captureIntervalTitle => 'Interval shooting';
+
+  @override
+  String get captureIntervalStart => 'Start';
+
+  @override
+  String get captureIntervalStop => 'Stop';
+
+  @override
+  String get captureIntervalPause => 'Pause';
+
+  @override
+  String get captureIntervalResume => 'Resume';
+
+  @override
+  String captureIntervalSeconds(int seconds) {
+    return '$seconds s interval';
+  }
+
+  @override
+  String captureIntervalCount(int count) {
+    return '$count shots';
+  }
+
+  @override
+  String captureIntervalDelay(int seconds) {
+    return 'Start after $seconds s';
+  }
+
+  @override
+  String captureIntervalProgress(int done, int total) {
+    return '$done / $total';
+  }
+
+  @override
+  String captureIntervalProgressUnlimited(int done) {
+    return '$done shots taken';
+  }
+
+  @override
+  String captureIntervalNextIn(String time) {
+    return 'Next in $time';
+  }
+
+  @override
+  String captureIntervalDone(int count) {
+    return 'Interval finished: $count shots';
+  }
+
+  @override
+  String get captureIntervalFailed =>
+      'Interval stopped because the camera rejected a shot';
+
+  @override
+  String get captureIntervalTooShort =>
+      'Interval is shorter than one shot takes; shots will drift';
+
+  @override
+  String get captureIntervalKeepLiveView => 'Keep live view running';
+
+  @override
+  String get captureIntervalUnlimitedShots => 'Unlimited';
+
+  @override
+  String get settingsLiveViewTitle => 'Live view';
+
+  @override
+  String get settingsLiveViewSub => 'Frame rate, overlays and focus';
+
+  @override
+  String get settingsLiveViewCaptureSection => 'Capture';
+
+  @override
+  String get settingsLiveViewFpsTitle => 'Frame rate cap';
+
+  @override
+  String get settingsLiveViewFpsSub => 'Lower this if the preview stutters';
+
+  @override
+  String settingsLiveViewFpsValue(int fps) {
+    return '$fps fps';
+  }
+
+  @override
+  String get settingsLiveViewAutoStartTitle => 'Start live view on open';
+
+  @override
+  String get settingsLiveViewAutoStartSub =>
+      'Otherwise tap the live view button';
+
+  @override
+  String get settingsLiveViewShowFpsTitle => 'Show frame rate';
+
+  @override
+  String get settingsLiveViewKeepAwakeTitle => 'Keep screen awake';
+
+  @override
+  String get settingsLiveViewKeepAwakeSub => 'Only while live view is running';
+
+  @override
+  String get settingsLiveViewOverlaySection => 'Overlays';
+
+  @override
+  String get settingsLiveViewGridTitle => 'Composition grid';
+
+  @override
+  String get settingsLiveViewPeakingTitle => 'Focus peaking';
+
+  @override
+  String get settingsLiveViewPeakingSub =>
+      'Highlight sharp edges in the preview';
+
+  @override
+  String get settingsLiveViewPeakingColorTitle => 'Peaking color';
+
+  @override
+  String get settingsLiveViewPeakingSensitivityTitle => 'Peaking sensitivity';
+
+  @override
+  String get settingsLiveViewPeakingLow => 'Low';
+
+  @override
+  String get settingsLiveViewPeakingMedium => 'Medium';
+
+  @override
+  String get settingsLiveViewPeakingHigh => 'High';
+
+  @override
+  String get settingsLiveViewZebraTitle => 'Zebra stripes';
+
+  @override
+  String get settingsLiveViewZebraSub =>
+      'Mark overexposed areas with diagonal stripes';
+
+  @override
+  String get settingsLiveViewZebraThresholdTitle => 'Zebra threshold';
+
+  @override
+  String settingsLiveViewZebraThresholdValue(int value) {
+    return 'Above $value';
+  }
+
+  @override
+  String get settingsLiveViewHistogramTitle => 'Histogram';
+
+  @override
+  String get settingsLiveViewHistogramSub =>
+      'Luminance histogram in the corner';
+
+  @override
+  String get settingsLiveViewFocusSection => 'Focus';
+
+  @override
+  String get settingsLiveViewAfDriveTitle => 'Focus when tapping the AF button';
+
+  @override
+  String get settingsLiveViewAfDriveSub => 'Off: only moves the focus point';
+
+  @override
+  String get settingsLiveViewMfStepTitle => 'Manual focus step';
+
+  @override
+  String settingsLiveViewMfStepValue(int steps) {
+    return '$steps steps';
+  }
+
+  @override
+  String get settingsLiveViewIntervalSection => 'Interval shooting defaults';
+
+  @override
+  String get settingsLiveViewIntervalSecondsTitle => 'Default interval';
+
+  @override
+  String get settingsLiveViewIntervalCountTitle => 'Default shot count';
+
+  @override
+  String get settingsLiveViewUnavailable =>
+      'This device cannot run preview analysis';
+
+  @override
+  String get settingsShootAndTransferTitle => 'Shoot & Transfer';
+
+  @override
+  String get settingsShootAndTransferSub =>
+      'Download each shot automatically while shooting';
 }

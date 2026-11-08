@@ -26,7 +26,12 @@ void main() {
 
     final dir = Directory.systemTemp.createTempSync('zync_export_fb_');
     addTearDown(() {
-      if (dir.existsSync()) dir.deleteSync(recursive: true);
+      // Windows 上导出的文件句柄可能还没释放，删不掉不应该让测试变红。
+      try {
+        if (dir.existsSync()) dir.deleteSync(recursive: true);
+      } on FileSystemException {
+        // 交给系统临时目录清理。
+      }
     });
 
     const paths = MethodChannel('plugins.flutter.io/path_provider');

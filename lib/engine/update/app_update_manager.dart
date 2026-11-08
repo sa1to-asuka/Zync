@@ -44,15 +44,26 @@ class AppReleaseInfo {
     String apkUrl = '';
     int? size;
     final assets = json['assets'] as List<dynamic>? ?? [];
+    // 一个 Release 里同时有 arm64 与 armeabi-v7a 两个包，
+    // 必须优先挑正式命名的 Zync-release-<ver>.apk，否则会随资产顺序随机选中 32 位包。
+    final preferredName = 'zync-release-${cleanVer.toLowerCase()}.apk';
+    Map<String, dynamic>? chosen;
     for (final a in assets) {
-      if (a is Map<String, dynamic>) {
-        final aName = (a['name'] as String? ?? '').toLowerCase();
-        if (aName.endsWith('.apk')) {
-          apkUrl = a['browser_download_url'] as String? ?? '';
-          size = (a['size'] as num?)?.toInt();
-          break;
-        }
+      if (a is! Map<String, dynamic>) continue;
+      final aName = (a['name'] as String? ?? '').toLowerCase();
+      if (aName == preferredName) {
+        chosen = a;
+        break;
       }
+      if (chosen == null &&
+          aName.endsWith('.apk') &&
+          !aName.contains('-armeabi')) {
+        chosen = a;
+      }
+    }
+    if (chosen != null) {
+      apkUrl = chosen['browser_download_url'] as String? ?? '';
+      size = (chosen['size'] as num?)?.toInt();
     }
 
     if (apkUrl.isEmpty) {
@@ -78,8 +89,8 @@ class AppReleaseInfo {
 class AppUpdateManager {
   AppUpdateManager._();
 
-  static String currentVersion = '2.4.0';
-  static int currentVersionCode = 11;
+  static String currentVersion = '2.5.0';
+  static int currentVersionCode = 12;
 
   static const String githubApiUrl =
       'https://api.github.com/repos/sa1to-asuka/Zync/releases/latest';

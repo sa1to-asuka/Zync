@@ -98,7 +98,7 @@ void main() {
 
     await tester.tap(find.text('水印工坊'));
     await tester.pump(const Duration(milliseconds: 200));
-    expect(_railIndex(tester), 3);
+    expect(_railIndex(tester), 4);
 
     await _pressSystemBack(tester);
 

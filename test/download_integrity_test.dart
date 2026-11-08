@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zync/engine/transfer/download_manager.dart';
 import 'package:zync/protocol/camera_driver.dart';
+import 'package:zync/protocol/camera_io_coordinator.dart';
 
 /// 可编程的假驱动：用于验证分块下载的续传与完整性契约。
 class FakeDriver implements CameraDriver {
@@ -31,6 +32,51 @@ class FakeDriver implements CameraDriver {
       const Stream.empty();
   @override
   Stream<CameraFileItem> get onPhotoCaptured => const Stream.empty();
+
+  final CameraIoCoordinator _io = CameraIoCoordinator();
+
+  @override
+  CameraIoCoordinator get io => _io;
+  @override
+  CameraTransportKind get transportKind => CameraTransportKind.wifi;
+  @override
+  bool get supportsLiveView => false;
+  @override
+  bool get supportsRemoteCapture => false;
+  @override
+  bool get supportsTapToFocus => false;
+  @override
+  bool get supportsExposureWrite => false;
+  @override
+  bool get isVerifiedBody => false;
+  @override
+  Future<void> startLiveView() async {}
+  @override
+  Future<Uint8List> fetchLiveViewFrame() async => Uint8List(0);
+  @override
+  Future<void> endLiveView() async {}
+  @override
+  Future<void> initiateCapture() async {}
+  @override
+  Future<void> moveAfArea(int x, int y) async {}
+  @override
+  Future<Uint8List> fetchDevicePropDesc(int propertyId) async => Uint8List(0);
+  @override
+  Future<Uint8List> fetchDevicePropValue(int propertyId) async => Uint8List(0);
+  @override
+  Future<void> writeDevicePropValue(int propertyId, Uint8List payload) async {}
+  @override
+  bool get supportsAfDrive => false;
+  @override
+  bool get supportsManualFocus => false;
+  @override
+  Future<void> afDrive() async {}
+  @override
+  Future<int> deviceReady() async => 0x2001;
+  @override
+  Future<void> mfDrive(MfDirection direction, int steps) async {}
+  @override
+  Future<void> cancelFocusDrive() async {}
 
   @override
   Future<void> connect(String host,

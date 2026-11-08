@@ -27,9 +27,12 @@ android {
     defaultConfig {
         applicationId = "com.zync.app"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // ABI 由构建参数控制（flutter build --split-per-abi / --target-platform）。
+        // 这里不要再设 ndk.abiFilters：它会和 Gradle 的 splits abi 过滤器冲突。
     }
 
     signingConfigs {
@@ -40,6 +43,12 @@ android {
                 storeFile = keystoreProperties["storeFile"]?.let { file(it) }
                 storePassword = keystoreProperties["storePassword"] as String
             }
+        }
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
         }
     }
 
@@ -57,6 +66,12 @@ android {
             } else {
                 signingConfigs.getByName("debug")
             }
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
 }

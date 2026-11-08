@@ -64,7 +64,7 @@ import 'app_localizations_zh.dart';
 /// property.
 abstract class AppLocalizations {
   AppLocalizations(String locale)
-      : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -87,17 +87,17 @@ abstract class AppLocalizations {
   /// of delegates is preferred or required.
   static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
       <LocalizationsDelegate<dynamic>>[
-    delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-  ];
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
     Locale('ja'),
-    Locale('zh')
+    Locale('zh'),
   ];
 
   /// No description provided for @appTitle.
@@ -1263,7 +1263,10 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Collage requires downloading {missing} photo(s) first{reusablePart}{skippedPart}. Collage will open automatically once finished.'**
   String galleryCollageDownloadPrompt(
-      int missing, String reusablePart, String skippedPart);
+    int missing,
+    String reusablePart,
+    String skippedPart,
+  );
 
   /// No description provided for @galleryCollageReusablePart.
   ///
@@ -1438,7 +1441,10 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Processed {handled} group(s), {failed} failed ({localFailed} deleted on camera but failed locally)'**
   String galleryDeletedGroupsPartialLocalFailToast(
-      int handled, int failed, int localFailed);
+    int handled,
+    int failed,
+    int localFailed,
+  );
 
   /// No description provided for @galleryDeletedGroupsFailToast.
   ///
@@ -5165,7 +5171,10 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Imported {imported} recipes ({duplicates} duplicates skipped, {invalid} invalid)'**
   String pcImportReportToast(
-      Object duplicates, Object imported, Object invalid);
+    Object duplicates,
+    Object imported,
+    Object invalid,
+  );
 
   /// No description provided for @pcRefreshSlotsTooltip.
   ///
@@ -5604,6 +5613,828 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Film preview failed; showing the original photo'**
   String get spektraPreviewFailed;
+
+  /// No description provided for @navCapture.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture'**
+  String get navCapture;
+
+  /// No description provided for @captureTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture'**
+  String get captureTitle;
+
+  /// No description provided for @captureNotConnectedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera not connected'**
+  String get captureNotConnectedTitle;
+
+  /// No description provided for @captureNotConnectedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect over Wi-Fi PTP/IP or USB-C OTG to start live view.'**
+  String get captureNotConnectedBody;
+
+  /// No description provided for @captureGoConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Connect'**
+  String get captureGoConnect;
+
+  /// No description provided for @captureLiveViewUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This camera does not support live view.'**
+  String get captureLiveViewUnsupported;
+
+  /// No description provided for @captureUnverifiedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Live view and remote capture are verified on the Nikon Z 30. Other bodies may behave differently.'**
+  String get captureUnverifiedBody;
+
+  /// No description provided for @captureLiveViewStarting.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting live view…'**
+  String get captureLiveViewStarting;
+
+  /// No description provided for @captureLiveViewRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Live view'**
+  String get captureLiveViewRunning;
+
+  /// No description provided for @captureLiveViewIdle.
+  ///
+  /// In en, this message translates to:
+  /// **'Live view off'**
+  String get captureLiveViewIdle;
+
+  /// No description provided for @captureLiveViewSuspended.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get captureLiveViewSuspended;
+
+  /// No description provided for @captureLiveViewExited.
+  ///
+  /// In en, this message translates to:
+  /// **'The camera left live view mode.'**
+  String get captureLiveViewExited;
+
+  /// No description provided for @captureLiveViewLost.
+  ///
+  /// In en, this message translates to:
+  /// **'Live view stopped unexpectedly.'**
+  String get captureLiveViewLost;
+
+  /// No description provided for @captureShutter.
+  ///
+  /// In en, this message translates to:
+  /// **'Shutter'**
+  String get captureShutter;
+
+  /// No description provided for @captureFocus.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus'**
+  String get captureFocus;
+
+  /// No description provided for @captureTapToFocus.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the frame to move the focus point'**
+  String get captureTapToFocus;
+
+  /// No description provided for @captureExposureMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Mode'**
+  String get captureExposureMode;
+
+  /// No description provided for @captureAperture.
+  ///
+  /// In en, this message translates to:
+  /// **'Aperture'**
+  String get captureAperture;
+
+  /// No description provided for @captureShutterSpeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Shutter speed'**
+  String get captureShutterSpeed;
+
+  /// No description provided for @captureIso.
+  ///
+  /// In en, this message translates to:
+  /// **'ISO'**
+  String get captureIso;
+
+  /// No description provided for @captureExposureComp.
+  ///
+  /// In en, this message translates to:
+  /// **'Exposure comp.'**
+  String get captureExposureComp;
+
+  /// No description provided for @captureFps.
+  ///
+  /// In en, this message translates to:
+  /// **'{fps} fps'**
+  String captureFps(String fps);
+
+  /// No description provided for @captureChannelWifi.
+  ///
+  /// In en, this message translates to:
+  /// **'Wi-Fi'**
+  String get captureChannelWifi;
+
+  /// No description provided for @captureChannelUsb.
+  ///
+  /// In en, this message translates to:
+  /// **'USB'**
+  String get captureChannelUsb;
+
+  /// No description provided for @captureSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Captured {fileName}'**
+  String captureSuccess(String fileName);
+
+  /// No description provided for @captureQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'Queued {fileName} for transfer'**
+  String captureQueued(String fileName);
+
+  /// No description provided for @captureUnconfirmedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shot may not have completed'**
+  String get captureUnconfirmedTitle;
+
+  /// No description provided for @captureUnconfirmedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'No new file appeared within {seconds} seconds. Check the camera before shooting again.'**
+  String captureUnconfirmedBody(int seconds);
+
+  /// No description provided for @captureRejectedBusy.
+  ///
+  /// In en, this message translates to:
+  /// **'The camera is busy. Try again in a moment.'**
+  String get captureRejectedBusy;
+
+  /// No description provided for @captureRejectedAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'The camera refused the shutter release.'**
+  String get captureRejectedAccess;
+
+  /// No description provided for @captureRejectedUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This camera does not support remote shutter release.'**
+  String get captureRejectedUnsupported;
+
+  /// No description provided for @captureFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture failed'**
+  String get captureFailed;
+
+  /// No description provided for @captureSettingApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Set to {value}'**
+  String captureSettingApplied(String value);
+
+  /// No description provided for @captureSettingRejectedDial.
+  ///
+  /// In en, this message translates to:
+  /// **'The camera ignored the change. Turn the mode dial to M and try again.'**
+  String get captureSettingRejectedDial;
+
+  /// No description provided for @captureSettingRejectedBusy.
+  ///
+  /// In en, this message translates to:
+  /// **'The camera is busy. Try again.'**
+  String get captureSettingRejectedBusy;
+
+  /// No description provided for @captureSettingRejectedNotWritable.
+  ///
+  /// In en, this message translates to:
+  /// **'The camera does not allow changing this setting.'**
+  String get captureSettingRejectedNotWritable;
+
+  /// No description provided for @captureSettingRejectedMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The camera kept {value} instead.'**
+  String captureSettingRejectedMismatch(String value);
+
+  /// No description provided for @captureSettingRejectedUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This setting is not supported by the camera.'**
+  String get captureSettingRejectedUnsupported;
+
+  /// No description provided for @captureSettingRejectedUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The camera did not report this setting.'**
+  String get captureSettingRejectedUnavailable;
+
+  /// No description provided for @captureDialNotManualHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Aperture, shutter and ISO are only writable in M mode.'**
+  String get captureDialNotManualHint;
+
+  /// No description provided for @captureAfFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not move the focus point.'**
+  String get captureAfFailed;
+
+  /// No description provided for @errDeviceBusy.
+  ///
+  /// In en, this message translates to:
+  /// **'The camera is busy.'**
+  String get errDeviceBusy;
+
+  /// No description provided for @errOperationNotSupported.
+  ///
+  /// In en, this message translates to:
+  /// **'The camera does not support this operation.'**
+  String get errOperationNotSupported;
+
+  /// No description provided for @errAccessDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'The camera denied the request. Check the mode dial (P/A/S/M).'**
+  String get errAccessDenied;
+
+  /// No description provided for @errTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'The camera did not respond in time.'**
+  String get errTimeout;
+
+  /// No description provided for @errDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'The camera connection was lost.'**
+  String get errDisconnected;
+
+  /// No description provided for @errGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong with the camera.'**
+  String get errGeneric;
+
+  /// No description provided for @errTransferInterrupted.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer interrupted (connection lost or paused). You can resume later.'**
+  String get errTransferInterrupted;
+
+  /// No description provided for @errTransferEmptyChunk.
+  ///
+  /// In en, this message translates to:
+  /// **'The camera returned an empty chunk at byte {offset}.'**
+  String errTransferEmptyChunk(int offset);
+
+  /// No description provided for @errTransferIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Download incomplete: {actual} / {total} bytes.'**
+  String errTransferIncomplete(int actual, int total);
+
+  /// No description provided for @errSaveToGalleryFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save {fileName} to the gallery.'**
+  String errSaveToGalleryFailed(String fileName);
+
+  /// No description provided for @settingsExportLogsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Export logs'**
+  String get settingsExportLogsTitle;
+
+  /// No description provided for @settingsExportLogsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Share a text file with recent logs and device info.'**
+  String get settingsExportLogsDescription;
+
+  /// No description provided for @settingsExportLogsSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Log file ready'**
+  String get settingsExportLogsSuccess;
+
+  /// No description provided for @settingsExportLogsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not create the log file'**
+  String get settingsExportLogsFailed;
+
+  /// No description provided for @settingsExportLogsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No logs to export yet'**
+  String get settingsExportLogsEmpty;
+
+  /// No description provided for @errorScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong'**
+  String get errorScreenTitle;
+
+  /// No description provided for @errorScreenBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The screen could not be drawn. Details were written to the log; you can export them from Settings.'**
+  String get errorScreenBody;
+
+  /// No description provided for @hubBentoColorImportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import color'**
+  String get hubBentoColorImportTitle;
+
+  /// No description provided for @hubBentoColorImportSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Bring an NP3/NCP recipe into the library'**
+  String get hubBentoColorImportSub;
+
+  /// No description provided for @hubBentoLiveViewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Live view'**
+  String get hubBentoLiveViewTitle;
+
+  /// No description provided for @hubBentoLiveViewSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Shoot from the phone over Wi-Fi or USB'**
+  String get hubBentoLiveViewSub;
+
+  /// No description provided for @hubBentoLiveViewOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect a camera first'**
+  String get hubBentoLiveViewOffline;
+
+  /// No description provided for @captureFocusNear.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus near'**
+  String get captureFocusNear;
+
+  /// No description provided for @captureFocusFar.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus far'**
+  String get captureFocusFar;
+
+  /// No description provided for @captureManualFocus.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual focus'**
+  String get captureManualFocus;
+
+  /// No description provided for @captureAfDone.
+  ///
+  /// In en, this message translates to:
+  /// **'In focus'**
+  String get captureAfDone;
+
+  /// No description provided for @captureAfNotFocus.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not lock focus'**
+  String get captureAfNotFocus;
+
+  /// No description provided for @captureMfStepEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus reached the end of its range'**
+  String get captureMfStepEnd;
+
+  /// No description provided for @captureMfStepInsufficient.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus step too small to move'**
+  String get captureMfStepInsufficient;
+
+  /// No description provided for @captureMfRequiresManualLens.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch the lens to manual focus first'**
+  String get captureMfRequiresManualLens;
+
+  /// No description provided for @captureParamsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Parameters'**
+  String get captureParamsTitle;
+
+  /// No description provided for @captureGridOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid off'**
+  String get captureGridOff;
+
+  /// No description provided for @captureGridThirds.
+  ///
+  /// In en, this message translates to:
+  /// **'Thirds'**
+  String get captureGridThirds;
+
+  /// No description provided for @captureGridNine.
+  ///
+  /// In en, this message translates to:
+  /// **'Nine grid'**
+  String get captureGridNine;
+
+  /// No description provided for @captureGuideLines.
+  ///
+  /// In en, this message translates to:
+  /// **'Composition guides'**
+  String get captureGuideLines;
+
+  /// No description provided for @captureOverlayPeaking.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus peaking'**
+  String get captureOverlayPeaking;
+
+  /// No description provided for @captureOverlayZebra.
+  ///
+  /// In en, this message translates to:
+  /// **'Zebra'**
+  String get captureOverlayZebra;
+
+  /// No description provided for @captureOverlayHistogram.
+  ///
+  /// In en, this message translates to:
+  /// **'Histogram'**
+  String get captureOverlayHistogram;
+
+  /// No description provided for @captureOverlayGrid.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid'**
+  String get captureOverlayGrid;
+
+  /// No description provided for @captureClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get captureClose;
+
+  /// No description provided for @captureShowParameters.
+  ///
+  /// In en, this message translates to:
+  /// **'Parameters'**
+  String get captureShowParameters;
+
+  /// No description provided for @captureModeLockedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'{mode} mode: {params} is controlled by the camera. Switch to M to set it manually.'**
+  String captureModeLockedHint(String mode, String params);
+
+  /// No description provided for @captureModeLockedShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get captureModeLockedShort;
+
+  /// No description provided for @captureIntervalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Interval shooting'**
+  String get captureIntervalTitle;
+
+  /// No description provided for @captureIntervalStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get captureIntervalStart;
+
+  /// No description provided for @captureIntervalStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get captureIntervalStop;
+
+  /// No description provided for @captureIntervalPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get captureIntervalPause;
+
+  /// No description provided for @captureIntervalResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get captureIntervalResume;
+
+  /// No description provided for @captureIntervalSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds} s interval'**
+  String captureIntervalSeconds(int seconds);
+
+  /// No description provided for @captureIntervalCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} shots'**
+  String captureIntervalCount(int count);
+
+  /// No description provided for @captureIntervalDelay.
+  ///
+  /// In en, this message translates to:
+  /// **'Start after {seconds} s'**
+  String captureIntervalDelay(int seconds);
+
+  /// No description provided for @captureIntervalProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} / {total}'**
+  String captureIntervalProgress(int done, int total);
+
+  /// No description provided for @captureIntervalProgressUnlimited.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} shots taken'**
+  String captureIntervalProgressUnlimited(int done);
+
+  /// No description provided for @captureIntervalNextIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Next in {time}'**
+  String captureIntervalNextIn(String time);
+
+  /// No description provided for @captureIntervalDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Interval finished: {count} shots'**
+  String captureIntervalDone(int count);
+
+  /// No description provided for @captureIntervalFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Interval stopped because the camera rejected a shot'**
+  String get captureIntervalFailed;
+
+  /// No description provided for @captureIntervalTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Interval is shorter than one shot takes; shots will drift'**
+  String get captureIntervalTooShort;
+
+  /// No description provided for @captureIntervalKeepLiveView.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep live view running'**
+  String get captureIntervalKeepLiveView;
+
+  /// No description provided for @captureIntervalUnlimitedShots.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited'**
+  String get captureIntervalUnlimitedShots;
+
+  /// No description provided for @settingsLiveViewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Live view'**
+  String get settingsLiveViewTitle;
+
+  /// No description provided for @settingsLiveViewSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Frame rate, overlays and focus'**
+  String get settingsLiveViewSub;
+
+  /// No description provided for @settingsLiveViewCaptureSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture'**
+  String get settingsLiveViewCaptureSection;
+
+  /// No description provided for @settingsLiveViewFpsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Frame rate cap'**
+  String get settingsLiveViewFpsTitle;
+
+  /// No description provided for @settingsLiveViewFpsSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Lower this if the preview stutters'**
+  String get settingsLiveViewFpsSub;
+
+  /// No description provided for @settingsLiveViewFpsValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{fps} fps'**
+  String settingsLiveViewFpsValue(int fps);
+
+  /// No description provided for @settingsLiveViewAutoStartTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start live view on open'**
+  String get settingsLiveViewAutoStartTitle;
+
+  /// No description provided for @settingsLiveViewAutoStartSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Otherwise tap the live view button'**
+  String get settingsLiveViewAutoStartSub;
+
+  /// No description provided for @settingsLiveViewShowFpsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Show frame rate'**
+  String get settingsLiveViewShowFpsTitle;
+
+  /// No description provided for @settingsLiveViewKeepAwakeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep screen awake'**
+  String get settingsLiveViewKeepAwakeTitle;
+
+  /// No description provided for @settingsLiveViewKeepAwakeSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Only while live view is running'**
+  String get settingsLiveViewKeepAwakeSub;
+
+  /// No description provided for @settingsLiveViewOverlaySection.
+  ///
+  /// In en, this message translates to:
+  /// **'Overlays'**
+  String get settingsLiveViewOverlaySection;
+
+  /// No description provided for @settingsLiveViewGridTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Composition grid'**
+  String get settingsLiveViewGridTitle;
+
+  /// No description provided for @settingsLiveViewPeakingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus peaking'**
+  String get settingsLiveViewPeakingTitle;
+
+  /// No description provided for @settingsLiveViewPeakingSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Highlight sharp edges in the preview'**
+  String get settingsLiveViewPeakingSub;
+
+  /// No description provided for @settingsLiveViewPeakingColorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Peaking color'**
+  String get settingsLiveViewPeakingColorTitle;
+
+  /// No description provided for @settingsLiveViewPeakingSensitivityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Peaking sensitivity'**
+  String get settingsLiveViewPeakingSensitivityTitle;
+
+  /// No description provided for @settingsLiveViewPeakingLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get settingsLiveViewPeakingLow;
+
+  /// No description provided for @settingsLiveViewPeakingMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get settingsLiveViewPeakingMedium;
+
+  /// No description provided for @settingsLiveViewPeakingHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get settingsLiveViewPeakingHigh;
+
+  /// No description provided for @settingsLiveViewZebraTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Zebra stripes'**
+  String get settingsLiveViewZebraTitle;
+
+  /// No description provided for @settingsLiveViewZebraSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark overexposed areas with diagonal stripes'**
+  String get settingsLiveViewZebraSub;
+
+  /// No description provided for @settingsLiveViewZebraThresholdTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Zebra threshold'**
+  String get settingsLiveViewZebraThresholdTitle;
+
+  /// No description provided for @settingsLiveViewZebraThresholdValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Above {value}'**
+  String settingsLiveViewZebraThresholdValue(int value);
+
+  /// No description provided for @settingsLiveViewHistogramTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Histogram'**
+  String get settingsLiveViewHistogramTitle;
+
+  /// No description provided for @settingsLiveViewHistogramSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Luminance histogram in the corner'**
+  String get settingsLiveViewHistogramSub;
+
+  /// No description provided for @settingsLiveViewFocusSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus'**
+  String get settingsLiveViewFocusSection;
+
+  /// No description provided for @settingsLiveViewAfDriveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus when tapping the AF button'**
+  String get settingsLiveViewAfDriveTitle;
+
+  /// No description provided for @settingsLiveViewAfDriveSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Off: only moves the focus point'**
+  String get settingsLiveViewAfDriveSub;
+
+  /// No description provided for @settingsLiveViewMfStepTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual focus step'**
+  String get settingsLiveViewMfStepTitle;
+
+  /// No description provided for @settingsLiveViewMfStepValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{steps} steps'**
+  String settingsLiveViewMfStepValue(int steps);
+
+  /// No description provided for @settingsLiveViewIntervalSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Interval shooting defaults'**
+  String get settingsLiveViewIntervalSection;
+
+  /// No description provided for @settingsLiveViewIntervalSecondsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Default interval'**
+  String get settingsLiveViewIntervalSecondsTitle;
+
+  /// No description provided for @settingsLiveViewIntervalCountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Default shot count'**
+  String get settingsLiveViewIntervalCountTitle;
+
+  /// No description provided for @settingsLiveViewUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This device cannot run preview analysis'**
+  String get settingsLiveViewUnavailable;
+
+  /// No description provided for @settingsShootAndTransferTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shoot & Transfer'**
+  String get settingsShootAndTransferTitle;
+
+  /// No description provided for @settingsShootAndTransferSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Download each shot automatically while shooting'**
+  String get settingsShootAndTransferSub;
 }
 
 class _AppLocalizationsDelegate
@@ -5635,8 +6466,9 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   }
 
   throw FlutterError(
-      'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
-      'an issue with the localizations generation tool. Please file an issue '
-      'on GitHub with a reproducible sample app and the gen-l10n configuration '
-      'that was used.');
+    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.',
+  );
 }

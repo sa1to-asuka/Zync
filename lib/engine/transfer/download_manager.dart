@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../core/settings/app_settings.dart';
 import '../../core/utils/app_log_manager.dart';
+import '../../core/utils/camera_error_mapper.dart';
 import '../../l10n/l10n.dart';
 import '../../protocol/camera_driver.dart';
 import '../../protocol/camera_native_bridge.dart';
@@ -408,7 +409,7 @@ class DownloadManager extends ChangeNotifier {
     try {
       while (received < task.totalBytes) {
         if (!driver.isConnected || isPaused) {
-          throw StateError('传输中断（连接断开或已暂停），可稍后重试续传');
+          throw const CameraFailure(CameraFailureKind.transferInterrupted);
         }
         final requestBytes = (task.totalBytes - received > chunkSize)
             ? chunkSize
@@ -418,7 +419,10 @@ class DownloadManager extends ChangeNotifier {
         final chunk = await driver.downloadPartialObject(
             task.fileItem.handle, received, requestBytes);
         if (chunk.isEmpty) {
-          throw StateError('相机在第 $received 字节处返回空数据块');
+          throw CameraFailure(
+            CameraFailureKind.emptyChunk,
+            details: <String, Object?>{'offset': received},
+          );
         }
         sink.add(chunk);
         received += chunk.length;
@@ -435,7 +439,13 @@ class DownloadManager extends ChangeNotifier {
 
     final actual = await target.length();
     if (actual < task.totalBytes) {
-      throw StateError('下载不完整：$actual / ${task.totalBytes} 字节');
+      throw CameraFailure(
+        CameraFailureKind.incomplete,
+        details: <String, Object?>{
+          'actual': actual,
+          'total': task.totalBytes,
+        },
+      );
     }
   }
 
@@ -546,8 +556,12 @@ class DownloadManager extends ChangeNotifier {
           final saved = await CameraNativeBridge.saveMediaToGallery(
               partial.path, pendingTask.fileItem.fileName);
           if (saved == null || saved.isEmpty) {
-            throw StateError(
-                '保存到系统相册失败（MediaStore 拒绝写入 ${pendingTask.fileItem.fileName}）');
+            throw CameraFailure(
+              CameraFailureKind.saveFailed,
+              details: <String, Object?>{
+                'fileName': pendingTask.fileItem.fileName,
+              },
+            );
           }
 
           final source = pendingTask.fileItem;
@@ -586,7 +600,7 @@ class DownloadManager extends ChangeNotifier {
             await Future.delayed(Duration(seconds: delaySec));
           } else {
             pendingTask.status = DownloadTaskStatus.failed;
-            pendingTask.error = e.toString();
+            pendingTask.error = CameraErrorMapper.describe(e, L10n.current);
             break;
           }
         }

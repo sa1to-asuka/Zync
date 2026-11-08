@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../core/constants/ptp_opcodes.dart';
 import 'camera_native_bridge.dart';
+import 'ptp_ip_client.dart' show PtpException;
 import 'ptp_packet.dart';
 import 'ptp_transport.dart';
 
@@ -104,6 +105,39 @@ class UsbPtpTransport implements PtpTransport {
     ));
   }
 
+  /// 原生层用 `PlatformException(code: 'USB_*', message: '... 0xXXXX ...')`
+  /// 回报 PTP 响应码。上层（驱动、控制器）统一按 [PtpException] 判断能力与重试，
+  /// 所以在这里做一次归一化，否则 USB 下的「忙 / 不支持」永远识别不出来。
+  Future<T> _translate<T>(int opCode, Future<T> Function() action) {
+    return _serialize(() async {
+      try {
+        return await action();
+      } on PlatformException catch (e) {
+        final code = _responseCodeOf(e.message);
+        if (code != null) {
+          throw PtpException(opCode, code, e.message ?? e.code);
+        }
+        rethrow;
+      }
+    });
+  }
+
+  /// 文本里可能同时有操作码和响应码，优先取「响应码」后面的那个。
+  static int? _responseCodeOf(String? message) {
+    if (message == null || message.isEmpty) return null;
+    final contextual = RegExp(
+      r'(?:响应码|返回码|response\s*code|code)\s*[:：=]?\s*0x([0-9a-fA-F]{4})',
+      caseSensitive: false,
+    ).firstMatch(message);
+    if (contextual != null) {
+      return int.tryParse(contextual.group(1)!, radix: 16);
+    }
+    final matches =
+        RegExp(r'0x([0-9a-fA-F]{4})').allMatches(message).toList();
+    if (matches.isEmpty) return null;
+    return int.tryParse(matches.last.group(1)!, radix: 16);
+  }
+
   String get _requireId {
     final id = _deviceId;
     if (id == null) throw StateError('USB 会话未建立');
@@ -112,21 +146,27 @@ class UsbPtpTransport implements PtpTransport {
 
   @override
   Future<void> executeOperation(int opCode, [List<int> params = const []]) {
-    return _serialize(() =>
-        CameraNativeBridge.usbExecuteOperation(_requireId, opCode, params));
+    return _translate(
+        opCode,
+        () => CameraNativeBridge.usbExecuteOperation(
+            _requireId, opCode, params));
   }
 
   @override
   Future<Uint8List> executeDataIn(int opCode, [List<int> params = const []]) {
-    return _serialize(
-        () => CameraNativeBridge.usbExecuteDataIn(_requireId, opCode, params));
+    return _translate(
+        opCode,
+        () => CameraNativeBridge.usbExecuteDataIn(
+            _requireId, opCode, params));
   }
 
   @override
   Future<void> executeDataOut(int opCode, Uint8List data,
       [List<int> params = const []]) {
-    return _serialize(() =>
-        CameraNativeBridge.usbExecuteDataOut(_requireId, opCode, data, params));
+    return _translate(
+        opCode,
+        () => CameraNativeBridge.usbExecuteDataOut(
+            _requireId, opCode, data, params));
   }
 
   void dispose() {

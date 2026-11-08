@@ -17,7 +17,7 @@
 Zync is an open-source Flutter application built around a focused workflow for Nikon Z-series cameras: connect to the camera, browse and transfer photos, then finish and export them with a watermark or color treatment. It is designed to work directly with the camera over Wi-Fi PTP/IP or USB PTP without requiring a vendor account, cloud service, or proprietary SDK.
 
 - Project: <https://github.com/sa1to-asuka/Zync>
-- Version: `2.4.0`
+- Version: `2.5.0`
 - License: MIT
 - Primary platform: Android
 
@@ -28,7 +28,8 @@ Zync is an open-source Flutter application built around a focused workflow for N
 | Camera connection | Wi-Fi PTP/IP and USB PTP over OTG |
 | Camera browsing | JPG, NEF, and NRW browsing with embedded RAW previews |
 | Transfer | Chunked downloads, transfer queue, pause, cancel, retry, and auto-transfer |
-| Watermark studio | 11 templates, EXIF data, custom text, logo overlays, a unified presets panel, and physical film simulation with 11 film stocks, halation, and silver-halide grain |
+| Watermark studio | 16 templates, EXIF data, custom text, a unified presets panel, and physical film simulation with 20 film stocks, halation, and silver-halide grain |
+| Capture | Live view, remote shutter, exposure sliders, tap-to-focus, manual focus, interval shooting, focus peaking, zebra and histogram |
 | Photo finishing | Color presets, exposure and tone controls, crop, rotate, compare, and collage |
 | Adaptive interface | Bottom navigation on phones and a navigation rail on larger screens |
 | Updates | GitHub Releases checks with SHA-256 verification before installation |
@@ -49,6 +50,20 @@ The Bluetooth Low Energy LSS path is experimental and hidden by default. It is n
 
 ## Features
 
+### Capture (live view)
+
+- Stream the camera live view over Wi-Fi PTP/IP or USB PTP and release the shutter from the phone.
+- Read and write exposure mode, aperture, shutter speed, ISO, and exposure compensation. Every write is read back and compared, so a change the camera silently ignored is reported instead of presented as success.
+- Tap the frame to move the focus point, or press the focus button to focus at the center.
+- A capture is confirmed by a new object handle appearing in the camera listing, never by the shutter response code. A timeout is reported as "may not have completed" and is never retried automatically.
+- Captured photos can be queued for transfer automatically through the existing Shoot & Transfer switch.
+- Adjust aperture, shutter speed, ISO and exposure compensation with sliders. Dragging only previews the value; the camera is written once, when you let go.
+- Only what the current exposure mode allows is editable. In A mode the shutter speed and ISO are greyed out with an explanation, instead of failing silently.
+- Focus peaking, zebra stripes, a luminance histogram, composition grid and framing guides are computed on-device from the preview and never affect the exported file.
+- Hold the manual-focus arrows to rack focus, or press the AF button to run a real autofocus cycle.
+- Interval shooting: choose an interval, a shot count and a start delay, then let it run. Captures still go through Shoot & Transfer.
+- On phones live view is a full-screen tool opened from the home grid; on tablets it is a two-pane workspace with a side panel. Live view and remote capture are verified on the Nikon Z 30; other bodies may behave differently and the screen says so.
+
 ### Camera gallery
 
 - Browse camera storage and preview JPG, NEF, and NRW files.
@@ -61,7 +76,7 @@ The Bluetooth Low Energy LSS path is experimental and hidden by default. It is n
 
 ### Transfer engine
 
-- Use `GetPartialObject` for streaming downloads in 4 MB chunks.
+- Use `GetPartialObject` for streaming downloads in 512 KB chunks.
 - Continue large photo and RAW downloads without blocking the rest of the interface.
 - Manage every task in the Transfer Center with progress, failure details, pause, resume, cancel, retry, and completed-task cleanup.
 - Keep transfers alive in the background with a foreground service and progress notification.
@@ -70,11 +85,11 @@ The Bluetooth Low Energy LSS path is experimental and hidden by default. It is n
 
 ### Watermark studio
 
-- Choose from 11 gallery-oriented watermark layouts, including blurred borders, Polaroid paper, dark glass, editorial caption, film perforation, gradient caption, and minimal line styles.
+- Choose from 16 gallery-oriented watermark layouts, including blurred borders, Polaroid paper, dark glass, editorial caption, film perforation, gradient caption, and minimal line styles.
 - Adjust border scale, accent color, card color, corner radius, opacity, typography, and spacing.
 - Toggle camera model, lens, exposure settings, and capture date independently.
 - Read EXIF values and populate watermark fields automatically.
-- Add up to two custom text lines and a logo image from the gallery.
+- Add up to two custom text lines.
 - Export a high-quality JPEG at 95, 92, or 85 quality.
 - Write dimensions, orientation, camera, lens, exposure, focal length, and timestamp back to the exported EXIF block.
 - Merge film presets and manual adjustments into one **Presets** panel: horizontal preset strip, collapsible slider groups, animated preset transitions, and personal presets with save, rename, overwrite, and delete.
@@ -88,6 +103,13 @@ The Bluetooth Low Energy LSS path is experimental and hidden by default. It is n
 - Activate a stored slot as the camera's current Picture Control (`0xD200`) and back up camera slots to the phone.
 - Parse Flexible Color (0310) recipes and convert them to standard NP3 before writing.
 - Preview recipes on bundled sample scenes with a draggable before/after split, a 257-point tone curve, and full parameter controls.
+
+### Video editor
+
+- Trim, reorder, and concatenate clips with a multi-clip timeline and chapter markers.
+- Grade with exposure, tone, color wheels, keyframes, and a `.cube` LUT.
+- Inspect waveform, vectorscope, RGB parade, and histogram scopes.
+- Export 1080p or 4K at H.264 or HEVC; HDR input is tone-mapped to SDR.
 
 ### Color and editing
 
@@ -250,6 +272,12 @@ Thank you to the maintainers and contributors of the projects below. Each projec
 | [ImageToolbox](https://github.com/T8RIN/ImageToolbox) | Image processing, filters, and editor interaction reference | Apache-2.0 |
 | [Recipe Lab](https://github.com/voxivoid/recipe-lab-sony-pmca) | Color-recipe and film-look data structure reference | GPL-3.0 |
 | [Spektrafilm](https://github.com/andreavolpato/spektrafilm) | Standalone native spectral film engine: H&D density curves, DIR couplers, halation, silver-halide grain, print paper rendering | Code GPL-3.0 / profiles CC BY-SA 4.0 |
+| [NICO](https://github.com/haecksenwerk/nico) | USB live view, focus-point selection, and exposure property read/write reference | MIT |
+| [Shotdeck](https://github.com/Fluoro-Antimonic-Acid/Shotdeck) | Live-view, capture, and object-confirmation behavior reference | GPL-3.0 |
+| [LutCameraPro](https://github.com/laodamanbaout/LutCameraPro-) | PTP/IP live-view and connection-boundary reference | Apache-2.0 |
+| [1dlut-z30-filters](https://github.com/haotiandi1011-lgtm/1dlut-z30-filters) | Z 30 tone-curve payload layout and C1-C9 write-back verification reference | MIT |
+| [aero-shutter](https://github.com/subhashraveendran/aero-shutter) | Wi-Fi PTP/IP import behavior reference | MIT |
+| [NikonCameraControl](https://github.com/youdangshi/NikonCameraControl) | Android remote-control and transfer flow reference | MIT |
 | [SnapBridge-Enhanced](https://github.com/MXWF0/SnapBridge-Enhanced) | Nikon connection flow and interaction reference | No license file currently declared |
 | [nsg](https://github.com/hurui200320/nsg) | Nikon protocol and device-capability reference | AGPL-3.0 |
 | [libgphoto2](https://github.com/gphoto/libgphoto2) | PTP/IP and Nikon operation-code reference | LGPL-2.1 |

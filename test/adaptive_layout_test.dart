@@ -39,7 +39,7 @@ void main() {
     await tester.tap(find.text('相机相册'));
     await tester.pump(const Duration(milliseconds: 200));
     await tester.pump(const Duration(milliseconds: 200));
-    expect(stack().index, 1);
+    expect(stack().index, 2);
   });
 
   testWidgets('宽屏下内容居中限宽(≤720dp)', (tester) async {

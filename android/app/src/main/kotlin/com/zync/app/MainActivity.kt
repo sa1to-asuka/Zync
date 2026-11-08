@@ -19,6 +19,7 @@ import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
+import android.view.WindowManager
 import android.provider.Settings
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
@@ -288,6 +289,18 @@ class MainActivity: FlutterActivity() {
                     } catch (e: Exception) {
                         result.error("WRITE_TEXT_ERROR", e.localizedMessage, null)
                     }
+                }
+                "setKeepScreenOn" -> {
+                    // 取景期间阻止屏幕休眠；与前台服务的 CPU 唤醒锁是两回事。
+                    val enabled = call.argument<Boolean>("enabled") ?: false
+                    runOnUiThread {
+                        if (enabled) {
+                            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                        } else {
+                            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                        }
+                    }
+                    result.success(true)
                 }
                 "pickFile" -> {
                     pendingPickFileResult = result

@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -631,7 +632,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String galleryCollageDownloadPrompt(
-      int missing, String reusablePart, String skippedPart) {
+    int missing,
+    String reusablePart,
+    String skippedPart,
+  ) {
     return '拼图功能需要先把素材下载到本地：待下载 $missing 张$reusablePart$skippedPart。下载完成后将自动进入拼图界面。';
   }
 
@@ -741,7 +745,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String galleryDeletedGroupsPartialLocalFailToast(
-      int handled, int failed, int localFailed) {
+    int handled,
+    int failed,
+    int localFailed,
+  ) {
     return '已处理 $handled 组，$failed 组失败（其中 $localFailed 组相机已删除、本地删除失败）';
   }
 
@@ -2732,7 +2739,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String pcImportReportToast(
-      Object duplicates, Object imported, Object invalid) {
+    Object duplicates,
+    Object imported,
+    Object invalid,
+  ) {
     return '成功导入 $imported 款配方（跳过重复 $duplicates，忽略无效 $invalid）';
   }
 
@@ -2978,4 +2988,456 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get spektraPreviewFailed => '胶片预览渲染失败，已保留原图';
+
+  @override
+  String get navCapture => '拍摄台';
+
+  @override
+  String get captureTitle => '拍摄台';
+
+  @override
+  String get captureNotConnectedTitle => '尚未连接相机';
+
+  @override
+  String get captureNotConnectedBody =>
+      '通过 Wi-Fi PTP/IP 或 USB-C OTG 连接相机即可开始实时取景。';
+
+  @override
+  String get captureGoConnect => '前往连接';
+
+  @override
+  String get captureLiveViewUnsupported => '当前相机不支持实时取景。';
+
+  @override
+  String get captureUnverifiedBody => '实时取景与遥控拍摄已在尼康 Z 30 上验证，其他机型可能表现不同。';
+
+  @override
+  String get captureLiveViewStarting => '正在启动取景…';
+
+  @override
+  String get captureLiveViewRunning => '取景中';
+
+  @override
+  String get captureLiveViewIdle => '取景已关闭';
+
+  @override
+  String get captureLiveViewSuspended => '已暂停';
+
+  @override
+  String get captureLiveViewExited => '相机已退出实时取景模式。';
+
+  @override
+  String get captureLiveViewLost => '取景意外中断。';
+
+  @override
+  String get captureShutter => '快门';
+
+  @override
+  String get captureFocus => '对焦';
+
+  @override
+  String get captureTapToFocus => '点击取景画面移动对焦点';
+
+  @override
+  String get captureExposureMode => '模式';
+
+  @override
+  String get captureAperture => '光圈';
+
+  @override
+  String get captureShutterSpeed => '快门速度';
+
+  @override
+  String get captureIso => 'ISO';
+
+  @override
+  String get captureExposureComp => '曝光补偿';
+
+  @override
+  String captureFps(String fps) {
+    return '$fps fps';
+  }
+
+  @override
+  String get captureChannelWifi => 'Wi-Fi';
+
+  @override
+  String get captureChannelUsb => 'USB';
+
+  @override
+  String captureSuccess(String fileName) {
+    return '已拍摄 $fileName';
+  }
+
+  @override
+  String captureQueued(String fileName) {
+    return '已将 $fileName 加入传输队列';
+  }
+
+  @override
+  String get captureUnconfirmedTitle => '拍摄可能尚未完成';
+
+  @override
+  String captureUnconfirmedBody(int seconds) {
+    return '$seconds 秒内没有出现新文件。重拍前请先确认相机状态。';
+  }
+
+  @override
+  String get captureRejectedBusy => '相机正忙，请稍后再试。';
+
+  @override
+  String get captureRejectedAccess => '相机拒绝了快门指令。';
+
+  @override
+  String get captureRejectedUnsupported => '当前相机不支持遥控快门。';
+
+  @override
+  String get captureFailed => '拍摄失败';
+
+  @override
+  String captureSettingApplied(String value) {
+    return '已设置 $value';
+  }
+
+  @override
+  String get captureSettingRejectedDial => '相机没有接受修改，请把模式拨盘转到 M 再试。';
+
+  @override
+  String get captureSettingRejectedBusy => '相机正忙，请重试。';
+
+  @override
+  String get captureSettingRejectedNotWritable => '相机不允许修改该设置。';
+
+  @override
+  String captureSettingRejectedMismatch(String value) {
+    return '相机实际保留了 $value。';
+  }
+
+  @override
+  String get captureSettingRejectedUnsupported => '相机不支持该设置。';
+
+  @override
+  String get captureSettingRejectedUnavailable => '相机没有提供该设置。';
+
+  @override
+  String get captureDialNotManualHint => '光圈、快门与 ISO 只有在 M 档才能修改。';
+
+  @override
+  String get captureAfFailed => '无法移动对焦点。';
+
+  @override
+  String get errDeviceBusy => '相机正忙。';
+
+  @override
+  String get errOperationNotSupported => '相机不支持该操作。';
+
+  @override
+  String get errAccessDenied => '相机拒绝了请求，请检查模式拨盘是否在 P/A/S/M。';
+
+  @override
+  String get errTimeout => '相机响应超时。';
+
+  @override
+  String get errDisconnected => '与相机的连接已断开。';
+
+  @override
+  String get errGeneric => '相机操作出现错误。';
+
+  @override
+  String get errTransferInterrupted => '传输中断（连接断开或已暂停），可稍后重试续传。';
+
+  @override
+  String errTransferEmptyChunk(int offset) {
+    return '相机在第 $offset 字节处返回空数据块。';
+  }
+
+  @override
+  String errTransferIncomplete(int actual, int total) {
+    return '下载不完整：$actual / $total 字节。';
+  }
+
+  @override
+  String errSaveToGalleryFailed(String fileName) {
+    return '无法将 $fileName 保存到系统相册。';
+  }
+
+  @override
+  String get settingsExportLogsTitle => '导出日志';
+
+  @override
+  String get settingsExportLogsDescription => '导出包含最近日志与设备信息的文本文件。';
+
+  @override
+  String get settingsExportLogsSuccess => '日志文件已生成';
+
+  @override
+  String get settingsExportLogsFailed => '无法生成日志文件';
+
+  @override
+  String get settingsExportLogsEmpty => '暂无可导出的日志';
+
+  @override
+  String get errorScreenTitle => '出现了问题';
+
+  @override
+  String get errorScreenBody => '界面渲染失败。详细信息已写入日志，可在设置中导出。';
+
+  @override
+  String get hubBentoColorImportTitle => '导入色彩';
+
+  @override
+  String get hubBentoColorImportSub => '把 NP3/NCP 配方导进本地库';
+
+  @override
+  String get hubBentoLiveViewTitle => '实时取景';
+
+  @override
+  String get hubBentoLiveViewSub => '通过 Wi-Fi 或 USB 在手机上取景拍摄';
+
+  @override
+  String get hubBentoLiveViewOffline => '连接相机后可用';
+
+  @override
+  String get captureFocusNear => '向近处对焦';
+
+  @override
+  String get captureFocusFar => '向远处对焦';
+
+  @override
+  String get captureManualFocus => '手动对焦';
+
+  @override
+  String get captureAfDone => '已合焦';
+
+  @override
+  String get captureAfNotFocus => '未能合焦';
+
+  @override
+  String get captureMfStepEnd => '对焦已到行程尽头';
+
+  @override
+  String get captureMfStepInsufficient => '对焦步长不足，未能移动';
+
+  @override
+  String get captureMfRequiresManualLens => '请先把镜头切到手动对焦';
+
+  @override
+  String get captureParamsTitle => '参数';
+
+  @override
+  String get captureGridOff => '网格关闭';
+
+  @override
+  String get captureGridThirds => '三分网格';
+
+  @override
+  String get captureGridNine => '九宫格';
+
+  @override
+  String get captureGuideLines => '构图参考线';
+
+  @override
+  String get captureOverlayPeaking => '峰值对焦';
+
+  @override
+  String get captureOverlayZebra => '斑马纹';
+
+  @override
+  String get captureOverlayHistogram => '直方图';
+
+  @override
+  String get captureOverlayGrid => '网格';
+
+  @override
+  String get captureClose => '关闭';
+
+  @override
+  String get captureShowParameters => '参数';
+
+  @override
+  String captureModeLockedHint(String mode, String params) {
+    return '$mode 档：$params 由相机决定，转到 M 档可手动设置。';
+  }
+
+  @override
+  String get captureModeLockedShort => '自动';
+
+  @override
+  String get captureIntervalTitle => '间隔拍摄';
+
+  @override
+  String get captureIntervalStart => '开始';
+
+  @override
+  String get captureIntervalStop => '停止';
+
+  @override
+  String get captureIntervalPause => '暂停';
+
+  @override
+  String get captureIntervalResume => '继续';
+
+  @override
+  String captureIntervalSeconds(int seconds) {
+    return '间隔 $seconds 秒';
+  }
+
+  @override
+  String captureIntervalCount(int count) {
+    return '$count 张';
+  }
+
+  @override
+  String captureIntervalDelay(int seconds) {
+    return '$seconds 秒后开始';
+  }
+
+  @override
+  String captureIntervalProgress(int done, int total) {
+    return '$done / $total';
+  }
+
+  @override
+  String captureIntervalProgressUnlimited(int done) {
+    return '已拍 $done 张';
+  }
+
+  @override
+  String captureIntervalNextIn(String time) {
+    return '下一张 $time';
+  }
+
+  @override
+  String captureIntervalDone(int count) {
+    return '间隔拍摄完成：$count 张';
+  }
+
+  @override
+  String get captureIntervalFailed => '相机拒绝拍摄，间隔拍摄已停止';
+
+  @override
+  String get captureIntervalTooShort => '间隔短于单张拍摄耗时，实际节奏会顺延';
+
+  @override
+  String get captureIntervalKeepLiveView => '拍摄时保持取景';
+
+  @override
+  String get captureIntervalUnlimitedShots => '不限张数';
+
+  @override
+  String get settingsLiveViewTitle => '实时取景';
+
+  @override
+  String get settingsLiveViewSub => '帧率、叠加层与对焦';
+
+  @override
+  String get settingsLiveViewCaptureSection => '取景与拍摄';
+
+  @override
+  String get settingsLiveViewFpsTitle => '帧率上限';
+
+  @override
+  String get settingsLiveViewFpsSub => '画面卡顿时可以调低';
+
+  @override
+  String settingsLiveViewFpsValue(int fps) {
+    return '$fps fps';
+  }
+
+  @override
+  String get settingsLiveViewAutoStartTitle => '进入页面自动开始取景';
+
+  @override
+  String get settingsLiveViewAutoStartSub => '关闭后需手动点取景开关';
+
+  @override
+  String get settingsLiveViewShowFpsTitle => '显示帧率';
+
+  @override
+  String get settingsLiveViewKeepAwakeTitle => '取景时保持屏幕常亮';
+
+  @override
+  String get settingsLiveViewKeepAwakeSub => '仅在取景期间生效';
+
+  @override
+  String get settingsLiveViewOverlaySection => '叠加层';
+
+  @override
+  String get settingsLiveViewGridTitle => '构图网格';
+
+  @override
+  String get settingsLiveViewPeakingTitle => '峰值对焦';
+
+  @override
+  String get settingsLiveViewPeakingSub => '在取景画面上高亮锐利边缘';
+
+  @override
+  String get settingsLiveViewPeakingColorTitle => '峰值颜色';
+
+  @override
+  String get settingsLiveViewPeakingSensitivityTitle => '峰值灵敏度';
+
+  @override
+  String get settingsLiveViewPeakingLow => '低';
+
+  @override
+  String get settingsLiveViewPeakingMedium => '中';
+
+  @override
+  String get settingsLiveViewPeakingHigh => '高';
+
+  @override
+  String get settingsLiveViewZebraTitle => '斑马纹';
+
+  @override
+  String get settingsLiveViewZebraSub => '用斜纹标出过曝区域';
+
+  @override
+  String get settingsLiveViewZebraThresholdTitle => '斑马纹阈值';
+
+  @override
+  String settingsLiveViewZebraThresholdValue(int value) {
+    return '高于 $value';
+  }
+
+  @override
+  String get settingsLiveViewHistogramTitle => '直方图';
+
+  @override
+  String get settingsLiveViewHistogramSub => '角落显示亮度直方图';
+
+  @override
+  String get settingsLiveViewFocusSection => '对焦';
+
+  @override
+  String get settingsLiveViewAfDriveTitle => '按对焦按钮时触发真实对焦';
+
+  @override
+  String get settingsLiveViewAfDriveSub => '关闭后只移动对焦点';
+
+  @override
+  String get settingsLiveViewMfStepTitle => '手动对焦步长';
+
+  @override
+  String settingsLiveViewMfStepValue(int steps) {
+    return '$steps 步';
+  }
+
+  @override
+  String get settingsLiveViewIntervalSection => '间隔拍摄默认值';
+
+  @override
+  String get settingsLiveViewIntervalSecondsTitle => '默认间隔';
+
+  @override
+  String get settingsLiveViewIntervalCountTitle => '默认张数';
+
+  @override
+  String get settingsLiveViewUnavailable => '本机无法运行画面分析';
+
+  @override
+  String get settingsShootAndTransferTitle => '边拍边传';
+
+  @override
+  String get settingsShootAndTransferSub => '拍摄后自动把照片传到手机';
 }
