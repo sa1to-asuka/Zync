@@ -594,8 +594,12 @@ class DownloadManager extends ChangeNotifier {
     _processQueue();
   }
 
-  /// 失败重试单项任务
+  /// 失败重试单项任务（「等待重连」的任务也可以手动重试）。
   void retryTask(DownloadTask task) {
+    if (task.status != DownloadTaskStatus.failed &&
+        task.status != DownloadTaskStatus.pausedWaitingReconnect) {
+      return;
+    }
     task.status = DownloadTaskStatus.queued;
     task.error = null;
     task.retryCount = 0;

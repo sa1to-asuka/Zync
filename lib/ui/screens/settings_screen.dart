@@ -723,6 +723,28 @@ class _WirelessDetailContent extends StatelessWidget {
               ],
             ),
             ZSection(
+              title: l10n.settingsRecoverySection,
+              children: [
+                ZTile(
+                  title: l10n.settingsAutoReconnectTitle,
+                  subtitle: l10n.settingsAutoReconnectSub,
+                  trailing: Switch(
+                    value: settings.autoReconnectEnabled,
+                    onChanged: settings.setAutoReconnectEnabled,
+                  ),
+                ),
+                ZTile(
+                  title: l10n.settingsResumeTransferTitle,
+                  subtitle: l10n.settingsResumeTransferSub,
+                  showDivider: false,
+                  trailing: Switch(
+                    value: settings.resumeTransfersAfterReconnect,
+                    onChanged: settings.setResumeTransfersAfterReconnect,
+                  ),
+                ),
+              ],
+            ),
+            ZSection(
               title: l10n.settingsShootTransferSection,
               children: [
                 ZTile(

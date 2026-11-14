@@ -2178,7 +2178,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsWirelessTitle => 'Wireless & Transfer';
 
   @override
-  String get settingsWirelessSub => 'Keep-alive, RAW sync, and export quality';
+  String get settingsWirelessSub =>
+      'Keep-alive, reconnection, and shoot & transfer';
 
   @override
   String get settingsKeepAliveOnShort => 'Keep-alive On';
@@ -3573,4 +3574,22 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settingsShootAndTransferSub =>
       'Download each shot automatically while shooting';
+
+  @override
+  String get settingsRecoverySection => 'Connection recovery';
+
+  @override
+  String get settingsAutoReconnectTitle => 'Reconnect automatically';
+
+  @override
+  String get settingsAutoReconnectSub =>
+      'Recover the session after a dropped link or camera wake-up, including live view';
+
+  @override
+  String get settingsResumeTransferTitle =>
+      'Resume transfers after reconnecting';
+
+  @override
+  String get settingsResumeTransferSub =>
+      'Continue downloading from the last received byte instead of starting over';
 }

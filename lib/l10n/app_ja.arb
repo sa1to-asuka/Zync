@@ -642,7 +642,7 @@
   "settingsCameraTitle": "カメラ接続",
   "settingsCameraSub": "IP・ポート・ネットワークバインド",
   "settingsWirelessTitle": "ワイヤレスと転送",
-  "settingsWirelessSub": "接続維持・RAW同期・書き出し品質",
+  "settingsWirelessSub": "接続維持・再接続・撮影後の自動転送",
   "settingsKeepAliveOnShort": "接続維持オン",
   "settingsKeepAliveOffShort": "接続維持オフ",
   "settingsBatteryTitle": "バッテリーと転送保護",
@@ -1053,5 +1053,10 @@
   "settingsLiveViewIntervalCountTitle": "既定の枚数",
   "settingsLiveViewUnavailable": "この端末ではプレビュー解析を実行できません",
   "settingsShootAndTransferTitle": "撮影と同時に転送",
-  "settingsShootAndTransferSub": "撮影した写真を自動でスマートフォンへ転送します"
+  "settingsShootAndTransferSub": "撮影した写真を自動でスマートフォンへ転送します",
+  "settingsRecoverySection": "接続の復旧",
+  "settingsAutoReconnectTitle": "自動再接続",
+  "settingsAutoReconnectSub": "切断やカメラのスリープ復帰後にセッションを復元し、ライブビューも再開します",
+  "settingsResumeTransferTitle": "再接続後に転送を再開",
+  "settingsResumeTransferSub": "最初からやり直さず、中断したバイトからダウンロードを続けます"
 }

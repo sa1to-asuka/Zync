@@ -642,7 +642,7 @@
   "settingsCameraTitle": "相机连接",
   "settingsCameraSub": "IP、端口与网卡绑定",
   "settingsWirelessTitle": "无线与传输",
-  "settingsWirelessSub": "保活与边拍边传",
+  "settingsWirelessSub": "保活、断线恢复与边拍边传",
   "settingsKeepAliveOnShort": "保活开",
   "settingsKeepAliveOffShort": "保活关",
   "settingsBatteryTitle": "电池与传输保护",
@@ -1053,5 +1053,10 @@
   "settingsLiveViewIntervalCountTitle": "默认张数",
   "settingsLiveViewUnavailable": "本机无法运行画面分析",
   "settingsShootAndTransferTitle": "边拍边传",
-  "settingsShootAndTransferSub": "拍摄后自动把照片传到手机"
+  "settingsShootAndTransferSub": "拍摄后自动把照片传到手机",
+  "settingsRecoverySection": "断线恢复",
+  "settingsAutoReconnectTitle": "自动重连相机",
+  "settingsAutoReconnectSub": "掉线或相机休眠唤醒后自动恢复会话，并重新启动实时取景",
+  "settingsResumeTransferTitle": "断线后自动续传",
+  "settingsResumeTransferSub": "重连成功后从上次中断的字节继续下载，不必从头开始"
 }

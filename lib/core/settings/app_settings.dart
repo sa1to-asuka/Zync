@@ -21,6 +21,8 @@ class AppSettings extends ChangeNotifier {
   static const bool defaultAutoKeepAlive = true;
   static const bool defaultDownloadRaw = false;
   static const bool defaultShootAndTransferEnabled = false;
+  static const bool defaultAutoReconnectEnabled = true;
+  static const bool defaultResumeTransfersAfterReconnect = true;
   static const bool defaultPowerProtectionEnabled = true;
   static const int defaultPowerThreshold = 15;
   static const AppThemeMode defaultThemeMode = AppThemeMode.system;
@@ -89,6 +91,8 @@ class AppSettings extends ChangeNotifier {
   bool autoKeepAlive = defaultAutoKeepAlive;
   bool downloadRaw = defaultDownloadRaw;
   bool shootAndTransferEnabled = defaultShootAndTransferEnabled;
+  bool autoReconnectEnabled = defaultAutoReconnectEnabled;
+  bool resumeTransfersAfterReconnect = defaultResumeTransfersAfterReconnect;
   bool powerProtectionEnabled = defaultPowerProtectionEnabled;
   int powerThreshold = defaultPowerThreshold;
   AppThemeMode themeMode = defaultThemeMode;
@@ -172,6 +176,10 @@ class AppSettings extends ChangeNotifier {
       downloadRaw = _readBool(m, 'downloadRaw', defaultDownloadRaw);
       shootAndTransferEnabled = _readBool(
           m, 'shootAndTransferEnabled', defaultShootAndTransferEnabled);
+      autoReconnectEnabled = _readBool(
+          m, 'autoReconnectEnabled', defaultAutoReconnectEnabled);
+      resumeTransfersAfterReconnect = _readBool(m,
+          'resumeTransfersAfterReconnect', defaultResumeTransfersAfterReconnect);
       powerProtectionEnabled =
           _readBool(m, 'powerProtectionEnabled', defaultPowerProtectionEnabled);
       powerThreshold = _normalizeThreshold(
@@ -306,6 +314,8 @@ class AppSettings extends ChangeNotifier {
         'autoKeepAlive': autoKeepAlive,
         'downloadRaw': downloadRaw,
         'shootAndTransferEnabled': shootAndTransferEnabled,
+        'autoReconnectEnabled': autoReconnectEnabled,
+        'resumeTransfersAfterReconnect': resumeTransfersAfterReconnect,
         'powerProtectionEnabled': powerProtectionEnabled,
         'powerThreshold': powerThreshold,
         'themeMode': themeMode.name,
@@ -409,6 +419,20 @@ class AppSettings extends ChangeNotifier {
   void setShootAndTransferEnabled(bool value) {
     if (value == shootAndTransferEnabled) return;
     shootAndTransferEnabled = value;
+    notifyListeners();
+    _scheduleSave();
+  }
+
+  void setAutoReconnectEnabled(bool value) {
+    if (value == autoReconnectEnabled) return;
+    autoReconnectEnabled = value;
+    notifyListeners();
+    _scheduleSave();
+  }
+
+  void setResumeTransfersAfterReconnect(bool value) {
+    if (value == resumeTransfersAfterReconnect) return;
+    resumeTransfersAfterReconnect = value;
     notifyListeners();
     _scheduleSave();
   }
@@ -771,6 +795,8 @@ class AppSettings extends ChangeNotifier {
     autoKeepAlive = defaultAutoKeepAlive;
     downloadRaw = defaultDownloadRaw;
     shootAndTransferEnabled = defaultShootAndTransferEnabled;
+    autoReconnectEnabled = defaultAutoReconnectEnabled;
+    resumeTransfersAfterReconnect = defaultResumeTransfersAfterReconnect;
     powerProtectionEnabled = defaultPowerProtectionEnabled;
     powerThreshold = defaultPowerThreshold;
     themeMode = defaultThemeMode;

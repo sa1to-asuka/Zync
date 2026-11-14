@@ -209,6 +209,8 @@ class _RootScaffoldState extends State<RootScaffold>
 
   void _handleUnexpectedDisconnect() {
     _downloadManager.pauseForReconnect();
+    // 关掉自动重连时只挂起队列，把恢复时机交回用户（手动连接同样会续传）。
+    if (!AppSettings.instance.autoReconnectEnabled) return;
     _recoveryController.notifyUnexpectedDisconnect();
   }
 
@@ -222,7 +224,9 @@ class _RootScaffoldState extends State<RootScaffold>
         await _liveViewController.start();
       } catch (_) {}
     }
-    await _downloadManager.resumeAfterReconnect();
+    if (AppSettings.instance.resumeTransfersAfterReconnect) {
+      await _downloadManager.resumeAfterReconnect();
+    }
   }
 
   @override
@@ -411,6 +415,8 @@ class _RootScaffoldState extends State<RootScaffold>
         onDisconnect: _recoveryController.cancel,
         onConnected: () {
           _recoveryController.acknowledge();
+          // 用户可能关掉了自动重连、改为手动连接：队列同样要续上。
+          unawaited(_downloadManager.resumeAfterReconnect());
           _galleryKey.currentState?.reloadFiles();
           _pictureControlKey.currentState?.refreshCameraSlots();
           if (mounted) setState(() {});

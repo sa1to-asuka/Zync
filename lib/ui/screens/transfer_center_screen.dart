@@ -405,11 +405,24 @@ class TransferCenterScreen extends StatelessWidget {
           ),
         );
       case DownloadTaskStatus.pausedWaitingReconnect:
-        return ZButton(
-          label: l10n.commonCancel,
-          variant: ZButtonVariant.ghost,
-          size: ZButtonSize.sm,
-          onTap: () => manager.cancelTask(task),
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ZButton(
+              label: l10n.commonRetry,
+              variant: ZButtonVariant.tonal,
+              size: ZButtonSize.sm,
+              onTap: () => manager.retryTask(task),
+            ),
+            const SizedBox(width: ZSpace.xs),
+            ZIconButton(
+              icon: Icons.close,
+              tooltip: l10n.commonCancel,
+              size: 32,
+              iconSize: 16,
+              onTap: () => manager.cancelTask(task),
+            ),
+          ],
         );
     }
   }

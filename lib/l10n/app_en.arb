@@ -1183,7 +1183,7 @@
   "settingsCameraTitle": "Camera Connection",
   "settingsCameraSub": "Default IP, port, and Wi-Fi NIC binding",
   "settingsWirelessTitle": "Wireless & Transfer",
-  "settingsWirelessSub": "Keep-alive, RAW sync, and export quality",
+  "settingsWirelessSub": "Keep-alive, reconnection, and shoot & transfer",
   "settingsKeepAliveOnShort": "Keep-alive On",
   "settingsKeepAliveOffShort": "Keep-alive Off",
   "settingsBatteryTitle": "Battery & Transfer Protection",
@@ -1830,5 +1830,10 @@
   "settingsLiveViewIntervalCountTitle": "Default shot count",
   "settingsLiveViewUnavailable": "This device cannot run preview analysis",
   "settingsShootAndTransferTitle": "Shoot & Transfer",
-  "settingsShootAndTransferSub": "Download each shot automatically while shooting"
+  "settingsShootAndTransferSub": "Download each shot automatically while shooting",
+  "settingsRecoverySection": "Connection recovery",
+  "settingsAutoReconnectTitle": "Reconnect automatically",
+  "settingsAutoReconnectSub": "Recover the session after a dropped link or camera wake-up, including live view",
+  "settingsResumeTransferTitle": "Resume transfers after reconnecting",
+  "settingsResumeTransferSub": "Continue downloading from the last received byte instead of starting over"
 }

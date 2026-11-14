@@ -2095,7 +2095,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsWirelessTitle => '无线与传输';
 
   @override
-  String get settingsWirelessSub => '保活与边拍边传';
+  String get settingsWirelessSub => '保活、断线恢复与边拍边传';
 
   @override
   String get settingsKeepAliveOnShort => '保活开';
@@ -3440,4 +3440,19 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsShootAndTransferSub => '拍摄后自动把照片传到手机';
+
+  @override
+  String get settingsRecoverySection => '断线恢复';
+
+  @override
+  String get settingsAutoReconnectTitle => '自动重连相机';
+
+  @override
+  String get settingsAutoReconnectSub => '掉线或相机休眠唤醒后自动恢复会话，并重新启动实时取景';
+
+  @override
+  String get settingsResumeTransferTitle => '断线后自动续传';
+
+  @override
+  String get settingsResumeTransferSub => '重连成功后从上次中断的字节继续下载，不必从头开始';
 }

@@ -3963,7 +3963,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsWirelessSub.
   ///
   /// In en, this message translates to:
-  /// **'Keep-alive, RAW sync, and export quality'**
+  /// **'Keep-alive, reconnection, and shoot & transfer'**
   String get settingsWirelessSub;
 
   /// No description provided for @settingsKeepAliveOnShort.
@@ -6435,6 +6435,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Download each shot automatically while shooting'**
   String get settingsShootAndTransferSub;
+
+  /// No description provided for @settingsRecoverySection.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection recovery'**
+  String get settingsRecoverySection;
+
+  /// No description provided for @settingsAutoReconnectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnect automatically'**
+  String get settingsAutoReconnectTitle;
+
+  /// No description provided for @settingsAutoReconnectSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Recover the session after a dropped link or camera wake-up, including live view'**
+  String get settingsAutoReconnectSub;
+
+  /// No description provided for @settingsResumeTransferTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume transfers after reconnecting'**
+  String get settingsResumeTransferTitle;
+
+  /// No description provided for @settingsResumeTransferSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue downloading from the last received byte instead of starting over'**
+  String get settingsResumeTransferSub;
 }
 
 class _AppLocalizationsDelegate

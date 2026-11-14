@@ -2112,7 +2112,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settingsWirelessTitle => 'ワイヤレスと転送';
 
   @override
-  String get settingsWirelessSub => '接続維持・RAW同期・書き出し品質';
+  String get settingsWirelessSub => '接続維持・再接続・撮影後の自動転送';
 
   @override
   String get settingsKeepAliveOnShort => '接続維持オン';
@@ -3463,4 +3463,20 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get settingsShootAndTransferSub => '撮影した写真を自動でスマートフォンへ転送します';
+
+  @override
+  String get settingsRecoverySection => '接続の復旧';
+
+  @override
+  String get settingsAutoReconnectTitle => '自動再接続';
+
+  @override
+  String get settingsAutoReconnectSub =>
+      '切断やカメラのスリープ復帰後にセッションを復元し、ライブビューも再開します';
+
+  @override
+  String get settingsResumeTransferTitle => '再接続後に転送を再開';
+
+  @override
+  String get settingsResumeTransferSub => '最初からやり直さず、中断したバイトからダウンロードを続けます';
 }
