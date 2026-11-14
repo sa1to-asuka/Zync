@@ -74,8 +74,9 @@ class ExposureSettingsBracketPort implements BracketPort {
   }
 
   @override
-  Future<void> capture() async {
-    await captureController.capture();
+  Future<CameraFileItem?> capture() async {
+    final outcome = await captureController.capture();
+    return outcome is CaptureConfirmed ? outcome.file : null;
   }
 
   @override
@@ -110,8 +111,9 @@ class DriverFocusStackPort implements FocusStackPort {
   }
 
   @override
-  Future<void> capture() async {
-    await captureController.capture();
+  Future<CameraFileItem?> capture() async {
+    final outcome = await captureController.capture();
+    return outcome is CaptureConfirmed ? outcome.file : null;
   }
 
   @override

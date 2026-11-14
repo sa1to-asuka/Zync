@@ -3455,4 +3455,39 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsResumeTransferSub => '重连成功后从上次中断的字节继续下载，不必从头开始';
+
+  @override
+  String get storageFolderTitle => '保存文件夹';
+
+  @override
+  String get storageFolderCurrent => '当前';
+
+  @override
+  String get storageFolderRecent => '最近使用';
+
+  @override
+  String get storageFolderHint => '文件夹名称（可用 / 分层）';
+
+  @override
+  String get storageFolderCreate => '创建并使用';
+
+  @override
+  String get storageFolderApply => '使用该文件夹';
+
+  @override
+  String storageFolderPath(Object folder) {
+    return 'DCIM/$folder';
+  }
+
+  @override
+  String get creditsCodePaths => '关键代码位置';
+
+  @override
+  String get creditsZ30Compat => 'Z 30 可用度';
+
+  @override
+  String get creditsCompliance => '源码合规边界';
+
+  @override
+  String get creditsCommit => '提交';
 }

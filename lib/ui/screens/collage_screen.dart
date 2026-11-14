@@ -293,7 +293,8 @@ class _CollageScreenState extends State<CollageScreen> {
       try {
         final name = result.file.uri.pathSegments.last;
         final uri =
-            await CameraNativeBridge.saveMediaToGallery(result.file.path, name);
+            await CameraNativeBridge.saveMediaToGallery(result.file.path, name,
+                subDir: AppSettings.instance.exportFolder);
         if (uri == null || uri.isEmpty) {
           throw StateError(
             mounted ? context.l10n.wmSaveAlbumFailed : 'Save failed',

@@ -711,9 +711,13 @@ class DownloadManager extends ChangeNotifier {
 
   /// 流式下载到应用私有临时目录，供视频编辑器等需要本地文件的场景使用。
   /// 不写入公共相册，不把大视频整段读进内存。
+  ///
+  /// [suffix] 用来区分「序列合成」这类旁路下载，避免和队列里同名的 `.part`
+  /// 互相覆盖——队列会删掉已存在的临时文件再续传。
   Future<File?> downloadToTemp(
     CameraFileItem file, {
     void Function(double progress)? onProgress,
+    String suffix = '',
   }) async {
     if (!driver.isConnected || file.size <= 0) return null;
     final task = DownloadTask(
@@ -721,7 +725,10 @@ class DownloadManager extends ChangeNotifier {
       totalBytes: file.size,
       status: DownloadTaskStatus.downloading,
     );
-    final partial = await _partialFileFor(task);
+    final dir = await _getTempDir();
+    final safeName =
+        file.fileName.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+    final partial = File('${dir.path}/$safeName$suffix.part');
     try {
       if (await partial.exists()) await partial.delete();
       await _downloadToFile(
@@ -815,7 +822,10 @@ class DownloadManager extends ChangeNotifier {
 
           // 交给 MediaStore 保存进系统公共相册；失败必须视为任务失败
           final saved = await CameraNativeBridge.saveMediaToGallery(
-              partial.path, pendingTask.fileItem.fileName);
+            partial.path,
+            pendingTask.fileItem.fileName,
+            subDir: AppSettings.instance.exportFolder,
+          );
           if (saved == null || saved.isEmpty) {
             throw CameraFailure(
               CameraFailureKind.saveFailed,

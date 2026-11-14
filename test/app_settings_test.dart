@@ -104,4 +104,59 @@ void main() {
           isNot(equals(cameraCacheKey(0x00010001, 100))));
     });
   });
+
+  group('自定义保存文件夹', () {
+    setUp(() => AppSettings.instance.resetForTest());
+
+    test('默认目录是 Zync', () {
+      expect(AppSettings.instance.exportFolder, equals('Zync'));
+      expect(AppSettings.defaultExportFolder, equals('Zync'));
+    });
+
+    test('归一化：去空白、统一分隔符、去掉 DCIM 前缀', () {
+      expect(AppSettings.normalizeExportFolder('  Zync/星空  '), 'Zync/星空');
+      expect(AppSettings.normalizeExportFolder('DCIM/Zync/星空'), 'Zync/星空');
+      expect(AppSettings.normalizeExportFolder(r'Zync\星空'), 'Zync/星空');
+      expect(AppSettings.normalizeExportFolder('Zync//星空/'), 'Zync/星空');
+    });
+
+    test('归一化：拒绝路径穿越与空值', () {
+      expect(AppSettings.normalizeExportFolder('../evil'), 'evil');
+      expect(AppSettings.normalizeExportFolder('..'), 'Zync');
+      expect(AppSettings.normalizeExportFolder('   '), 'Zync');
+      expect(AppSettings.normalizeExportFolder('/'), 'Zync');
+    });
+
+    test('归一化：非法字符替换、层级截断', () {
+      expect(AppSettings.normalizeExportFolder('a:b'), 'a_b');
+      expect(
+        AppSettings.normalizeExportFolder('a/b/c/d/e'),
+        'a/b/c',
+        reason: '最多三层，避免 MediaStore 里出现过深目录',
+      );
+    });
+
+    test('设置后会进入最近使用列表并去重', () {
+      AppSettings.instance.setExportFolder('Zync/星空');
+      expect(AppSettings.instance.exportFolder, 'Zync/星空');
+      expect(AppSettings.instance.recentExportFolders.first, 'Zync/星空');
+
+      AppSettings.instance.setExportFolder('Zync');
+      expect(AppSettings.instance.recentExportFolders.first, 'Zync');
+      expect(
+        AppSettings.instance.recentExportFolders
+            .where((f) => f == 'Zync')
+            .length,
+        1,
+      );
+    });
+
+    test('最近列表最多保留 8 项', () {
+      for (var i = 0; i < 12; i++) {
+        AppSettings.instance.setExportFolder('Zync/f$i');
+      }
+      expect(AppSettings.instance.recentExportFolders.length, 8);
+      expect(AppSettings.instance.recentExportFolders.first, 'Zync/f11');
+    });
+  });
 }

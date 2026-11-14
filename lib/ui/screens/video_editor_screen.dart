@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../core/settings/app_settings.dart';
 import '../../engine/editor/pro_photo_models.dart';
 import '../../engine/filter/photo_filter.dart';
 import '../../engine/video/video_editor_bridge.dart';
@@ -455,7 +456,8 @@ class _VideoEditorScreenState extends State<VideoEditorScreen> {
     unawaited(VideoProjectStore.save(widget.path, project));
     _initialProject = project;
     _hadSavedProject = true;
-    final uri = await CameraNativeBridge.saveMediaToGallery(result.path, name);
+    final uri = await CameraNativeBridge.saveMediaToGallery(result.path, name,
+        subDir: AppSettings.instance.exportFolder);
     if (!mounted) return;
     setState(() => _exporting = false);
     final saveFailed = uri == null || uri.isEmpty;

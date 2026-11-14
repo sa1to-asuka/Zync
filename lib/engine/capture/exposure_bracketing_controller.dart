@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../../protocol/camera_driver.dart';
+
 /// 包围曝光要偏移哪一轴。
 enum BracketAxis { exposureCompensation, shutter, iso }
 
@@ -55,8 +57,8 @@ abstract class BracketPort {
   /// 写入并回读校验；返回 false 表示相机没有接受这个值。
   Future<bool> write(BracketAxis axis, int raw);
 
-  /// 触发一次快门。
-  Future<void> capture();
+  /// 触发一次快门，返回落盘后的文件（未确认时返回 null）。
+  Future<CameraFileItem?> capture();
 
   /// 等待相机稳定。
   Future<void> settle(Duration duration);
@@ -127,6 +129,10 @@ class ExposureBracketingController extends ChangeNotifier {
 
   bool _stopRequested = false;
   bool _restoreFailed = false;
+
+  /// 本次序列拍到的文件，用于结束后可选合成。
+  final List<CameraFileItem> _captured = <CameraFileItem>[];
+  List<CameraFileItem> get capturedFiles => List.unmodifiable(_captured);
   bool get restoreFailed => _restoreFailed;
 
   bool get isActive => _state == BracketState.running;
@@ -176,6 +182,7 @@ class ExposureBracketingController extends ChangeNotifier {
     _current = 0;
     _stopRequested = false;
     _restoreFailed = false;
+    _captured.clear();
     _state = BracketState.running;
     notifyListeners();
 
@@ -193,7 +200,8 @@ class ExposureBracketingController extends ChangeNotifier {
         }
         await port.settle(config.settle);
         if (_stopRequested) break;
-        await port.capture();
+        final file = await port.capture();
+        if (file != null) _captured.add(file);
       }
     } catch (_) {
       _state = BracketState.failed;

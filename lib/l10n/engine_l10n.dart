@@ -679,6 +679,58 @@ abstract final class EngineL10n {
     '单色': (en: 'Monochrome', ja: 'モノクローム'),
     '平淡': (en: 'Flat', ja: 'フラット'),
     '灵活色彩': (en: 'Flexible Color', ja: 'フレキシブルカラー'),
+
+    // ==================== v2.6.0 致谢明细 ====================
+    'Z 系列三代能力分级、0x000D 探活应答、0x9431 大文件分块、取景帧头遥测与录像控制参考': (
+      en: 'Z-series generation tiers, 0x000D keep-alive probe, 0x9431 large-file chunking, live-view header telemetry, and movie-control reference',
+      ja: 'Zシリーズの世代別ケイパビリティ、0x000D 生存確認、0x9431 大容量分割転送、ライブビューヘッダ解析、動画制御のリファレンス',
+    ),
+    'Android 端断线重连状态机与 AP 重连策略参考': (
+      en: 'Android reconnect state machine and access-point reconnection strategy reference',
+      ja: 'Android 側の再接続ステートマシンと AP 再接続方針のリファレンス',
+    ),
+    'NikonZ30 专属模式编码、App 端包围曝光与原值还原、A-B 点焦点包围状态机参考': (
+      en: 'Z 30-specific mode encoding, app-side bracketing with value restoration, and A-B focus-stacking state machine reference',
+      ja: 'Z 30 固有のモード値、アプリ側ブラケット撮影と元値復元、A-B フォーカススタッキングの状態機械のリファレンス',
+    ),
+    '断点续传状态校验思路参考': (
+      en: 'Reference for resumable-download state validation',
+      ja: 'レジューム転送の状態検証方針のリファレンス',
+    ),
+    '尼康 BLE 快门控制、0x2007 经纬度同步，以及 SnapBridge BLE Blowfish 握手与 Wi-Fi 唤醒协议参考': (
+      en: 'Nikon BLE shutter control, 0x2007 geotag sync, plus SnapBridge BLE Blowfish handshake and Wi-Fi wake protocol reference',
+      ja: 'ニコン BLE シャッター制御、0x2007 位置情報同期、SnapBridge BLE Blowfish ハンドシェイクと Wi-Fi 起動プロトコルのリファレンス',
+    ),
+    'PTP/IP、尼康操作码与响应码表参考，含 0xD0A4 禁录位掩码与 0xC108 封盘事件': (
+      en: 'PTP/IP and Nikon opcode/response tables, including the 0xD0A4 recording-prohibition mask and the 0xC108 finalize event',
+      ja: 'PTP/IP とニコンの操作コード・応答コード表。0xD0A4 録画禁止ビットマスクと 0xC108 書き込み完了イベントを含む',
+    ),
+    '极高（核心参考）': (en: 'Very high (core reference)', ja: '非常に高い（中核リファレンス）'),
+    '很高': (en: 'High', ja: '高い'),
+    '中（实验性参考）': (en: 'Medium (experimental)', ja: '中（実験的）'),
+    '高（协议规范）': (en: 'High (protocol spec)', ja: '高い（プロトコル仕様）'),
+    '中（策略参考）': (en: 'Medium (strategy)', ja: '中（方針の参考）'),
+    'Apache-2.0 兼容，可按 Dart 习惯重构移植并署名致谢': (
+      en: 'Apache-2.0 compatible; may be restructured and ported to Dart with attribution',
+      ja: 'Apache-2.0 互換。Dart 向けに再構成して移植でき、出典を明記します',
+    ),
+    'Apache-2.0 兼容': (en: 'Apache-2.0 compatible', ja: 'Apache-2.0 互換'),
+    'MIT 兼容，可直接参考逻辑结构并署名': (
+      en: 'MIT compatible; logic may be referenced directly with attribution',
+      ja: 'MIT 互換。ロジックを参照し出典を明記できます',
+    ),
+    'GPL-3.0：仅借鉴状态与边界校验思路，禁止复制 Python 代码': (
+      en: 'GPL-3.0: only the state and boundary-checking ideas are borrowed; no Python code is copied',
+      ja: 'GPL-3.0：状態と境界検証の発想のみ参考にし、Python コードは複製していません',
+    ),
+    'MIT 兼容；BLE 唤醒在 UI 中标注为实验性开关': (
+      en: 'MIT compatible; BLE wake-up is labelled experimental in the UI',
+      ja: 'MIT 互換。BLE 起動は UI 上で実験的機能として明示しています',
+    ),
+    'LGPL-2.1：仅参考协议常数与交互顺序，禁止复制 C 代码': (
+      en: 'LGPL-2.1: only protocol constants and command ordering are referenced; no C code is copied',
+      ja: 'LGPL-2.1：プロトコル定数とコマンド順序のみ参考にし、C コードは複製していません',
+    ),
   };
 
   static const Map<String,
@@ -1553,5 +1605,103 @@ abstract final class EngineL10n {
         'ja' => 'バッテリー節約のため、シーケンス中はライブビューを停止しました',
         'en' => 'Live view is off during the sequence to save battery',
         _ => '为保证手机与相机电量，序列拍摄期间已关闭实时取景',
+      };
+
+  // ==================== v2.6.0 机内 HDR ====================
+
+  static String hdrTitle(String langCode) => switch (langCode) {
+        'ja' => 'カメラ内 HDR',
+        'en' => 'In-camera HDR',
+        _ => '机内 HDR',
+      };
+
+  static String hdrSubtitle(String langCode) => switch (langCode) {
+        'ja' => 'カメラが2枚撮影して1枚に合成します。元画像はカードに残せます',
+        'en' => 'The camera takes two frames and merges them; originals can stay on the card',
+        _ => '由相机拍两张并合成一张，原片可保留在存储卡',
+      };
+
+  static String hdrEvAuto(String langCode) => switch (langCode) {
+        'ja' => '自動',
+        'en' => 'Auto',
+        _ => '自动',
+      };
+
+  static String hdrEv(int ev) => '±$ev EV';
+
+  static String hdrSucceeded(String langCode) => switch (langCode) {
+        'ja' => 'カメラ内で合成しました',
+        'en' => 'Merged in the camera',
+        _ => '已由相机完成合成',
+      };
+
+  static String hdrUnsupported(String langCode) => switch (langCode) {
+        'ja' => 'この機種ではカメラ内 HDR を利用できません',
+        'en' => 'In-camera HDR is not available on this body',
+        _ => '这台机身不支持机内 HDR',
+      };
+
+  static String hdrCaptureFailed(String langCode) => switch (langCode) {
+        'ja' => 'カメラ内 HDR の撮影に失敗しました',
+        'en' => 'In-camera HDR capture failed',
+        _ => '机内 HDR 拍摄失败',
+      };
+
+  static String hdrKeepsOriginals(String langCode) => switch (langCode) {
+        'ja' => '元画像もカードに保存',
+        'en' => 'Keep the originals on the card',
+        _ => '同时在存储卡保留原片',
+      };
+
+  // ==================== v2.6.0 App 内序列合成 ====================
+
+  static String compositeOfferTitle(String langCode) => switch (langCode) {
+        'ja' => '1枚に合成しますか？',
+        'en' => 'Merge into one image?',
+        _ => '合成一张？',
+      };
+
+  static String compositeOfferBody(String langCode, int count) =>
+      switch (langCode) {
+        'ja' => '今回は $count 枚撮影しました。元画像はカメラのカードに残っています。アプリ内で1枚に合成しますか？（共有向けの解像度になります）',
+        'en' =>
+          'You captured $count frames. The originals stay on the camera card. Merge them into one image in the app? (Share-resolution output)',
+        _ => '这次拍了 $count 张，原片都还在相机存储卡里。要在 App 内合成一张吗？（合成图是分享级分辨率）',
+      };
+
+  static String compositeConfirm(String langCode) => switch (langCode) {
+        'ja' => '合成する',
+        'en' => 'Merge',
+        _ => '合成',
+      };
+
+  static String compositeKeepOriginals(String langCode) => switch (langCode) {
+        'ja' => '元画像のみ',
+        'en' => 'Originals only',
+        _ => '只保留原片',
+      };
+
+  static String compositeWorking(String langCode) => switch (langCode) {
+        'ja' => '合成中…',
+        'en' => 'Merging…',
+        _ => '正在合成…',
+      };
+
+  static String compositeSuccess(String langCode) => switch (langCode) {
+        'ja' => '合成して保存しました',
+        'en' => 'Merged and saved',
+        _ => '已合成并保存',
+      };
+
+  static String compositeFailed(String langCode) => switch (langCode) {
+        'ja' => '合成に失敗しました。元画像はカメラに残っています',
+        'en' => 'Merge failed; the originals are still on the camera',
+        _ => '合成失败，原片仍在相机里',
+      };
+
+  static String compositeRawUnsupported(String langCode) => switch (langCode) {
+        'ja' => 'RAW を含むためアプリ内合成はできません',
+        'en' => 'In-app merging is not available for RAW sequences',
+        _ => '序列里有 RAW，App 内合成暂不支持',
       };
 }

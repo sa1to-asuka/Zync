@@ -8,11 +8,27 @@ class OpenSourceCredit {
   final String url;
   final String license;
 
+  /// 核对时的提交号（短哈希）。
+  final String? commit;
+
+  /// 实际参考过的关键文件，按仓库内相对路径书写。
+  final List<String> codePaths;
+
+  /// 对 Z 30 (Gen 2) 的可用度评估。
+  final String? z30Usability;
+
+  /// 源码合规边界（哪些能抄、哪些只能看）。
+  final String? compliance;
+
   const OpenSourceCredit({
     required this.name,
     required this.description,
     required this.url,
     required this.license,
+    this.commit,
+    this.codePaths = const <String>[],
+    this.z30Usability,
+    this.compliance,
   });
 
   /// 按当前应用语言返回致谢描述。
@@ -22,6 +38,16 @@ class OpenSourceCredit {
   /// 按当前应用语言返回许可证文案。
   String trLicense(BuildContext context) =>
       EngineL10n.tr(license, context.l10n.localeName);
+
+  /// 按当前应用语言返回 Z 30 可用度。
+  String? trZ30(BuildContext context) => z30Usability == null
+      ? null
+      : EngineL10n.tr(z30Usability!, context.l10n.localeName);
+
+  /// 按当前应用语言返回合规边界。
+  String? trCompliance(BuildContext context) => compliance == null
+      ? null
+      : EngineL10n.tr(compliance!, context.l10n.localeName);
 }
 
 const List<OpenSourceCredit> openSourceProjectCredits = [
@@ -87,9 +113,16 @@ const List<OpenSourceCredit> openSourceProjectCredits = [
   ),
   OpenSourceCredit(
     name: 'libgphoto2',
-    description: 'PTP/IP、尼康操作码与响应码表参考',
+    description: 'PTP/IP、尼康操作码与响应码表参考，含 0xD0A4 禁录位掩码与 0xC108 封盘事件',
     url: 'https://github.com/gphoto/libgphoto2',
     license: 'LGPL-2.1',
+    commit: '31a2f40',
+    codePaths: <String>[
+      'camlibs/ptp2/ptp.h',
+      'camlibs/ptp2/config.c (L10331 _put_Nikon_Movie)',
+    ],
+    z30Usability: '高（协议规范）',
+    compliance: 'LGPL-2.1：仅参考协议常数与交互顺序，禁止复制 C 代码',
   ),
   OpenSourceCredit(
     name: 'ptplibrary',
@@ -117,9 +150,16 @@ const List<OpenSourceCredit> openSourceProjectCredits = [
   ),
   OpenSourceCredit(
     name: 'furble',
-    description: '尼康 BLE 快门控制与 0x2007 经纬度定位同步参考',
+    description: '尼康 BLE 快门控制、0x2007 经纬度同步，以及 SnapBridge BLE Blowfish 握手与 Wi-Fi 唤醒协议参考',
     url: 'https://github.com/gkoh/furble',
     license: 'MIT',
+    commit: '0cac22a',
+    codePaths: <String>[
+      'lib/furble/NikonSmart.cpp (L1-100)',
+      'lib/furble/NikonSmart.h (L1-100)',
+    ],
+    z30Usability: '中（实验性参考）',
+    compliance: 'MIT 兼容；BLE 唤醒在 UI 中标注为实验性开关',
   ),
   OpenSourceCredit(
     name: 'nikongeotag',
@@ -195,27 +235,62 @@ const List<OpenSourceCredit> openSourceProjectCredits = [
   ),
   OpenSourceCredit(
     name: 'OpenCine',
-    description: 'Z 系列三代能力分级、PTP/IP 0x000D 探活应答、0x9431 大文件分块与取景帧头遥测解析参考',
+    description: 'Z 系列三代能力分级、0x000D 探活应答、0x9431 大文件分块、取景帧头遥测与录像控制参考',
     url: 'https://github.com/erik-sutton95/OpenCine',
     license: 'Apache-2.0',
+    commit: '5e93770',
+    codePaths: <String>[
+      'Sources/OpenCineNikon/ZCameraCapabilityProfile.swift',
+      'Sources/OpenCineNikon/PTPIPTransport.swift (L482-499)',
+      'NikonBodyWake.swift',
+      'PTPObjectTransfer.swift',
+      'PTPLiveViewObject.swift (L1-95)',
+      'PTPCameraProperties.swift / StillCapture.swift / NativeCameraSession.swift',
+    ],
+    z30Usability: '极高（核心参考）',
+    compliance: 'Apache-2.0 兼容，可按 Dart 习惯重构移植并署名致谢',
   ),
   OpenSourceCredit(
     name: 'OpenZCine',
-    description: '断线重连状态机：单次超时、总恢复预算、退避与重连风暴防抖策略参考',
+    description: 'Android 端断线重连状态机与 AP 重连策略参考',
     url: 'https://github.com/erik-sutton95/OpenZCine',
     license: 'Apache-2.0',
+    commit: 'c5423f4',
+    codePaths: <String>[
+      'Apps/Android/.../MonitorSessionRecovery.kt',
+      'pairing/CameraApReconnect.kt',
+      'pairing/SavedCameraConnector.kt',
+    ],
+    z30Usability: '极高（核心参考）',
+    compliance: 'Apache-2.0 兼容',
   ),
   OpenSourceCredit(
     name: 'digiCamControl',
-    description: '包围曝光序列生成与参数还原、A-B 点焦点堆叠交互参考',
+    description: 'NikonZ30 专属模式编码、App 端包围曝光与原值还原、A-B 点焦点包围状态机参考',
     url: 'https://github.com/dukus/digiCamControl',
     license: 'MIT',
+    commit: 'c420d40',
+    codePaths: <String>[
+      'CameraControl.Devices/Nikon/NikonZ30.cs (L1-44)',
+      'CameraControl/ViewModel/BracketingViewModel.cs (L470-540)',
+      'CameraControl/ViewModel/LiveViewViewModel.cs (L3010-3100)',
+      'NikonBase.cs (L1960-1969)',
+    ],
+    z30Usability: '很高',
+    compliance: 'MIT 兼容，可直接参考逻辑结构并署名',
   ),
   OpenSourceCredit(
     name: 'airnef',
-    description: '断点续传状态校验思路参考（临时文件长度校正、断连边界处理），未复用其源代码',
+    description: '断点续传状态校验思路参考',
     url: 'https://github.com/besi/airnef',
     license: 'GPL-3.0',
+    commit: 'e03adda',
+    codePaths: <String>[
+      'airnefcmd.py (L2720+)',
+      'mtpwifi.py',
+    ],
+    z30Usability: '中（策略参考）',
+    compliance: 'GPL-3.0：仅借鉴状态与边界校验思路，禁止复制 Python 代码',
   ),
 ];
 

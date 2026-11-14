@@ -92,6 +92,13 @@ class PtpOpCodes {
   static const int devicePropEnableAeBracketing = 0xD0C0; // 机内包围曝光开关
   static const int devicePropAeBracketingStep = 0xD0C1; // 机内包围步长
   static const int devicePropAeBracketingPattern = 0xD0C2; // 机内包围张数/顺序
+  static const int devicePropAeBracketingCount = 0xD0C3; // 机内包围张数（只读）
+
+  // 机内 HDR：相机自己拍两张并合成一张，来源 libgphoto2 ptp.h / config.c
+  static const int nikonPropHdrMode = 0xD130; // 0=关 1=开
+  static const int nikonPropHdrHighDynamic = 0xD131; // 0=自动 1=±1EV 2=±2EV 3=±3EV
+  static const int nikonPropHdrSmoothing = 0xD132; // 0=强 1=标准 2=弱 3=自动 4=超强
+  static const int nikonPropHdrSaveIndividual = 0xD133; // 保存单张原片
 
   // ==========================================
   // 2e. 相机事件码 (EventCode)

@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-import '../../protocol/camera_driver.dart' show MfDirection;
+import '../../protocol/camera_driver.dart' show CameraFileItem, MfDirection;
 
 /// 焦点堆叠运行状态。
 enum FocusStackState { idle, running, completed, stopped, failed }
@@ -46,7 +46,8 @@ abstract class FocusStackPort {
   /// 驱动对焦马达。返回 false 表示已到行程尽头（`0xA00C`）。
   Future<bool> drive(MfDirection direction, int steps);
 
-  Future<void> capture();
+  /// 触发一次快门，返回落盘后的文件（未确认时返回 null）。
+  Future<CameraFileItem?> capture();
   Future<void> settle(Duration duration);
 }
 
@@ -72,6 +73,10 @@ class FocusStackingController extends ChangeNotifier {
   bool _stopRequested = false;
   bool _hitEnd = false;
 
+  /// 本次序列拍到的文件，用于结束后可选合成。
+  final List<CameraFileItem> _captured = <CameraFileItem>[];
+  List<CameraFileItem> get capturedFiles => List.unmodifiable(_captured);
+
   /// 中途撞到对焦行程尽头时为 true：实际张数会少于设定值。
   bool get hitFocusEnd => _hitEnd;
 
@@ -86,6 +91,7 @@ class FocusStackingController extends ChangeNotifier {
     _current = 0;
     _stopRequested = false;
     _hitEnd = false;
+    _captured.clear();
     _state = FocusStackState.running;
     notifyListeners();
 
@@ -96,7 +102,8 @@ class FocusStackingController extends ChangeNotifier {
         _current = taken;
         notifyListeners();
 
-        await port.capture();
+        final file = await port.capture();
+        if (file != null) _captured.add(file);
         taken++;
 
         if (taken >= config.shotCount) break;

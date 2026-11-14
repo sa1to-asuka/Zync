@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zync/engine/capture/capture_controller.dart';
+import 'package:zync/engine/transfer/download_manager.dart';
 import 'package:zync/engine/capture/exposure_settings_controller.dart';
 import 'package:zync/engine/capture/interval_shooting_controller.dart';
 import 'package:zync/engine/capture/movie_recording_controller.dart';
 import 'package:zync/engine/capture/exposure_bracketing_controller.dart';
 import 'package:zync/engine/capture/focus_stacking_controller.dart';
+import 'package:zync/engine/capture/camera_hdr_controller.dart';
 import 'package:zync/engine/liveview/live_view_controller.dart';
 import 'package:zync/engine/liveview/manual_focus_drive_controller.dart';
 import 'package:zync/protocol/camera_driver.dart';
@@ -30,7 +32,7 @@ class _NoopBracketPort implements BracketPort {
   @override
   Future<bool> write(BracketAxis axis, int raw) async => true;
   @override
-  Future<void> capture() async {}
+  Future<CameraFileItem?> capture() async => null;
   @override
   Future<void> settle(Duration duration) async {}
 }
@@ -41,9 +43,18 @@ class _NoopFocusPort implements FocusStackPort {
   @override
   Future<bool> drive(MfDirection direction, int steps) async => true;
   @override
-  Future<void> capture() async {}
+  Future<CameraFileItem?> capture() async => null;
   @override
   Future<void> settle(Duration duration) async {}
+}
+
+class _NoopHdrDriver implements HdrDriver {
+  @override
+  bool get isConnected => true;
+  @override
+  Future<int?> readUintProperty(int propertyId) async => 0;
+  @override
+  Future<void> writeUintProperty(int propertyId, int value) async {}
 }
 class _NoopMovieDriver implements MovieRecordingDriver {
   @override
@@ -96,6 +107,11 @@ Widget _build(
     movieController: MovieRecordingController(driver: _NoopMovieDriver()),
     bracketController: ExposureBracketingController(port: _NoopBracketPort()),
     focusStackController: FocusStackingController(port: _NoopFocusPort()),
+    hdrController: CameraHdrController(
+      driver: _NoopHdrDriver(),
+      capture: () async {},
+    ),
+    downloadManager: DownloadManager(driver: driver),
     onNavigateToConnect: onNavigateToConnect ?? () {},
   );
 }

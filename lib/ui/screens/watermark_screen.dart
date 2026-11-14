@@ -675,7 +675,8 @@ class WatermarkScreenState extends State<WatermarkScreen>
       try {
         final name = result.file.uri.pathSegments.last;
         savedUri =
-            await CameraNativeBridge.saveMediaToGallery(result.file.path, name);
+            await CameraNativeBridge.saveMediaToGallery(result.file.path, name,
+                subDir: AppSettings.instance.exportFolder);
         if (savedUri == null || savedUri.isEmpty) {
           throw StateError(
             mounted ? context.l10n.wmSaveAlbumFailed : 'Save failed',

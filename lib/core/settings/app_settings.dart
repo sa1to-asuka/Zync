@@ -22,6 +22,13 @@ class AppSettings extends ChangeNotifier {
   static const bool defaultDownloadRaw = false;
   static const bool defaultShootAndTransferEnabled = false;
   static const bool defaultAutoReconnectEnabled = true;
+  static const String defaultExportFolder = 'Zync';
+  static const List<String> defaultRecentExportFolders = <String>[
+    'Zync',
+    'Zync/星空',
+    'Zync/包围曝光',
+    'Zync/焦点堆叠',
+  ];
   static const bool defaultResumeTransfersAfterReconnect = true;
   static const bool defaultPowerProtectionEnabled = true;
   static const int defaultPowerThreshold = 15;
@@ -92,6 +99,9 @@ class AppSettings extends ChangeNotifier {
   bool downloadRaw = defaultDownloadRaw;
   bool shootAndTransferEnabled = defaultShootAndTransferEnabled;
   bool autoReconnectEnabled = defaultAutoReconnectEnabled;
+  String exportFolder = defaultExportFolder;
+  List<String> recentExportFolders =
+      List<String>.of(defaultRecentExportFolders);
   bool resumeTransfersAfterReconnect = defaultResumeTransfersAfterReconnect;
   bool powerProtectionEnabled = defaultPowerProtectionEnabled;
   int powerThreshold = defaultPowerThreshold;
@@ -178,6 +188,20 @@ class AppSettings extends ChangeNotifier {
           m, 'shootAndTransferEnabled', defaultShootAndTransferEnabled);
       autoReconnectEnabled = _readBool(
           m, 'autoReconnectEnabled', defaultAutoReconnectEnabled);
+      final folder = m['exportFolder'];
+      if (folder is String && folder.trim().isNotEmpty) {
+        exportFolder = normalizeExportFolder(folder);
+      }
+      final recents = m['recentExportFolders'];
+      if (recents is List) {
+        final parsed = recents
+            .whereType<String>()
+            .map(normalizeExportFolder)
+            .where((f) => f.isNotEmpty)
+            .toSet()
+            .toList();
+        if (parsed.isNotEmpty) recentExportFolders = parsed;
+      }
       resumeTransfersAfterReconnect = _readBool(m,
           'resumeTransfersAfterReconnect', defaultResumeTransfersAfterReconnect);
       powerProtectionEnabled =
@@ -315,6 +339,8 @@ class AppSettings extends ChangeNotifier {
         'downloadRaw': downloadRaw,
         'shootAndTransferEnabled': shootAndTransferEnabled,
         'autoReconnectEnabled': autoReconnectEnabled,
+        'exportFolder': exportFolder,
+        'recentExportFolders': recentExportFolders,
         'resumeTransfersAfterReconnect': resumeTransfersAfterReconnect,
         'powerProtectionEnabled': powerProtectionEnabled,
         'powerThreshold': powerThreshold,
@@ -419,6 +445,36 @@ class AppSettings extends ChangeNotifier {
   void setShootAndTransferEnabled(bool value) {
     if (value == shootAndTransferEnabled) return;
     shootAndTransferEnabled = value;
+    notifyListeners();
+    _scheduleSave();
+  }
+
+  /// 把用户输入的目录收敛成 `DCIM/` 下的安全相对路径。
+  static String normalizeExportFolder(String raw) {
+    final cleaned = raw
+        .trim()
+        .replaceAll('\\', '/')
+        .split('/')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty && e != '.' && e != '..')
+        .map((e) => e.replaceAll(RegExp(r'[\\:*?"<>|]'), '_'))
+        .take(3)
+        .toList();
+    if (cleaned.isEmpty) return defaultExportFolder;
+    // 去掉可能重复的前缀 DCIM。
+    if (cleaned.first.toUpperCase() == 'DCIM') cleaned.removeAt(0);
+    if (cleaned.isEmpty) return defaultExportFolder;
+    return cleaned.join('/');
+  }
+
+  void setExportFolder(String value) {
+    final normalized = normalizeExportFolder(value);
+    if (normalized == exportFolder) return;
+    exportFolder = normalized;
+    recentExportFolders = <String>[
+      normalized,
+      ...recentExportFolders.where((f) => f != normalized),
+    ].take(8).toList();
     notifyListeners();
     _scheduleSave();
   }
@@ -796,6 +852,8 @@ class AppSettings extends ChangeNotifier {
     downloadRaw = defaultDownloadRaw;
     shootAndTransferEnabled = defaultShootAndTransferEnabled;
     autoReconnectEnabled = defaultAutoReconnectEnabled;
+    exportFolder = defaultExportFolder;
+    recentExportFolders = List<String>.of(defaultRecentExportFolders);
     resumeTransfersAfterReconnect = defaultResumeTransfersAfterReconnect;
     powerProtectionEnabled = defaultPowerProtectionEnabled;
     powerThreshold = defaultPowerThreshold;

@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as img;
+import 'package:path_provider/path_provider.dart';
 
 import '../../core/constants/ptp_opcodes.dart';
 import '../../core/settings/app_settings.dart';
@@ -14,6 +17,10 @@ import '../../engine/capture/exposure_settings_controller.dart';
 import '../../engine/capture/interval_shooting_controller.dart';
 import '../../engine/capture/exposure_bracketing_controller.dart';
 import '../../engine/capture/focus_stacking_controller.dart';
+import '../../engine/capture/camera_hdr_controller.dart';
+import '../../engine/capture/jpeg_scaler.dart';
+import '../../engine/capture/sequence_compositor.dart';
+import '../../engine/transfer/download_manager.dart';
 import '../../engine/capture/movie_recording_controller.dart';
 import '../../engine/liveview/live_view_controller.dart';
 import '../../engine/liveview/live_view_frame_pipeline.dart';
@@ -28,6 +35,7 @@ import 'capture/capture_controls.dart';
 import 'capture/capture_interval_sheet.dart';
 import 'capture/capture_overlays.dart';
 import 'capture/capture_sequence_sheet.dart';
+import 'capture/storage_folder_sheet.dart';
 
 /// 拍摄台：实时取景 + 遥控快门 + 参数读写 + 对焦与叠加辅助。
 ///
@@ -45,6 +53,8 @@ class CaptureScreen extends StatefulWidget {
     required this.movieController,
     required this.bracketController,
     required this.focusStackController,
+    required this.hdrController,
+    required this.downloadManager,
     required this.onNavigateToConnect,
   });
 
@@ -57,6 +67,8 @@ class CaptureScreen extends StatefulWidget {
   final MovieRecordingController movieController;
   final ExposureBracketingController bracketController;
   final FocusStackingController focusStackController;
+  final CameraHdrController hdrController;
+  final DownloadManager downloadManager;
   final VoidCallback onNavigateToConnect;
 
   @override
@@ -473,6 +485,10 @@ class CaptureScreenState extends State<CaptureScreen> {
     } else {
       _toast(EngineL10n.bracketRestored(lang), tone: ZStatusTone.success);
     }
+    await _offerComposite(
+      mode: SequenceCompositeMode.exposureFusion,
+      files: widget.bracketController.capturedFiles,
+    );
   }
 
   Future<void> _openFocusStackSheet() async {
@@ -498,12 +514,203 @@ class CaptureScreenState extends State<CaptureScreen> {
     if (!mounted) return;
     if (!started) {
       _toast(context.l10n.captureFailed, isError: true);
+      return;
     }
+    await _offerComposite(
+      mode: SequenceCompositeMode.focusStack,
+      files: widget.focusStackController.capturedFiles,
+    );
   }
 
   void _stopSequences() {
     widget.bracketController.stop();
     widget.focusStackController.stop();
+  }
+
+  // ---------------------------------------------------------------- 序列合成
+
+  /// 序列拍完后询问是否在 App 内合成一张。
+  ///
+  /// 原片始终留在相机存储卡上，这里只是额外产出一张分享级的合成图；
+  /// 用户不选就不做任何事。
+  Future<void> _offerComposite({
+    required SequenceCompositeMode mode,
+    required List<CameraFileItem> files,
+  }) async {
+    if (files.length < 2 || !mounted) return;
+    final lang = L10n.current.localeName;
+
+    if (files.any((f) => f.isRaw)) {
+      _toast(EngineL10n.compositeRawUnsupported(lang), isError: true);
+      return;
+    }
+
+    final confirmed = await showZDialog<bool>(
+      context: context,
+      builder: (ctx) => ZDialog(
+        title: EngineL10n.compositeOfferTitle(lang),
+        message: EngineL10n.compositeOfferBody(lang, files.length),
+        confirmLabel: EngineL10n.compositeConfirm(lang),
+        cancelLabel: EngineL10n.compositeKeepOriginals(lang),
+        onConfirm: () => Navigator.of(ctx).pop(true),
+        onCancel: () => Navigator.of(ctx).pop(false),
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    await _compositeAndSave(mode, files);
+  }
+
+  Future<void> _compositeAndSave(
+    SequenceCompositeMode mode,
+    List<CameraFileItem> files,
+  ) async {
+    final lang = L10n.current.localeName;
+    _toast(EngineL10n.compositeWorking(lang));
+
+    final frames = <img.Image>[];
+    for (final file in files) {
+      if (!mounted) return;
+      final temp = await widget.downloadManager
+          .downloadToTemp(file, suffix: '_seq');
+      if (temp == null) continue;
+      try {
+        final image = await decodeScaledJpeg(
+          await temp.readAsBytes(),
+          maxEdge: SequenceCompositor.defaultMaxEdge,
+        );
+        if (image != null) frames.add(image);
+      } finally {
+        try {
+          await temp.delete();
+        } catch (_) {}
+      }
+    }
+
+    if (frames.length < 2) {
+      if (mounted) _toast(EngineL10n.compositeFailed(lang), isError: true);
+      return;
+    }
+
+    final result = SequenceCompositor.composeFrames(frames, mode: mode);
+    if (!result.isSuccess) {
+      if (mounted) _toast(EngineL10n.compositeFailed(lang), isError: true);
+      return;
+    }
+
+    try {
+      final dir = await getTemporaryDirectory();
+      final now = DateTime.now();
+      final stamp = '${now.year}'
+          '${now.month.toString().padLeft(2, '0')}'
+          '${now.day.toString().padLeft(2, '0')}_'
+          '${now.hour.toString().padLeft(2, '0')}'
+          '${now.minute.toString().padLeft(2, '0')}'
+          '${now.second.toString().padLeft(2, '0')}';
+      final name = 'SEQ_$stamp.jpg';
+      final merged = File('${dir.path}/$name');
+      await merged.writeAsBytes(result.bytes!, flush: true);
+
+      final saved = await CameraNativeBridge.saveMediaToGallery(
+        merged.path,
+        name,
+        subDir: AppSettings.instance.exportFolder,
+      );
+      try {
+        await merged.delete();
+      } catch (_) {}
+
+      if (!mounted) return;
+      if (saved == null || saved.isEmpty) {
+        _toast(EngineL10n.compositeFailed(lang), isError: true);
+      } else {
+        _toast(EngineL10n.compositeSuccess(lang), tone: ZStatusTone.success);
+      }
+    } catch (_) {
+      if (mounted) _toast(EngineL10n.compositeFailed(lang), isError: true);
+    }
+  }
+
+  // ---------------------------------------------------------------- 机内 HDR
+
+  Future<void> _openHdrSheet() async {
+    if (_sequenceBusy) {
+      _toast(EngineL10n.taskBusyHint(L10n.current.localeName), isError: true);
+      return;
+    }
+    final lang = L10n.current.localeName;
+    final dynamicEv = await _showHdrSheet(lang);
+    if (dynamicEv == null || !mounted) return;
+
+    var result = HdrResult.unsupported;
+    await _runSequence(
+      keepLiveView: false,
+      body: () async {
+        result = await widget.hdrController.shoot(highDynamic: dynamicEv);
+      },
+    );
+    if (!mounted) return;
+    switch (result) {
+      case HdrResult.merged:
+        _toast(EngineL10n.hdrSucceeded(lang), tone: ZStatusTone.success);
+      case HdrResult.unsupported:
+        _toast(EngineL10n.hdrUnsupported(lang), isError: true);
+      case HdrResult.captureFailed:
+        _toast(EngineL10n.hdrCaptureFailed(lang), isError: true);
+    }
+  }
+
+  /// 选择 HDR 动态范围；返回 null 表示取消，0 表示自动。
+  Future<int?> _showHdrSheet(String lang) {
+    final zc = context.zc;
+    final zt = context.zt;
+    return showModalBottomSheet<int>(
+      context: context,
+      backgroundColor: ZSwatch.transparent,
+      builder: (ctx) => SafeArea(
+        child: Container(
+          margin: const EdgeInsets.all(ZSpace.md),
+          padding: const EdgeInsets.all(ZSpace.lg),
+          decoration: BoxDecoration(
+            color: zc.surface,
+            borderRadius: ZRadius.brLg,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Text(EngineL10n.hdrTitle(lang),
+                  style: zt.title.copyWith(color: zc.textPrimary)),
+              const SizedBox(height: ZSpace.xs),
+              Text(EngineL10n.hdrSubtitle(lang),
+                  style: zt.caption.copyWith(color: zc.textSecondary)),
+              const SizedBox(height: ZSpace.md),
+              for (final ev in <int?>[null, 1, 2, 3])
+                ZTile(
+                  title: ev == null
+                      ? EngineL10n.hdrEvAuto(lang)
+                      : EngineL10n.hdrEv(ev),
+                  leadingIcon: Icons.hdr_on_outlined,
+                  isLink: true,
+                  showDivider: ev != 3,
+                  onTap: () => Navigator.of(ctx).pop(ev ?? 0),
+                ),
+              const SizedBox(height: ZSpace.xs),
+              Text(EngineL10n.hdrKeepsOriginals(lang),
+                  style: zt.caption.copyWith(color: zc.textSecondary)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickStorageFolder() async {
+    final changed = await showStorageFolderSheet(context);
+    if (!mounted || !changed) return;
+    _toast(
+      context.l10n.storageFolderPath(AppSettings.instance.exportFolder),
+      tone: ZStatusTone.success,
+    );
   }
 
   // ---------------------------------------------------------------- 视图
@@ -658,6 +865,14 @@ class CaptureScreenState extends State<CaptureScreen> {
                 color: zc.accent,
               ),
             ),
+          ZIconButton(
+            icon: Icons.create_new_folder_outlined,
+            tooltip: l10n.storageFolderPath(AppSettings.instance.exportFolder),
+            size: 32,
+            iconSize: 18,
+            onTap: _pickStorageFolder,
+          ),
+          const SizedBox(width: ZSpace.xs),
           ZTag(
             text: isUsb ? l10n.captureChannelUsb : l10n.captureChannelWifi,
             compact: true,
@@ -1184,6 +1399,13 @@ class CaptureScreenState extends State<CaptureScreen> {
               )
             else ...<Widget>[
               ZTile(
+                title: EngineL10n.hdrTitle(L10n.current.localeName),
+                subtitle: EngineL10n.hdrSubtitle(L10n.current.localeName),
+                leadingIcon: Icons.hdr_on_outlined,
+                isLink: true,
+                onTap: _sequenceBusy ? null : _openHdrSheet,
+              ),
+              ZTile(
                 title: EngineL10n.bracketTitle(L10n.current.localeName),
                 subtitle: EngineL10n.bracketSubtitle(L10n.current.localeName),
                 leadingIcon: Icons.exposure_outlined,
@@ -1287,6 +1509,15 @@ class CaptureScreenState extends State<CaptureScreen> {
                 onTap: () {
                   Navigator.of(ctx).pop();
                   _openIntervalSheet();
+                },
+              ),
+              ZTile(
+                title: EngineL10n.hdrTitle(L10n.current.localeName),
+                leadingIcon: Icons.hdr_on_outlined,
+                isLink: true,
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _openHdrSheet();
                 },
               ),
               ZTile(

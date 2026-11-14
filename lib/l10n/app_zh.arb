@@ -1058,5 +1058,16 @@
   "settingsAutoReconnectTitle": "自动重连相机",
   "settingsAutoReconnectSub": "掉线或相机休眠唤醒后自动恢复会话，并重新启动实时取景",
   "settingsResumeTransferTitle": "断线后自动续传",
-  "settingsResumeTransferSub": "重连成功后从上次中断的字节继续下载，不必从头开始"
+  "settingsResumeTransferSub": "重连成功后从上次中断的字节继续下载，不必从头开始",
+  "storageFolderTitle": "保存文件夹",
+  "storageFolderCurrent": "当前",
+  "storageFolderRecent": "最近使用",
+  "storageFolderHint": "文件夹名称（可用 / 分层）",
+  "storageFolderCreate": "创建并使用",
+  "storageFolderApply": "使用该文件夹",
+  "storageFolderPath": "DCIM/{folder}",
+  "creditsCodePaths": "关键代码位置",
+  "creditsZ30Compat": "Z 30 可用度",
+  "creditsCompliance": "源码合规边界",
+  "creditsCommit": "提交"
 }

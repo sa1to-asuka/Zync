@@ -362,12 +362,18 @@ class CameraNativeBridge {
 
   /// 将相机下载到的临时文件按内容类型保存到系统公共媒体库（图片/视频/RAW）。
   /// 成功返回 MediaStore Uri（或旧系统路径），失败返回 null。
+  /// 保存到系统相册。
+  ///
+  /// [subDir] 是相对 `DCIM/` 的子目录（例如 `Zync/星空`）；为空时用默认目录。
+  /// Android 10+ 走 MediaStore 的 RELATIVE_PATH，不需要存储权限。
   static Future<String?> saveMediaToGallery(
-      String srcPath, String fileName) async {
+      String srcPath, String fileName,
+      {String? subDir}) async {
     try {
       final res = await _channel.invokeMethod<String>('saveMediaToGallery', {
         'srcPath': srcPath,
         'fileName': fileName,
+        if (subDir != null && subDir.isNotEmpty) 'subDir': subDir,
       });
       return res;
     } catch (_) {

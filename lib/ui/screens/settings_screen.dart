@@ -11,6 +11,7 @@ import '../../l10n/l10n.dart';
 import '../../protocol/camera_native_bridge.dart';
 import '../design/design.dart';
 import '../onboarding/onboarding_flow.dart';
+import 'capture/storage_folder_sheet.dart';
 import '../widgets/adaptive_layout.dart';
 
 enum _SettingsSectionId {
@@ -758,11 +759,18 @@ class _WirelessDetailContent extends StatelessWidget {
                 ZTile(
                   title: l10n.settingsDownloadRawTitle,
                   subtitle: l10n.settingsDownloadRawSub,
-                  showDivider: false,
                   trailing: Switch(
                     value: settings.downloadRaw,
                     onChanged: settings.setDownloadRaw,
                   ),
+                ),
+                ZTile(
+                  title: l10n.storageFolderTitle,
+                  subtitle: l10n.storageFolderPath(settings.exportFolder),
+                  leadingIcon: Icons.folder_outlined,
+                  isLink: true,
+                  showDivider: false,
+                  onTap: () => showStorageFolderSheet(context),
                 ),
               ],
             ),
@@ -1301,6 +1309,15 @@ class _OpenSourceCreditTile extends StatelessWidget {
                   child: Text(credit.name, style: zt.title),
                 ),
                 const SizedBox(width: ZSpace.sm),
+                if (credit.commit != null) ...[
+                  ZTag(
+                    text: credit.commit!,
+                    color: zc.textSecondary,
+                    compact: true,
+                    isOutline: true,
+                  ),
+                  const SizedBox(width: ZSpace.xs),
+                ],
                 ZTag(
                   text: credit.trLicense(context),
                   color: zc.accent,
@@ -1313,6 +1330,36 @@ class _OpenSourceCreditTile extends StatelessWidget {
               credit.trDescription(context),
               style: zt.bodySmall,
             ),
+            if (credit.codePaths.isNotEmpty) ...[
+              const SizedBox(height: ZSpace.sm),
+              Text(
+                l10n.creditsCodePaths,
+                style: zt.caption.copyWith(color: zc.textSecondary),
+              ),
+              const SizedBox(height: 2),
+              for (final path in credit.codePaths)
+                Padding(
+                  padding: const EdgeInsets.only(top: 1),
+                  child: Text(
+                    path,
+                    style: zt.numericSmall.copyWith(color: zc.textSecondary),
+                  ),
+                ),
+            ],
+            if (credit.trZ30(context) != null) ...[
+              const SizedBox(height: ZSpace.sm),
+              Text(
+                '${l10n.creditsZ30Compat}: ${credit.trZ30(context)}',
+                style: zt.caption.copyWith(color: zc.textSecondary),
+              ),
+            ],
+            if (credit.trCompliance(context) != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                '${l10n.creditsCompliance}: ${credit.trCompliance(context)}',
+                style: zt.caption.copyWith(color: zc.textSecondary),
+              ),
+            ],
             const SizedBox(height: ZSpace.xs),
             Text(
               credit.url,

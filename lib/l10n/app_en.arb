@@ -1835,5 +1835,16 @@
   "settingsAutoReconnectTitle": "Reconnect automatically",
   "settingsAutoReconnectSub": "Recover the session after a dropped link or camera wake-up, including live view",
   "settingsResumeTransferTitle": "Resume transfers after reconnecting",
-  "settingsResumeTransferSub": "Continue downloading from the last received byte instead of starting over"
+  "settingsResumeTransferSub": "Continue downloading from the last received byte instead of starting over",
+  "storageFolderTitle": "Save to folder",
+  "storageFolderCurrent": "Current",
+  "storageFolderRecent": "Recent",
+  "storageFolderHint": "Folder name (use / for subfolders)",
+  "storageFolderCreate": "Create and use",
+  "storageFolderApply": "Use this folder",
+  "storageFolderPath": "DCIM/{folder}",
+  "creditsCodePaths": "Key files",
+  "creditsZ30Compat": "Z 30 support",
+  "creditsCompliance": "Source compliance",
+  "creditsCommit": "Commit"
 }

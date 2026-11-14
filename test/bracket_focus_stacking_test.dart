@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zync/engine/capture/exposure_bracketing_controller.dart';
 import 'package:zync/engine/capture/focus_stacking_controller.dart';
-import 'package:zync/protocol/camera_driver.dart' show MfDirection;
+import 'package:zync/protocol/camera_driver.dart';
 
 class _FakeBracketPort implements BracketPort {
   _FakeBracketPort({
@@ -43,10 +43,11 @@ class _FakeBracketPort implements BracketPort {
   }
 
   @override
-  Future<void> capture() async {
+  Future<CameraFileItem?> capture() async {
     captures++;
     final gate = captureGate;
     if (gate != null) await gate.future;
+    return null;
   }
 
   @override
@@ -70,8 +71,9 @@ class _FakeFocusPort implements FocusStackPort {
   }
 
   @override
-  Future<void> capture() async {
+  Future<CameraFileItem?> capture() async {
     captures++;
+    return null;
   }
 
   @override

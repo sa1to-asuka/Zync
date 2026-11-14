@@ -4,6 +4,7 @@ import '../core/constants/ptp_opcodes.dart';
 import '../core/settings/app_settings.dart';
 import '../core/utils/byte_buffer_ext.dart';
 import '../core/utils/camera_error_mapper.dart';
+import '../engine/capture/camera_hdr_controller.dart';
 import '../engine/capture/movie_recording_controller.dart';
 import '../engine/picture_control/np3_codec.dart';
 import 'camera_driver.dart';
@@ -215,7 +216,8 @@ class NikonDeviceInfo {
 
 /// 尼康专属相机硬件协议驱动。
 /// Nikon 扩展操作码与设备属性读取。
-class NikonDriver implements CameraDriver, MovieRecordingDriver {
+class NikonDriver
+    implements CameraDriver, MovieRecordingDriver, HdrDriver {
   PtpTransport? _client;
   CameraConnectionState _state = CameraConnectionState.disconnected;
   String _cameraModel = 'Nikon Camera';
@@ -1442,6 +1444,16 @@ class NikonDriver implements CameraDriver, MovieRecordingDriver {
   Future<void> setLiveViewSelector(int value) async {
     final bytes = Uint8List(1)..[0] = value & 0xFF;
     await writeDevicePropValue(PtpOpCodes.devicePropLiveViewSelector, bytes);
+  }
+
+  // ---- HdrDriver ----
+  @override
+  Future<int?> readUintProperty(int propertyId) =>
+      _readUintProperty(propertyId);
+
+  @override
+  Future<void> writeUintProperty(int propertyId, int value) async {
+    await writeDevicePropValue(propertyId, Uint8List(1)..[0] = value & 0xFF);
   }
 
   /// 属性宽度随机型不同：UINT8 返回 1 字节，UINT32 返回 4 字节。

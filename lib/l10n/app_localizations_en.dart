@@ -3592,4 +3592,39 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settingsResumeTransferSub =>
       'Continue downloading from the last received byte instead of starting over';
+
+  @override
+  String get storageFolderTitle => 'Save to folder';
+
+  @override
+  String get storageFolderCurrent => 'Current';
+
+  @override
+  String get storageFolderRecent => 'Recent';
+
+  @override
+  String get storageFolderHint => 'Folder name (use / for subfolders)';
+
+  @override
+  String get storageFolderCreate => 'Create and use';
+
+  @override
+  String get storageFolderApply => 'Use this folder';
+
+  @override
+  String storageFolderPath(Object folder) {
+    return 'DCIM/$folder';
+  }
+
+  @override
+  String get creditsCodePaths => 'Key files';
+
+  @override
+  String get creditsZ30Compat => 'Z 30 support';
+
+  @override
+  String get creditsCompliance => 'Source compliance';
+
+  @override
+  String get creditsCommit => 'Commit';
 }

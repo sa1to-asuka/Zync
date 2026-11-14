@@ -3479,4 +3479,39 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get settingsResumeTransferSub => '最初からやり直さず、中断したバイトからダウンロードを続けます';
+
+  @override
+  String get storageFolderTitle => '保存先フォルダー';
+
+  @override
+  String get storageFolderCurrent => '現在';
+
+  @override
+  String get storageFolderRecent => '最近使用したフォルダー';
+
+  @override
+  String get storageFolderHint => 'フォルダー名（/ で階層化できます）';
+
+  @override
+  String get storageFolderCreate => '作成して使用';
+
+  @override
+  String get storageFolderApply => 'このフォルダーを使用';
+
+  @override
+  String storageFolderPath(Object folder) {
+    return 'DCIM/$folder';
+  }
+
+  @override
+  String get creditsCodePaths => '主要コード';
+
+  @override
+  String get creditsZ30Compat => 'Z 30 での可用性';
+
+  @override
+  String get creditsCompliance => 'ソース利用の境界';
+
+  @override
+  String get creditsCommit => 'コミット';
 }

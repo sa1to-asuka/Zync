@@ -6465,6 +6465,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Continue downloading from the last received byte instead of starting over'**
   String get settingsResumeTransferSub;
+
+  /// No description provided for @storageFolderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to folder'**
+  String get storageFolderTitle;
+
+  /// No description provided for @storageFolderCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current'**
+  String get storageFolderCurrent;
+
+  /// No description provided for @storageFolderRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get storageFolderRecent;
+
+  /// No description provided for @storageFolderHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Folder name (use / for subfolders)'**
+  String get storageFolderHint;
+
+  /// No description provided for @storageFolderCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create and use'**
+  String get storageFolderCreate;
+
+  /// No description provided for @storageFolderApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this folder'**
+  String get storageFolderApply;
+
+  /// No description provided for @storageFolderPath.
+  ///
+  /// In en, this message translates to:
+  /// **'DCIM/{folder}'**
+  String storageFolderPath(Object folder);
+
+  /// No description provided for @creditsCodePaths.
+  ///
+  /// In en, this message translates to:
+  /// **'Key files'**
+  String get creditsCodePaths;
+
+  /// No description provided for @creditsZ30Compat.
+  ///
+  /// In en, this message translates to:
+  /// **'Z 30 support'**
+  String get creditsZ30Compat;
+
+  /// No description provided for @creditsCompliance.
+  ///
+  /// In en, this message translates to:
+  /// **'Source compliance'**
+  String get creditsCompliance;
+
+  /// No description provided for @creditsCommit.
+  ///
+  /// In en, this message translates to:
+  /// **'Commit'**
+  String get creditsCommit;
 }
 
 class _AppLocalizationsDelegate

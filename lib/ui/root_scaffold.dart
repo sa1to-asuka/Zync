@@ -11,6 +11,7 @@ import '../../engine/capture/interval_shooting_controller.dart';
 import '../../engine/capture/exposure_settings_controller.dart';
 import '../../engine/capture/movie_recording_controller.dart';
 import '../../engine/capture/bracket_ports.dart';
+import '../../engine/capture/camera_hdr_controller.dart';
 import '../../engine/capture/exposure_bracketing_controller.dart';
 import '../../engine/capture/focus_stacking_controller.dart';
 import '../../engine/liveview/live_view_analyzer.dart';
@@ -94,6 +95,7 @@ class _RootScaffoldState extends State<RootScaffold>
   late final MovieRecordingController _movieController;
   late final ExposureBracketingController _bracketController;
   late final FocusStackingController _focusStackController;
+  late final CameraHdrController _hdrController;
   late final AnimationController _tabFadeController;
   late final Animation<double> _tabFadeAnimation;
   late final Animation<double> _tabScaleAnimation;
@@ -168,6 +170,10 @@ class _RootScaffoldState extends State<RootScaffold>
         driver: _driver,
         captureController: _captureController,
       ),
+    );
+    _hdrController = CameraHdrController(
+      driver: _driver,
+      capture: () => _captureController.capture(),
     );
     AppSettings.instance.addListener(_syncLiveViewSettings);
 
@@ -472,6 +478,8 @@ class _RootScaffoldState extends State<RootScaffold>
         movieController: _movieController,
         bracketController: _bracketController,
         focusStackController: _focusStackController,
+        hdrController: _hdrController,
+        downloadManager: _downloadManager,
         onNavigateToConnect: () => _onTabSelected(_connectTabIndex),
       ),
       GalleryScreen(

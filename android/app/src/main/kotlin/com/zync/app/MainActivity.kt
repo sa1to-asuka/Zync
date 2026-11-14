@@ -423,6 +423,7 @@ class MainActivity: FlutterActivity() {
                 "saveMediaToGallery" -> {
                     val srcPath = call.argument<String>("srcPath")
                     val fileName = call.argument<String>("fileName")
+                    val subDir = call.argument<String>("subDir")
                     if (srcPath.isNullOrBlank()) {
                         result.error("INVALID_PATH", "Path is empty", null)
                     } else {
@@ -430,7 +431,10 @@ class MainActivity: FlutterActivity() {
                         if (!file.exists()) {
                             result.error("NOT_FOUND", "File does not exist", null)
                         } else {
-                            mediaTask(result) { saveMediaToPublic(file, fileName ?: file.name) ?: throw java.io.IOException("MediaStore 保存失败") }
+                            mediaTask(result) {
+                            saveMediaToPublic(file, fileName ?: file.name, subDir)
+                                ?: throw java.io.IOException("MediaStore 保存失败")
+                        }
                         }
                     }
                 }
@@ -1825,7 +1829,24 @@ class MainActivity: FlutterActivity() {
      * 统一落在 DCIM/Zync：DCIM 是相机目录，系统与厂商相册一定会索引，
      * 也与应用内提示「保存路径: /DCIM/Zync」保持一致。
      */
-    private fun resolveSaveTarget(fileName: String): Triple<Uri, String, String?> {
+    /** 把用户输入的文件夹名收敛成安全的相对路径片段。 */
+    private fun sanitizeSubDir(raw: String?): String {
+        if (raw.isNullOrBlank()) return "Zync"
+        val unsafe = Regex("[\\\\:*?\"<>|]")
+        val cleaned = raw.trim()
+            .replace('\\', '/')
+            .split('/')
+            .map { it.trim() }
+            .filter { it.isNotEmpty() && it != "." && it != ".." }
+            .map { part -> unsafe.replace(part, "_").take(40) }
+            .joinToString("/")
+        return if (cleaned.isEmpty()) "Zync" else cleaned
+    }
+
+    private fun resolveSaveTarget(
+        fileName: String,
+        subDir: String? = null,
+    ): Triple<Uri, String, String?> {
         val lower = fileName.lowercase()
         val mime = when {
             lower.endsWith(".png") -> "image/png"
@@ -1836,30 +1857,39 @@ class MainActivity: FlutterActivity() {
         }
         val isVideo = lower.endsWith(".mp4") || lower.endsWith(".mov")
         val isRaw = lower.endsWith(".nef") || lower.endsWith(".nrw")
+        val relativePath = "DCIM/" + sanitizeSubDir(subDir) + "/"
         return when {
-            isVideo -> Triple(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, "DCIM/Zync/", mime)
+            isVideo -> Triple(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, relativePath, mime)
             // Android 10+ 分区存储：DCIM 仅允许 Images 与 Video 集合，NEF/NRW 属于原生 Raw 图片，归属 MediaStore.Images
-            isRaw -> Triple(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "DCIM/Zync/", mime)
-            else -> Triple(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "DCIM/Zync/", mime)
+            isRaw -> Triple(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, relativePath, mime)
+            else -> Triple(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, relativePath, mime)
         }
     }
 
     private fun mimeForFileName(fileName: String): String = resolveSaveTarget(fileName).third ?: "image/jpeg"
 
     /** 按调用方给定的文件名（可覆盖临时 .part 名）保存到公共媒体库。 */
-    private fun saveMediaToPublic(srcFile: File, fileName: String): String? {
-        return saveMediaToPublicInternal(srcFile, fileName)
+    private fun saveMediaToPublic(
+        srcFile: File,
+        fileName: String,
+        subDir: String? = null,
+    ): String? {
+        return saveMediaToPublicInternal(srcFile, fileName, subDir)
     }
 
     /**
      * 将应用私有文件保存进系统公共媒体库（Android 10+ 走 MediaStore，无需存储权限）。
      * 返回公共 MediaStore Uri 字符串；失败返回 null，由调用方标记任务失败。
      */
-    private fun saveImageToPublicPictures(srcFile: File): String? =
-        saveMediaToPublicInternal(srcFile, srcFile.name)
+    private fun saveImageToPublicPictures(srcFile: File, subDir: String? = null): String? =
+        saveMediaToPublicInternal(srcFile, srcFile.name, subDir)
 
-    private fun saveMediaToPublicInternal(srcFile: File, fileName: String): String? {
-        val (collection, relativePath, mime) = resolveSaveTarget(fileName)
+    private fun saveMediaToPublicInternal(
+        srcFile: File,
+        fileName: String,
+        subDir: String? = null,
+    ): String? {
+        val (collection, relativePath, mime) = resolveSaveTarget(fileName, subDir)
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 val values = ContentValues().apply {
@@ -1895,7 +1925,7 @@ class MainActivity: FlutterActivity() {
                     throw e
                 }
             } else {
-                val targetDir = File("/storage/emulated/0/DCIM/Zync")
+                val targetDir = File("/storage/emulated/0/DCIM/" + sanitizeSubDir(subDir))
                 if (!targetDir.exists()) targetDir.mkdirs()
                 val targetFile = File(targetDir, fileName)
                 FileInputStream(srcFile).use { input ->

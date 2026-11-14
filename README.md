@@ -62,6 +62,8 @@ The Bluetooth Low Energy LSS path is experimental and hidden by default. It is n
 - Focus peaking, zebra stripes, a luminance histogram, composition grid and framing guides are computed on-device from the preview and never affect the exported file.
 - Hold the manual-focus arrows to rack focus, or press the AF button to run a real autofocus cycle.
 - Interval shooting: choose an interval, a shot count and a start delay, then let it run. Captures still go through Shoot & Transfer.
+- In-camera HDR: the body merges two exposures into one JPEG (`0xD130`–`0xD133`), optionally keeping both originals on the card.
+- After a bracket or focus-stack sequence you can merge the frames in the app. The originals always stay on the camera card; the merged copy is share-resolution and is written to the folder you chose.
 - Photo/video mode switch with in-app recording control: start and stop recording from the phone, watch the REC timer and stereo audio meters, and see the same state when you press the red button on the body (the live-view header carries the recording flag).
 - Exposure bracketing across EV, shutter or ISO: pick the number of frames and the step, and the original value is always restored afterwards — even if you stop halfway or the camera rejects a write.
 - Focus stacking: step the focus motor a fixed number of pulses between frames, optionally returning to the start point when the sequence ends.

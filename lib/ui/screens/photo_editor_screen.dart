@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../../core/settings/app_settings.dart';
 import '../../engine/editor/photo_edit_controller.dart';
 import '../../engine/transfer/export_history_manager.dart';
 import '../../l10n/l10n.dart';
@@ -289,6 +290,7 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
       final saved = await CameraNativeBridge.saveMediaToGallery(
         tempFile.path,
         newName,
+        subDir: AppSettings.instance.exportFolder,
       );
       if (saved == null || saved.isEmpty) {
         final l10n = L10n.current;
