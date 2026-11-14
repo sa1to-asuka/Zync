@@ -503,6 +503,22 @@ abstract final class EngineL10n {
     ),
 
     // ==================== 开源致谢描述 ====================
+    'Z 系列三代能力分级、PTP/IP 0x000D 探活应答、0x9431 大文件分块与取景帧头遥测解析参考': (
+      en: 'Reference for Z-series capability tiers, PTP/IP 0x000D keep-alive probe, 0x9431 large-object chunking and live-view header telemetry',
+      ja: 'Zシリーズの世代別ケイパビリティ、PTP/IP 0x000D 生存確認、0x9431 大容量分割転送、ライブビューヘッダ解析のリファレンス',
+    ),
+    '断线重连状态机：单次超时、总恢复预算、退避与重连风暴防抖策略参考': (
+      en: 'Reference for the reconnect state machine: per-attempt timeout, total recovery budget, backoff and reconnect-storm debouncing',
+      ja: '再接続ステートマシンのリファレンス：試行タイムアウト、復旧予算、バックオフ、再接続ストームの抑制',
+    ),
+    '包围曝光序列生成与参数还原、A-B 点焦点堆叠交互参考': (
+      en: 'Reference for bracketing sequence generation, parameter restoration, and A-B focus stacking interaction',
+      ja: 'ブラケット撮影の系列生成・パラメータ復元、A-B フォーカススタッキング操作のリファレンス',
+    ),
+    '断点续传状态校验思路参考（临时文件长度校正、断连边界处理），未复用其源代码': (
+      en: 'Reference for resumable-download validation (temp-file length correction, disconnect boundary handling); no source code reused',
+      ja: 'レジューム転送の検証方針のリファレンス（一時ファイル長の補正、切断境界の扱い）。ソースコードは流用していません',
+    ),
     '图像处理、滤镜与编辑交互参考': (
       en: 'Image processing, filter pipeline, and editor interaction reference',
       ja: '画像処理・フィルター・編集UIのリファレンス',
@@ -1234,5 +1250,292 @@ abstract final class EngineL10n {
         'en' =>
           'Transfer interrupted; retrying (#$retryCount) in ${delaySec}s...',
         _ => '下载遇阻，$delaySec秒后第$retryCount次重试...',
+      };
+
+  // ==================== v2.6.0 断线重连 ====================
+
+  /// 队列项：等待重连后续传。
+  static String transferWaitingReconnect(String langCode) => switch (langCode) {
+        'ja' => '再接続後に自動で続きから転送します',
+        'en' => 'Will resume automatically after reconnecting',
+        _ => '等待重连后自动续传',
+      };
+
+  /// 传输中心顶部横幅：正在恢复连接。
+  static String recoveryBanner(String langCode, String phase, int attempt) =>
+      switch (langCode) {
+        'ja' => 'カメラとの接続を復元中… $phase (試行 $attempt)',
+        'en' => 'Restoring camera connection… $phase (attempt $attempt)',
+        _ => '正在恢复相机连接… $phase（第 $attempt 次）',
+      };
+
+  /// 恢复阶段名。
+  static String recoveryPhase(String langCode, String phase) => switch (phase) {
+        'waitingForNetwork' => switch (langCode) {
+            'ja' => 'ネットワーク待機',
+            'en' => 'waiting for network',
+            _ => '等待网络',
+          },
+        'probing' => switch (langCode) {
+            'ja' => 'ポート確認',
+            'en' => 'probing port',
+            _ => '探测端口',
+          },
+        'reconnecting' => switch (langCode) {
+            'ja' => '再接続中',
+            'en' => 'reconnecting',
+            _ => '重连中',
+          },
+        'restoringSession' => switch (langCode) {
+            'ja' => 'セッション復元',
+            'en' => 'restoring session',
+            _ => '恢复会话',
+          },
+        _ => phase,
+      };
+
+  /// 自动恢复最终失败。
+  static String recoveryExhausted(String langCode, String error) =>
+      switch (langCode) {
+        'ja' => '自動再接続を断念しました。カメラの Wi-Fi を確認してください ${error.isEmpty ? '' : '($error)'}',
+        'en' =>
+          'Automatic reconnect gave up. Check the camera Wi-Fi. ${error.isEmpty ? '' : '($error)'}',
+        _ => '自动重连已停止，请检查相机 Wi-Fi${error.isEmpty ? '' : '（$error）'}',
+      };
+
+  /// 重连成功提示。
+  static String recoverySucceeded(String langCode) => switch (langCode) {
+        'ja' => 'カメラに再接続しました',
+        'en' => 'Reconnected to the camera',
+        _ => '已重新连接相机',
+      };
+
+  /// 重连后文件已不在相机上。
+  static String transferObjectGone(String langCode) => switch (langCode) {
+        'ja' => '再接続後、このファイルはカメラ内に見つかりません',
+        'en' => 'File is no longer on the camera after reconnecting',
+        _ => '重连后相机端已找不到该文件',
+      };
+
+  // ==================== v2.6.0 录像控制 ====================
+
+  static String capturePhotoMode(String langCode) => switch (langCode) {
+        'ja' => '静止画',
+        'en' => 'Photo',
+        _ => '拍照',
+      };
+
+  static String captureVideoMode(String langCode) => switch (langCode) {
+        'ja' => '動画',
+        'en' => 'Video',
+        _ => '录像',
+      };
+
+  static String movieRecording(String langCode) => switch (langCode) {
+        'ja' => '録画中',
+        'en' => 'REC',
+        _ => '录制中',
+      };
+
+  static String movieStartingHint(String langCode) => switch (langCode) {
+        'ja' => '録画を開始しています…',
+        'en' => 'Starting recording…',
+        _ => '正在开始录制…',
+      };
+
+  static String movieFinalizingHint(String langCode) => switch (langCode) {
+        'ja' => 'ファイルを書き込み中です。少々お待ちください…',
+        'en' => 'Finalizing the file, please wait…',
+        _ => '正在封盘，请稍候…',
+      };
+
+  /// Z30 顶部拨杆不在视频档。
+  static String movieNeedPhysicalLever(String langCode) => switch (langCode) {
+        'ja' => 'カメラ上部のレバーを動画アイコンに合わせてください',
+        'en' => 'Move the camera lever to the video icon',
+        _ => '请把机身顶部拨杆拨到视频档',
+      };
+
+  /// 0xD0A4 禁录原因。bit 为位序号。
+  static String movieProhibitionReason(String langCode, int bit) =>
+      switch (bit) {
+        0 => switch (langCode) {
+            'ja' => 'メモリーカードが入っていません',
+            'en' => 'No memory card',
+            _ => '未插入存储卡',
+          },
+        1 => switch (langCode) {
+            'ja' => 'メモリーカードに異常があります',
+            'en' => 'Memory card error',
+            _ => '存储卡异常',
+          },
+        2 => switch (langCode) {
+            'ja' => 'メモリーカードがフォーマットされていません',
+            'en' => 'Memory card is not formatted',
+            _ => '存储卡未格式化',
+          },
+        3 => switch (langCode) {
+            'ja' => 'メモリーカードがいっぱいです',
+            'en' => 'Memory card is full',
+            _ => '存储卡已满',
+          },
+        9 => switch (langCode) {
+            'ja' => 'バッファ書き込み中です',
+            'en' => 'Still writing the buffer',
+            _ => '缓存尚未写完',
+          },
+        10 => switch (langCode) {
+            'ja' => 'すでに録画中です',
+            'en' => 'Already recording',
+            _ => '已经在录制中',
+          },
+        11 => switch (langCode) {
+            'ja' => 'カードが書き込み禁止です',
+            'en' => 'Card is write-protected',
+            _ => '存储卡处于写保护',
+          },
+        12 => switch (langCode) {
+            'ja' => 'ライブビュー拡大中は録画できません',
+            'en' => 'Cannot record while live view is magnified',
+            _ => '实时取景放大时不可录制',
+          },
+        13 => switch (langCode) {
+            'ja' => 'レバーが動画モードになっていません',
+            'en' => 'Lever is not in video mode',
+            _ => '切换杆未在录像档',
+          },
+        14 => switch (langCode) {
+            'ja' => '現在のアプリモードでは録画できません',
+            'en' => 'Recording is not allowed in this app mode',
+            _ => '当前应用模式不允许录制',
+          },
+        _ => switch (langCode) {
+            'ja' => '録画できません (理由コード $bit)',
+            'en' => 'Recording not allowed (reason bit $bit)',
+            _ => '当前不可录制（原因位 $bit）',
+          },
+      };
+
+  // ==================== v2.6.0 包围曝光 / 焦点包围 ====================
+
+  static String bracketTitle(String langCode) => switch (langCode) {
+        'ja' => '露出ブラケット',
+        'en' => 'Exposure Bracketing',
+        _ => '包围曝光',
+      };
+
+  static String focusStackTitle(String langCode) => switch (langCode) {
+        'ja' => 'フォーカスブラケット',
+        'en' => 'Focus Stacking',
+        _ => '焦点包围',
+      };
+
+  static String bracketRunning(int current, int total) => '$current / $total';
+
+  static String bracketRestored(String langCode) => switch (langCode) {
+        'ja' => '元の露出設定に戻しました',
+        'en' => 'Restored the original exposure settings',
+        _ => '已恢复拍摄前的曝光参数',
+      };
+
+  static String bracketRestoreWarning(String langCode) => switch (langCode) {
+        'ja' => '元の露出パラメータを復元できませんでした。手動で確認してください',
+        'en' => 'Could not restore the original exposure settings; please check',
+        _ => '未能恢复原始曝光参数，请手动检查',
+      };
+
+  static String bracketBuiltinConflict(String langCode) => switch (langCode) {
+        'ja' => 'カメラ本体のブラケットが有効です。先にオフにしてください',
+        'en' => 'In-camera bracketing is on; turn it off first',
+        _ => '机身内置包围曝光已开启，请先在相机上关闭',
+      };
+
+  static String taskBusyHint(String langCode) => switch (langCode) {
+        'ja' => '他のシーケンスが実行中です',
+        'en' => 'Another sequence is running',
+        _ => '其他序列任务正在运行',
+      };
+
+  // ==================== v2.6.0 序列参数面板 ====================
+
+  static String seqShotCount(String langCode, int n) => switch (langCode) {
+        'ja' => '$n 枚',
+        'en' => '$n shots',
+        _ => '$n 张',
+      };
+
+  static String seqStepCount(String langCode, int n) => switch (langCode) {
+        'ja' => '間隔 $n 段',
+        'en' => 'Step $n stop(s)',
+        _ => '间隔 $n 档',
+      };
+
+  static String seqSettleMs(String langCode, int ms) => switch (langCode) {
+        'ja' => '安定 $ms ms',
+        'en' => 'Settle $ms ms',
+        _ => '稳定 $ms ms',
+      };
+
+  static String seqOrderNormalFirst(String langCode) => switch (langCode) {
+        'ja' => '標準 → 暗 → 明',
+        'en' => 'Normal → dark → bright',
+        _ => '正常 → 暗 → 亮',
+      };
+
+  static String seqOrderDarkToLight(String langCode) => switch (langCode) {
+        'ja' => '暗 → 明',
+        'en' => 'Dark → bright',
+        _ => '暗 → 亮',
+      };
+
+  static String axisLabel(String langCode, String axis) => switch (axis) {
+        'exposureCompensation' => switch (langCode) {
+            'ja' => '露出補正',
+            'en' => 'EV',
+            _ => '曝光补偿',
+          },
+        'shutter' => switch (langCode) {
+            'ja' => 'シャッター',
+            'en' => 'Shutter',
+            _ => '快门',
+          },
+        _ => 'ISO',
+      };
+
+  static String focusStepPerShot(String langCode, int n) =>
+      switch (langCode) {
+        'ja' => '1 枚あたり $n ステップ',
+        'en' => '$n steps per shot',
+        _ => '每张 $n 步',
+      };
+
+  static String focusFarToNear(String langCode) => switch (langCode) {
+        'ja' => '遠 → 近',
+        'en' => 'Far → near',
+        _ => '由远到近',
+      };
+
+  static String focusNearToFar(String langCode) => switch (langCode) {
+        'ja' => '近 → 遠',
+        'en' => 'Near → far',
+        _ => '由近到远',
+      };
+
+  static String focusReturnToStart(String langCode) => switch (langCode) {
+        'ja' => '完了後に起点へ戻す',
+        'en' => 'Return to start when done',
+        _ => '完成后回到起点',
+      };
+
+  static String bracketSubtitle(String langCode) => switch (langCode) {
+        'ja' => 'EV / シャッター / ISO の3軸、撮影後に元の値へ戻します',
+        'en' => 'EV / shutter / ISO axes; restores the original values',
+        _ => 'EV / 快门 / ISO 三轴可选，自动还原原始参数',
+      };
+
+  static String focusStackSubtitle(String langCode) => switch (langCode) {
+        'ja' => '一定ステップでピントを送り、後工程で合成できる連写を撮ります',
+        'en' => 'Steps the focus and captures a set for desktop stacking',
+        _ => '按固定步长推进焦点，拍完整组供桌面端合成',
       };
 }

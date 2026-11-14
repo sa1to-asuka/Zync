@@ -4,6 +4,7 @@ import '../core/constants/ptp_opcodes.dart';
 import '../core/settings/app_settings.dart';
 import '../core/utils/byte_buffer_ext.dart';
 import '../core/utils/camera_error_mapper.dart';
+import '../engine/capture/movie_recording_controller.dart';
 import '../engine/picture_control/np3_codec.dart';
 import 'camera_driver.dart';
 import 'camera_io_coordinator.dart';
@@ -12,6 +13,13 @@ import 'ptp_ip_client.dart';
 import 'ptp_transport.dart';
 import 'usb_ptp_transport.dart';
 import 'ptp_packet.dart';
+
+/// 何时必须走 64 位分块读取。
+///
+/// `0x101B GetPartialObject` 的偏移量与长度都是 32 位无符号数，
+/// 一旦请求区间跨过 4GiB 边界就会被截断，大视频会静默损坏。
+bool requiresPartialObject64(int offset, int maxBytes) =>
+    offset > 0xFFFFFFFF || (offset + maxBytes) > 0xFFFFFFFF;
 
 /// 尼康 PTP 设备信息完整描述实体 (0x1001 GetDeviceInfo)
 /// 数据集布局遵循 ISO 15740 / PIMA 15740。
@@ -207,7 +215,7 @@ class NikonDeviceInfo {
 
 /// 尼康专属相机硬件协议驱动。
 /// Nikon 扩展操作码与设备属性读取。
-class NikonDriver implements CameraDriver {
+class NikonDriver implements CameraDriver, MovieRecordingDriver {
   PtpTransport? _client;
   CameraConnectionState _state = CameraConnectionState.disconnected;
   String _cameraModel = 'Nikon Camera';
@@ -220,6 +228,10 @@ class NikonDriver implements CameraDriver {
   final StreamController<CameraConnectionState> _stateController =
       StreamController<CameraConnectionState>.broadcast();
 
+  /// 相机事件码广播（0x4002 / 0xC108 等），录像封盘确认要用。
+  final StreamController<int> _eventCodeController =
+      StreamController<int>.broadcast();
+
   List<int> _detectedStorageIds = [];
   final Map<int, CameraFileItem> _objectInfoCache = {};
   final Map<int, Uint8List> _thumbCache = {};
@@ -227,6 +239,36 @@ class NikonDriver implements CameraDriver {
   final CameraIoCoordinator _io = CameraIoCoordinator();
   CameraTransportKind _transportKind = CameraTransportKind.wifi;
   bool _liveViewActive = false;
+
+  // ---- 自动重连支持 ----
+  String? _lastWifiHost;
+  int _lastWifiPort = 15740;
+  String? _lastUsbDeviceName;
+  bool _lastWasUsb = false;
+  StreamSubscription<PtpPacket>? _eventSub;
+
+  /// 非用户主动断开（掉线 / USB 拔出 / 网络丢失）时回调一次。
+  void Function()? onUnexpectedDisconnect;
+
+  /// 用户是否正在主动断开；主动断开不触发重连。
+  bool _userDisconnect = false;
+
+  /// 重连目标是否仍然存在。
+  bool get canReconnect =>
+      _lastWasUsb ? _lastUsbDeviceName != null : _lastWifiHost != null;
+
+  /// 用上次成功的连接目标重建会话。
+  Future<void> reconnect({void Function(String msg)? onLog}) async {
+    if (_lastWasUsb) {
+      final name = _lastUsbDeviceName;
+      if (name == null) throw StateError('没有可重连的 USB 设备');
+      await connectUsb(name, onLog: onLog);
+    } else {
+      final host = _lastWifiHost;
+      if (host == null) throw StateError('没有可重连的 Wi-Fi 目标');
+      await connect(host, port: _lastWifiPort, onLog: onLog);
+    }
+  }
 
   /// 会话内已被相机明确拒绝 (0x2005) 的操作码，避免逐帧重复尝试。
   final Set<int> _unsupportedOps = <int>{};
@@ -289,6 +331,10 @@ class NikonDriver implements CameraDriver {
     void Function(String msg)? onLog,
   }) async {
     _logCallback = onLog;
+    _userDisconnect = false;
+    _lastWifiHost = host;
+    _lastWifiPort = port;
+    _lastWasUsb = false;
     _state = CameraConnectionState.connecting;
     _stateController.add(_state);
     PtpIpClient? client;
@@ -327,12 +373,14 @@ class NikonDriver implements CameraDriver {
         clientGuid: AppSettings.instance.ptpClientGuidBytes,
       );
       _client = client;
+      client.onUnexpectedDisconnect = _notifyUnexpectedDisconnect;
       await client.connect();
       _state = CameraConnectionState.connected;
       _stateController.add(_state);
 
       // 监听相机推送事件 (ObjectAdded 0x4002) 用于边拍边传
-      client.events.listen(_handleCameraEvent);
+      await _eventSub?.cancel();
+      _eventSub = client.events.listen(_handleCameraEvent);
 
       // 查询设备信息以获取具体型号与支持能力集
       try {
@@ -358,10 +406,13 @@ class NikonDriver implements CameraDriver {
   /// 通过 USB (PTP over OTG) 连接相机。首期支持连接、浏览存储卡与分块下载。
   Future<void> connectUsb(String deviceName,
       {void Function(String msg)? onLog}) async {
+    _userDisconnect = false;
     final transport = UsbPtpTransport(deviceName: deviceName, onLog: onLog);
     try {
       await connectTransport(transport,
           onLog: onLog, kind: CameraTransportKind.usb);
+      _lastUsbDeviceName = deviceName;
+      _lastWasUsb = true;
     } catch (e) {
       await transport.disconnect();
       transport.dispose();
@@ -379,10 +430,12 @@ class NikonDriver implements CameraDriver {
     _stateController.add(_state);
     try {
       _client = transport;
+      transport.onUnexpectedDisconnect = _notifyUnexpectedDisconnect;
       await _client!.connect();
       _state = CameraConnectionState.connected;
       _stateController.add(_state);
-      _client!.events.listen(_handleCameraEvent);
+      await _eventSub?.cancel();
+      _eventSub = _client!.events.listen(_handleCameraEvent);
 
       try {
         await _queryDeviceInfo();
@@ -401,14 +454,18 @@ class NikonDriver implements CameraDriver {
 
   @override
   Future<void> disconnect() async {
+    _userDisconnect = true;
     // 先退出取景，避免相机停留在取景模式无法休眠。
     try {
       await endLiveView();
     } catch (_) {}
     _io.reset();
+    await _eventSub?.cancel();
+    _eventSub = null;
     await _client?.disconnect();
     _client = null;
     _state = CameraConnectionState.disconnected;
+    // 注意：不重置 _lastWasUsb / _lastWifiHost，重连需要它们。
     _transportKind = CameraTransportKind.wifi;
     _unsupportedOps.clear();
     // dispose 场景下控制器可能已关闭，避免向已关闭的 StreamController 发送事件
@@ -941,6 +998,30 @@ class NikonDriver implements CameraDriver {
   Future<Uint8List> downloadPartialObject(
       int handle, int offset, int maxBytes) async {
     if (!isConnected) return Uint8List(0);
+
+    // 0x101B 的偏移量只有 32 位，超过 4GiB 的视频会在第 4GB 处被截断。
+    // 这时改用 Nikon 的 0x9431 GetPartialObject64：偏移拆成高低 32 位两个参数。
+    final needs64Bit = requiresPartialObject64(offset, maxBytes);
+    if (needs64Bit) {
+      if (_supports(PtpOpCodes.nikonGetPartialObject64)) {
+        final low = offset & 0xFFFFFFFF;
+        final high = (offset >> 32) & 0xFFFFFFFF;
+        try {
+          return await _client!.executeDataIn(
+              PtpOpCodes.nikonGetPartialObject64,
+              [handle, low, high, maxBytes]);
+        } on PtpException catch (e) {
+          _markUnsupported(PtpOpCodes.nikonGetPartialObject64, e);
+          throw PtpException(
+            PtpOpCodes.nikonGetPartialObject64,
+            e.responseCode,
+            '相机不支持 64 位分块读取 (0x9431)，无法续传超过 4GiB 的文件',
+          );
+        }
+      }
+      throw StateError('相机不支持 0x9431，超过 4GiB 的文件无法分段读取');
+    }
+
     // 0x101B: GetPartialObject (Handle, Offset, MaxBytes)
     return await _client!
         .executeDataIn(PtpOpCodes.getPartialObject, [handle, offset, maxBytes]);
@@ -1000,11 +1081,27 @@ class NikonDriver implements CameraDriver {
   // 事件处理与私有辅助函数
   // ==========================================
 
+  /// 底层传输报告被动掉线：更新状态并交给上层重连控制器。
+  /// 用户主动 `disconnect()` 不会走到这里。
+  void _notifyUnexpectedDisconnect() {
+    if (_userDisconnect) return;
+    if (_state == CameraConnectionState.disconnected) return;
+    _state = CameraConnectionState.error;
+    if (!_stateController.isClosed) {
+      _stateController.add(_state);
+    }
+    onUnexpectedDisconnect?.call();
+  }
+
   void _handleCameraEvent(PtpPacket eventPacket) async {
     // PTP/IP Event 负载：eventCode(2) + transactionId(4) + param1(4)...
+    if (eventPacket.payload.length < 2) return;
+    final eventCode = eventPacket.getUint16(0);
+    if (!_eventCodeController.isClosed) {
+      _eventCodeController.add(eventCode);
+    }
     if (eventPacket.payload.length >= 10) {
-      final eventCode = eventPacket.getUint16(0);
-      if (eventCode == 0x4002) {
+      if (eventCode == PtpOpCodes.eventObjectAdded) {
         final newHandle = eventPacket.getUint32(6);
         final fileInfo = await getObjectInfo(newHandle);
         if (fileInfo != null) {
@@ -1076,6 +1173,7 @@ class NikonDriver implements CameraDriver {
     disconnect();
     _photoCapturedController.close();
     _stateController.close();
+    _eventCodeController.close();
   }
 
   // ==========================================
@@ -1297,6 +1395,72 @@ class NikonDriver implements CameraDriver {
       // 部分固件不接受取消；小步进本身也会很快结束，忽略即可。
     }
   }
+
+  // ==========================================
+  // 录像控制 (0x920A / 0x920B / 0xD1A6 / 0xD0A4)
+  // ==========================================
+
+  @override
+  bool get supportsMovieRecording =>
+      _supports(PtpOpCodes.nikonStartMovieRecInCard) &&
+      _supports(PtpOpCodes.nikonEndMovieRec);
+
+  @override
+  Future<void> startMovieRecording() async {
+    final client = _client;
+    if (client == null || !isConnected) throw StateError('相机未连接');
+    try {
+      await client.executeOperation(
+          PtpOpCodes.nikonStartMovieRecInCard, const <int>[0, 0]);
+    } catch (e) {
+      _markUnsupported(PtpOpCodes.nikonStartMovieRecInCard, e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> stopMovieRecording() async {
+    final client = _client;
+    if (client == null || !isConnected) throw StateError('相机未连接');
+    try {
+      await client.executeOperation(PtpOpCodes.nikonEndMovieRec);
+    } catch (e) {
+      _markUnsupported(PtpOpCodes.nikonEndMovieRec, e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<int?> readLiveViewSelector() =>
+      _readUintProperty(PtpOpCodes.devicePropLiveViewSelector);
+
+  @override
+  Future<int?> readMovieRecProhibition() =>
+      _readUintProperty(PtpOpCodes.devicePropMovieRecProhibition);
+
+  @override
+  Future<void> setLiveViewSelector(int value) async {
+    final bytes = Uint8List(1)..[0] = value & 0xFF;
+    await writeDevicePropValue(PtpOpCodes.devicePropLiveViewSelector, bytes);
+  }
+
+  /// 属性宽度随机型不同：UINT8 返回 1 字节，UINT32 返回 4 字节。
+  Future<int?> _readUintProperty(int propertyId) async {
+    if (!isConnected) return null;
+    try {
+      final data = await fetchDevicePropValue(propertyId);
+      if (data.isEmpty) return null;
+      if (data.length >= 4) {
+        return ByteData.sublistView(data, 0, 4).getUint32(0, Endian.little);
+      }
+      return data[0];
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Stream<int> get eventCodes => _eventCodeController.stream;
 
   @override
   Future<Uint8List> fetchDevicePropDesc(int propertyId) async {

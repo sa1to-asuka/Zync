@@ -104,6 +104,11 @@
 | [LibRaw](https://github.com/LibRaw/LibRaw) | RAW 解码 | LGPL-2.1 / CDDL-1.0 |
 | [AndroidX Media3](https://github.com/androidx/media) | 视频播放与编辑 | Apache-2.0 |
 
+| [erik-sutton95/OpenCine](https://github.com/erik-sutton95/OpenCine) | Z 系列能力分级、`0x000D` 探活应答、`0x9431` 大文件分块、取景帧头遥测解析参考 | Apache-2.0 |
+| [erik-sutton95/OpenZCine](https://github.com/erik-sutton95/OpenZCine) | 断线重连状态机与恢复预算策略参考 | Apache-2.0 |
+| [dukus/digiCamControl](https://github.com/dukus/digiCamControl) | `NikonZ30.cs` 模式编码、包围曝光序列与 A-B 点焦点堆叠参考 | MIT |
+| [besi/airnef](https://github.com/besi/airnef) | 断点续传状态校验思路参考（未复用源代码） | GPL-3.0 |
+
 > 第三方项目的版权与许可证归原作者所有，具体以各仓库当前许可证文件为准。
 
 ## 5. 实现边界
@@ -115,3 +120,12 @@
 - 峰值对焦、斑马纹与直方图是本机图像处理，不是相机能力；关闭后不影响取景与导出。
 - 构图参考线只依据机身朝向（0/90/180/270）绘制，PTP 未暴露俯仰/横滚角，因此不提供真正的水准泡。
 - 不提供固件修改、刷机或任何写机内固件的能力。
+
+## 6. v2.6.0 新增协议边界
+
+- **PTP/IP `0x000D` ProbeRequest**：相机主动探活，控制端必须原样回送 `0x000E ProbeResponse`（协议版本负载一致）。不应答时部分 Z 机身会判定控制端失联并主动断开事件通道。
+- **`0x9431 GetPartialObject64`**：参数为 `[handle, offsetLow, offsetHigh, maxBytes]`。偏移或区间跨过 4 GiB 时必须改用该指令，否则 32 位偏移会溢出截断。
+- **取景帧头遥测**：`0x9203` 负载在 JPEG SOI 之前有厂商头部；当 `SOI 偏移 >= 840` 时，字节 828 为录像状态、824–827 为双声道电平、839 为机身朝向。短包机型按纯 JPEG 处理，不解析头部。
+- **录像控制**：`0x920A` 开始录制、`0x920B` 停止；停止后必须等 `0xC108 MovieRecordComplete`（或以帧头录像标志转 false 兜底）再发下一条指令。`0xD1A6` 为拍照/录像选择器，写入被拒说明机身物理拨杆不在视频档。`0xD0A4` 为禁录原因位掩码（bit 0 无卡、1 卡异常、2 未格式化、3 卡满、9 缓存未写完、10 已在录制、11 写保护、12 取景放大、13 拨杆未在录像档、14 应用模式受限）。
+- **包围曝光**：`0xD0C0` 为机身内置包围开关，非 0 时 App 不应叠加偏移，否则曝光量双重计算。App 端序列按属性档位表下标生成，结束时无条件还原原值。
+- **焦点堆叠**：`0x9204 MfDrive` 需要取景保持开启；`0xA00C` 表示已到行程尽头，应停止推进而不是继续拍重复画面。`0x9207 InitiateCaptureRecInMedia` 的第一个参数设为 1 可跳过每次重新对焦。

@@ -28,6 +28,20 @@ class UsbPtpTransport implements PtpTransport {
   final StreamController<PtpPacket> _eventController =
       StreamController<PtpPacket>.broadcast();
 
+  void Function()? _onUnexpectedDisconnect;
+
+  @override
+  set onUnexpectedDisconnect(void Function()? callback) {
+    _onUnexpectedDisconnect = callback;
+  }
+
+  void _handleUnexpectedDisconnect() {
+    if (!_connected) return;
+    _connected = false;
+    onLog?.call('USB: 设备被动断开，交由重连控制器处理');
+    _onUnexpectedDisconnect?.call();
+  }
+
   /// 原生 UsbPtpSession 不允许并发 bulk 请求；缩略图、属性查询与分块下载
   /// 必须串行进入同一条 USB 会话。
   Future<void> _pending = Future<void>.value();
@@ -91,6 +105,10 @@ class UsbPtpTransport implements PtpTransport {
     if (event is! Map) return;
     final name = event['deviceName']?.toString() ?? '';
     if (name.isNotEmpty && name != deviceName) return;
+    if (event['detached'] == true) {
+      _handleUnexpectedDisconnect();
+      return;
+    }
     final raw = event['data'];
     if (raw is! Uint8List || raw.length < 12) return;
     final length = ByteData.sublistView(raw, 0, 4).getUint32(0, Endian.little);

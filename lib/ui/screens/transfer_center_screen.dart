@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../engine/transfer/download_manager.dart';
+import '../../l10n/engine_l10n.dart';
 import '../../l10n/l10n.dart';
+import '../../protocol/connection_recovery_controller.dart';
 import '../design/design.dart';
 import '../widgets/adaptive_layout.dart';
 
@@ -8,9 +10,16 @@ import '../widgets/adaptive_layout.dart';
 ///
 /// 与 AppBar 的进度徽标、后台前台服务通知同源（都读同一个 DownloadManager）。
 class TransferCenterScreen extends StatelessWidget {
-  const TransferCenterScreen({super.key, required this.manager});
+  const TransferCenterScreen({
+    super.key,
+    required this.manager,
+    this.recovery,
+  });
 
   final DownloadManager manager;
+
+  /// 断线自动重连状态；为 null 时不显示恢复横幅。
+  final ConnectionRecoveryController? recovery;
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +27,8 @@ class TransferCenterScreen extends StatelessWidget {
     final l10n = context.l10n;
 
     return AnimatedBuilder(
-      animation: manager,
+      animation:
+          Listenable.merge([manager, if (recovery != null) recovery!]),
       builder: (context, _) {
         final tasks = manager.tasks;
         return Scaffold(
@@ -33,6 +43,7 @@ class TransferCenterScreen extends StatelessWidget {
                   )
                 : Column(
                     children: [
+                      _buildReconnectBanner(context),
                       _buildSummary(context),
                       Divider(height: 1, color: zc.outlineVariant),
                       Expanded(
@@ -53,6 +64,84 @@ class TransferCenterScreen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  /// 断线重连横幅：正在恢复 / 已恢复 / 放弃。
+  Widget _buildReconnectBanner(BuildContext context) {
+    final zc = context.zc;
+    final zt = context.zt;
+    final device = recovery;
+    if (device == null) return const SizedBox.shrink();
+
+    final lang = L10n.current.localeName;
+    final waiting = manager.waitingReconnectCount;
+
+    final String? text;
+    Color color;
+    IconData icon;
+
+    switch (device.phase) {
+      case RecoveryPhase.waitingForNetwork:
+      case RecoveryPhase.probing:
+      case RecoveryPhase.reconnecting:
+      case RecoveryPhase.restoringSession:
+        text = EngineL10n.recoveryBanner(
+          lang,
+          EngineL10n.recoveryPhase(lang, device.phase.name),
+          device.attempt,
+        );
+        color = zc.warning;
+        icon = Icons.sync_rounded;
+        break;
+      case RecoveryPhase.connected:
+        text = EngineL10n.recoverySucceeded(lang);
+        color = zc.accent;
+        icon = Icons.check_circle_outline;
+        break;
+      case RecoveryPhase.exhausted:
+        text = EngineL10n.recoveryExhausted(lang, device.lastError);
+        color = zc.danger;
+        icon = Icons.error_outline;
+        break;
+      case RecoveryPhase.idle:
+        if (waiting == 0) return const SizedBox.shrink();
+        text = EngineL10n.transferWaitingReconnect(lang);
+        color = zc.warning;
+        icon = Icons.cloud_off_outlined;
+        break;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        ZSpace.lg,
+        ZSpace.md,
+        ZSpace.lg,
+        0,
+      ),
+      child: ZCard(
+        padding: const EdgeInsets.symmetric(
+          horizontal: ZSpace.md,
+          vertical: ZSpace.sm + 2,
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: color),
+            const SizedBox(width: ZSpace.sm),
+            Expanded(
+              child: Text(
+                text,
+                style: zt.caption.copyWith(color: color),
+              ),
+            ),
+            if (waiting > 0)
+              ZTag(
+                text: '$waiting',
+                color: color,
+              ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -185,6 +274,7 @@ class TransferCenterScreen extends StatelessWidget {
     final zt = context.zt;
     final l10n = context.l10n;
     final file = task.fileItem;
+    final lang = L10n.current.localeName;
 
     final statusText = switch (task.status) {
       DownloadTaskStatus.queued => l10n.transferStatusQueued,
@@ -194,6 +284,8 @@ class TransferCenterScreen extends StatelessWidget {
       DownloadTaskStatus.failed =>
         l10n.transferStatusFailedReason(task.error ?? l10n.commonUnknownError),
       DownloadTaskStatus.canceled => l10n.transferStatusCancelled,
+      DownloadTaskStatus.pausedWaitingReconnect =>
+        EngineL10n.transferWaitingReconnect(lang),
     };
 
     final badge = file.isRaw
@@ -311,6 +403,13 @@ class TransferCenterScreen extends StatelessWidget {
             strokeWidth: 2,
             color: zc.accent,
           ),
+        );
+      case DownloadTaskStatus.pausedWaitingReconnect:
+        return ZButton(
+          label: l10n.commonCancel,
+          variant: ZButtonVariant.ghost,
+          size: ZButtonSize.sm,
+          onTap: () => manager.cancelTask(task),
         );
     }
   }

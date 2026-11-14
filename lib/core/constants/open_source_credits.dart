@@ -193,6 +193,30 @@ const List<OpenSourceCredit> openSourceProjectCredits = [
     url: 'https://github.com/andreavolpato/spektrafilm',
     license: 'GPL-3.0 / CC BY-SA 4.0',
   ),
+  OpenSourceCredit(
+    name: 'OpenCine',
+    description: 'Z 系列三代能力分级、PTP/IP 0x000D 探活应答、0x9431 大文件分块与取景帧头遥测解析参考',
+    url: 'https://github.com/erik-sutton95/OpenCine',
+    license: 'Apache-2.0',
+  ),
+  OpenSourceCredit(
+    name: 'OpenZCine',
+    description: '断线重连状态机：单次超时、总恢复预算、退避与重连风暴防抖策略参考',
+    url: 'https://github.com/erik-sutton95/OpenZCine',
+    license: 'Apache-2.0',
+  ),
+  OpenSourceCredit(
+    name: 'digiCamControl',
+    description: '包围曝光序列生成与参数还原、A-B 点焦点堆叠交互参考',
+    url: 'https://github.com/dukus/digiCamControl',
+    license: 'MIT',
+  ),
+  OpenSourceCredit(
+    name: 'airnef',
+    description: '断点续传状态校验思路参考（临时文件长度校正、断连边界处理），未复用其源代码',
+    url: 'https://github.com/besi/airnef',
+    license: 'GPL-3.0',
+  ),
 ];
 
 const List<OpenSourceCredit> openSourceRuntimeCredits = [

@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import '../core/constants/ptp_opcodes.dart';
 import '../core/utils/byte_buffer_ext.dart';
 
 /// PTP/IP 协议数据包实体
@@ -57,6 +58,20 @@ class PtpPacket {
     final buffer = PtpByteBuffer()..writeUint32(connectionNumber);
     final payload = buffer.toBytes();
     return PtpPacket(length: payload.length + 8, type: 3, payload: payload);
+  }
+
+  /// 快捷构造: ProbeResponse (Type = 14)。
+  ///
+  /// 规范要求原样回送 ProbeRequest 的协议版本负载；部分 Z 机身会在
+  /// 收不到应答时判定控制端失联并主动断开事件通道。
+  static PtpPacket buildProbeResponse(Uint8List requestPayload) {
+    final payload = requestPayload.isEmpty
+        ? (PtpByteBuffer()..writeUint32(0x00010000)).toBytes()
+        : requestPayload;
+    return PtpPacket(
+        length: payload.length + 8,
+        type: PtpOpCodes.ptpIpProbeResponse,
+        payload: payload);
   }
 
   /// 快捷构造: OperationRequest (Type = 6)

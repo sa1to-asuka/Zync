@@ -29,6 +29,9 @@ enum _ConnectionTransport { wifi, usb }
 class ConnectScreen extends StatefulWidget {
   final CameraDriver driver;
   final VoidCallback onConnected;
+
+  /// 用户主动断开时通知外层，用于取消正在进行的自动重连。
+  final VoidCallback? onDisconnect;
   final void Function({bool exportedTab, bool enterCollagePick})?
       onNavigateToGallery;
   final void Function({
@@ -50,6 +53,7 @@ class ConnectScreen extends StatefulWidget {
     super.key,
     required this.driver,
     required this.onConnected,
+    this.onDisconnect,
     this.onNavigateToGallery,
     this.onOpenWatermark,
     this.onOpenTransferCenter,
@@ -220,6 +224,7 @@ class ConnectScreenState extends State<ConnectScreen>
   }
 
   Future<void> _handleDisconnect() async {
+    widget.onDisconnect?.call();
     await widget.driver.disconnect();
     await CameraNativeBridge.unbindWifi();
     _transport = _ConnectionTransport.wifi;

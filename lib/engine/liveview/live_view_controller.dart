@@ -7,7 +7,7 @@ import '../../protocol/camera_io_coordinator.dart';
 import '../../protocol/ptp_ip_client.dart';
 import 'live_view_analyzer.dart';
 import 'live_view_frame_pipeline.dart';
-import 'live_view_jpeg.dart';
+import 'nikon_live_view_packet.dart';
 
 enum LiveViewState { idle, starting, running, suspended, failed }
 
@@ -71,6 +71,26 @@ class LiveViewController extends ChangeNotifier {
   int get frameWidth => _frameWidth;
   int get frameHeight => _frameHeight;
   bool get isRunning => _state == LiveViewState.running;
+
+  // ---- 取景帧头遥测（录像状态 / 音频电平）----
+  bool _cameraRecording = false;
+  bool _hasTelemetry = false;
+  int _audioPeakLeft = 0;
+  int _audioPeakRight = 0;
+  int _audioCurrentLeft = 0;
+  int _audioCurrentRight = 0;
+  int _headerOrientation = 0;
+
+  /// 机身侧是否正在录像。在机身上按红色录像键时这里也会立刻反映。
+  bool get cameraRecording => _cameraRecording;
+
+  /// 当前固件的帧头是否带可解析遥测（短包机型为 false）。
+  bool get hasFrameTelemetry => _hasTelemetry;
+  int get audioPeakLeft => _audioPeakLeft;
+  int get audioPeakRight => _audioPeakRight;
+  int get audioCurrentLeft => _audioCurrentLeft;
+  int get audioCurrentRight => _audioCurrentRight;
+  int get headerOrientation => _headerOrientation;
   bool get isActive =>
       _state == LiveViewState.running ||
       _state == LiveViewState.starting ||
@@ -227,8 +247,10 @@ class LiveViewController extends ChangeNotifier {
       _io.liveViewTransactionStarted();
       try {
         final payload = await _driver.fetchLiveViewFrame();
-        final jpeg = LiveViewJpeg.extract(payload);
+        final packet = NikonLiveViewPacket.parse(payload);
+        final jpeg = packet.jpeg;
         if (jpeg != null) {
+          _recordTelemetry(packet);
           _pipeline.offerJpeg(jpeg);
           // 分析是旁路：同步投递、可丢弃，绝不 await，失败也不影响取景。
           _analysis?.offerJpeg(jpeg);
@@ -287,6 +309,17 @@ class LiveViewController extends ChangeNotifier {
     }
     await _sleep(const Duration(milliseconds: 300));
     return true;
+  }
+
+  void _recordTelemetry(NikonLiveViewPacket packet) {
+    _cameraRecording = packet.isRecording;
+    _hasTelemetry = packet.hasTelemetry;
+    if (!packet.hasTelemetry) return;
+    _audioPeakLeft = packet.peakLeft;
+    _audioPeakRight = packet.peakRight;
+    _audioCurrentLeft = packet.currentLeft;
+    _audioCurrentRight = packet.currentRight;
+    _headerOrientation = packet.orientation;
   }
 
   void _onFrameArrived() {

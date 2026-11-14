@@ -17,7 +17,7 @@
 Zync is an open-source Flutter application built around a focused workflow for Nikon Z-series cameras: connect to the camera, browse and transfer photos, then finish and export them with a watermark or color treatment. It is designed to work directly with the camera over Wi-Fi PTP/IP or USB PTP without requiring a vendor account, cloud service, or proprietary SDK.
 
 - Project: <https://github.com/sa1to-asuka/Zync>
-- Version: `2.5.1`
+- Version: `2.6.0`
 - License: MIT
 - Primary platform: Android
 
@@ -62,6 +62,9 @@ The Bluetooth Low Energy LSS path is experimental and hidden by default. It is n
 - Focus peaking, zebra stripes, a luminance histogram, composition grid and framing guides are computed on-device from the preview and never affect the exported file.
 - Hold the manual-focus arrows to rack focus, or press the AF button to run a real autofocus cycle.
 - Interval shooting: choose an interval, a shot count and a start delay, then let it run. Captures still go through Shoot & Transfer.
+- Photo/video mode switch with in-app recording control: start and stop recording from the phone, watch the REC timer and stereo audio meters, and see the same state when you press the red button on the body (the live-view header carries the recording flag).
+- Exposure bracketing across EV, shutter or ISO: pick the number of frames and the step, and the original value is always restored afterwards — even if you stop halfway or the camera rejects a write.
+- Focus stacking: step the focus motor a fixed number of pulses between frames, optionally returning to the start point when the sequence ends.
 - On phones live view is a full-screen tool opened from the home grid; on tablets it is a two-pane workspace with a side panel. Live view and remote capture are verified on the Nikon Z 30; other bodies may behave differently and the screen says so.
 
 ### Camera gallery
@@ -77,6 +80,9 @@ The Bluetooth Low Energy LSS path is experimental and hidden by default. It is n
 ### Transfer engine
 
 - Use `GetPartialObject` for streaming downloads in 512 KB chunks.
+- The queue is persisted to disk and resumes from the exact byte after an app kill or a reconnect; camera-side object handles are re-resolved by file name, size and capture time, and anything that can no longer be matched is reported instead of guessed.
+- Files larger than 4 GiB switch to `0x9431 GetPartialObject64`, so long videos are not truncated at the 32-bit offset boundary.
+- A Wi-Fi drop or USB unplug pauses the queue instead of failing it, and reconnection wakes it back up automatically.
 - Continue large photo and RAW downloads without blocking the rest of the interface.
 - Manage every task in the Transfer Center with progress, failure details, pause, resume, cancel, retry, and completed-task cleanup.
 - Keep transfers alive in the background with a foreground service and progress notification.
@@ -293,6 +299,10 @@ Thank you to the maintainers and contributors of the projects below. Each projec
 | [Spektrafilm](https://github.com/andreavolpato/spektrafilm) | Standalone native spectral film engine: H&D density curves, DIR couplers, halation, silver-halide grain, print paper rendering | Code GPL-3.0 / profiles CC BY-SA 4.0 |
 | [NICO](https://github.com/haecksenwerk/nico) | USB live view, focus-point selection, and exposure property read/write reference | MIT |
 | [Shotdeck](https://github.com/Fluoro-Antimonic-Acid/Shotdeck) | Live-view, capture, and object-confirmation behavior reference | GPL-3.0 |
+| [OpenCine](https://github.com/erik-sutton95/OpenCine) | Z-series capability tiers, PTP/IP `0x000D` keep-alive probe, `0x9431` chunking, and live-view header telemetry reference | Apache-2.0 |
+| [OpenZCine](https://github.com/erik-sutton95/OpenZCine) | Reconnect state machine: per-attempt timeout, total recovery budget, backoff, and storm debouncing reference | Apache-2.0 |
+| [digiCamControl](https://github.com/dukus/digiCamControl) | Bracketing sequence generation, parameter restoration, and A-B focus-stacking interaction reference | MIT |
+| [airnef](https://github.com/besi/airnef) | Resumable-download validation approach reference; no source code reused | GPL-3.0 |
 | [LutCameraPro](https://github.com/laodamanbaout/LutCameraPro-) | PTP/IP live-view and connection-boundary reference | Apache-2.0 |
 | [1dlut-z30-filters](https://github.com/haotiandi1011-lgtm/1dlut-z30-filters) | Z 30 tone-curve payload layout and C1-C9 write-back verification reference | MIT |
 | [aero-shutter](https://github.com/subhashraveendran/aero-shutter) | Wi-Fi PTP/IP import behavior reference | MIT |

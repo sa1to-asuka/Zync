@@ -8,6 +8,7 @@ import '../../core/utils/camera_error_mapper.dart';
 import '../../l10n/l10n.dart';
 import '../../protocol/camera_driver.dart';
 import '../../protocol/camera_native_bridge.dart';
+import 'download_queue_store.dart';
 import 'export_history_manager.dart';
 import 'keep_alive_arbiter.dart';
 
@@ -18,11 +19,14 @@ enum DownloadTaskStatus {
   completed,
   failed,
   canceled,
+
+  /// 相机断线，等重连后自动续传。
+  pausedWaitingReconnect,
 }
 
 /// 媒体下载任务项
 class DownloadTask {
-  final CameraFileItem fileItem;
+  CameraFileItem fileItem;
   DownloadTaskStatus status;
   int downloadedBytes;
   int totalBytes;
@@ -30,6 +34,12 @@ class DownloadTask {
   String? localPath;
   String? error;
   int retryCount;
+
+  /// 临时 `.part` 文件的绝对路径（重连 / 重启后续传要靠它定位已下载字节）。
+  String? partPath;
+
+  /// 同一次包围曝光 / 录像回传的任务共享，UI 按批次分组。
+  String? batchGroupId;
 
   DownloadTask({
     required this.fileItem,
@@ -40,7 +50,21 @@ class DownloadTask {
     this.localPath,
     this.error,
     this.retryCount = 0,
+    this.partPath,
+    this.batchGroupId,
   });
+
+  /// 跨会话稳定的身份：handle 会随重连变化，文件名 + 拍摄时间不会。
+  String get id => DownloadQueueEntry.buildId(
+        storageId: fileItem.storageId,
+        fileName: fileItem.fileName,
+        captureDate: fileItem.captureDate,
+      );
+
+  bool get isPending =>
+      status == DownloadTaskStatus.queued ||
+      status == DownloadTaskStatus.downloading ||
+      status == DownloadTaskStatus.pausedWaitingReconnect;
 }
 
 /// 传输保活状态：决定是否显示 / 如何显示前台服务通知。
@@ -99,6 +123,12 @@ class DownloadManager extends ChangeNotifier {
   final List<DownloadTask> _tasks = [];
   bool _isProcessing = false;
 
+  /// 队列持久化（可不接：单测与某些页面只需要内存队列）。
+  DownloadQueueStore? _store;
+
+  /// 当前正在执行的批次（包围曝光 / 焦点堆叠），用于给任务打组。
+  String? _activeBatchId;
+
   // ----------------------------------------------------
   // 低电量保护状态机
   // ----------------------------------------------------
@@ -126,7 +156,70 @@ class DownloadManager extends ChangeNotifier {
   @override
   void notifyListeners() {
     _syncTransferKeepAlive();
+    _store?.scheduleSave(_snapshotForStore());
     super.notifyListeners();
+  }
+
+  /// 只持久化「还会继续」的任务：已完成 / 已取消的重启后没有意义，
+  /// 而且已经交给 MediaStore 的条目重新入队会生成重复副本。
+  List<DownloadQueueEntry> _snapshotForStore() {
+    return _tasks
+        .where((t) =>
+            t.status != DownloadTaskStatus.completed &&
+            t.status != DownloadTaskStatus.canceled)
+        .map(_toEntry)
+        .toList(growable: false);
+  }
+
+  DownloadQueueEntry _toEntry(DownloadTask task) => DownloadQueueEntry(
+        id: task.id,
+        storageId: task.fileItem.storageId,
+        handle: task.fileItem.handle,
+        fileName: task.fileItem.fileName,
+        captureDate: task.fileItem.captureDate,
+        sizeBytes: task.totalBytes,
+        isRaw: task.fileItem.isRaw,
+        isVideo: task.fileItem.isVideo,
+        tempPartPath: task.partPath ?? '',
+        targetPath: task.localPath ?? '',
+        bytesTransferred: task.downloadedBytes,
+        status: _statusToQueue(task.status),
+        batchGroupId: task.batchGroupId,
+        lastError: task.error,
+      );
+
+  static DownloadQueueStatus _statusToQueue(DownloadTaskStatus s) {
+    switch (s) {
+      case DownloadTaskStatus.queued:
+        return DownloadQueueStatus.queued;
+      case DownloadTaskStatus.downloading:
+        return DownloadQueueStatus.downloading;
+      case DownloadTaskStatus.pausedWaitingReconnect:
+        return DownloadQueueStatus.pausedWaitingReconnect;
+      case DownloadTaskStatus.failed:
+        return DownloadQueueStatus.failed;
+      case DownloadTaskStatus.completed:
+        return DownloadQueueStatus.completed;
+      case DownloadTaskStatus.canceled:
+        return DownloadQueueStatus.canceled;
+    }
+  }
+
+  static DownloadTaskStatus _statusFromQueue(DownloadQueueStatus s) {
+    switch (s) {
+      case DownloadQueueStatus.queued:
+        return DownloadTaskStatus.queued;
+      case DownloadQueueStatus.downloading:
+        return DownloadTaskStatus.queued;
+      case DownloadQueueStatus.pausedWaitingReconnect:
+        return DownloadTaskStatus.pausedWaitingReconnect;
+      case DownloadQueueStatus.failed:
+        return DownloadTaskStatus.failed;
+      case DownloadQueueStatus.completed:
+        return DownloadTaskStatus.completed;
+      case DownloadQueueStatus.canceled:
+        return DownloadTaskStatus.canceled;
+    }
   }
 
   void _syncTransferKeepAlive() {
@@ -174,17 +267,166 @@ class DownloadManager extends ChangeNotifier {
     return done / _tasks.length;
   }
 
-  /// 未结束任务数（排队 + 下载中 + 失败），用于入口徽标。
+  /// 未结束任务数（排队 + 下载中 + 等待重连 + 失败），用于入口徽标。
   int get pendingCount => _tasks
       .where((t) =>
           t.status == DownloadTaskStatus.queued ||
           t.status == DownloadTaskStatus.downloading ||
+          t.status == DownloadTaskStatus.pausedWaitingReconnect ||
           t.status == DownloadTaskStatus.failed)
       .length;
 
-  /// 单条取消：只对排队中的任务生效（正在下载的会在当前分块结束后由队列自然处理）。
+  /// 等待重连续传的任务数。
+  int get waitingReconnectCount => _tasks
+      .where((t) => t.status == DownloadTaskStatus.pausedWaitingReconnect)
+      .length;
+
+  /// 设置了持久化后，启动时把上次没传完的队列接回来。
+  ///
+  /// `.part` 的真实长度是唯一可信的进度来源：App 被强杀时内存里的
+  /// `downloadedBytes` 一定比磁盘上的字节多。
+  Future<void> attachStore(DownloadQueueStore store) async {
+    _store = store;
+    final entries = await store.load();
+    if (entries.isEmpty) return;
+
+    final connected = driver.isConnected;
+    for (final entry in entries) {
+      if (_tasks.any((t) => t.id == entry.id)) continue;
+      var actual = await _fileLength(entry.tempPartPath);
+      final reconciled =
+          reconcilePartWithDisk(entry, actual, isConnected: connected);
+      if (actual != null &&
+          entry.sizeBytes > 0 &&
+          actual > entry.sizeBytes &&
+          entry.tempPartPath.isNotEmpty) {
+        // 长度超出预期的 .part 一定是坏的，留着会让续传写进一个错位的文件。
+        try {
+          await File(entry.tempPartPath).delete();
+        } catch (_) {}
+        actual = null;
+      }
+
+      final task = DownloadTask(
+        fileItem: CameraFileItem(
+          handle: entry.handle,
+          storageId: entry.storageId,
+          format: entry.isRaw ? 0xB101 : 0,
+          size: entry.sizeBytes,
+          fileName: entry.fileName,
+          captureDate: entry.captureDate,
+        ),
+        totalBytes: entry.sizeBytes,
+        downloadedBytes: reconciled.bytesTransferred,
+        status: _statusFromQueue(reconciled.status),
+        partPath: entry.tempPartPath.isEmpty ? null : entry.tempPartPath,
+        batchGroupId: entry.batchGroupId,
+        error: reconciled.lastError,
+      );
+      _tasks.add(task);
+    }
+
+    notifyListeners();
+    if (connected && !isPaused) _processQueue();
+  }
+
+  /// 相机掉线：把还没传完的任务挂起，等重连后续传，而不是判失败。
+  void pauseForReconnect() {
+    var changed = false;
+    for (final t in _tasks) {
+      if (t.status == DownloadTaskStatus.queued ||
+          t.status == DownloadTaskStatus.downloading) {
+        t.status = DownloadTaskStatus.pausedWaitingReconnect;
+        changed = true;
+      }
+    }
+    if (changed) notifyListeners();
+  }
+
+  /// 重连成功：重新绑定 ObjectHandle，然后把队列跑起来。
+  ///
+  /// 重连会换掉整个 PTP 会话，旧 handle 可能指向别的文件，
+  /// 因此必须先用 `listObjectHandles + getObjectInfo` 建索引再匹配。
+  Future<void> resumeAfterReconnect() async {
+    final waiting = _tasks
+        .where((t) => t.status == DownloadTaskStatus.pausedWaitingReconnect)
+        .toList(growable: false);
+    if (waiting.isEmpty) {
+      if (!isPaused) _processQueue();
+      return;
+    }
+    if (!driver.isConnected) return;
+
+    final byStorage = <int, List<CameraFileItem>>{};
+    for (final storageId in waiting.map((t) => t.fileItem.storageId).toSet()) {
+      byStorage[storageId] = await _indexStorage(storageId);
+    }
+
+    for (final task in waiting) {
+      final entry = _toEntry(task);
+      final candidates = byStorage[task.fileItem.storageId] ?? const [];
+      final handle = matchHandleFor(entry, candidates);
+      if (handle == null) {
+        task.status = DownloadTaskStatus.failed;
+        task.error = '重连后相机端已找不到该文件，可能已被删除或换卡';
+        continue;
+      }
+      final renewed =
+          candidates.firstWhere((c) => c.handle == handle);
+      task.fileItem = renewed;
+      task.totalBytes = renewed.size > 0 ? renewed.size : task.totalBytes;
+      task.status = DownloadTaskStatus.queued;
+      task.error = null;
+      task.retryCount = 0;
+    }
+
+    notifyListeners();
+    if (!isPaused) _processQueue();
+  }
+
+  /// 读取一个存储卷的对象索引。相机端对象可能上万，只取有需要的分组，
+  /// 并限制上限避免重连后卡在一个巨大的列表上。
+  Future<List<CameraFileItem>> _indexStorage(int storageId) async {
+    const maxObjects = 4000;
+    try {
+      final handles = await driver.listObjectHandles(storageId);
+      final result = <CameraFileItem>[];
+      for (final h in handles.take(maxObjects)) {
+        final info = await driver.getObjectInfo(h);
+        if (info != null) result.add(info);
+      }
+      return result;
+    } catch (_) {
+      return const <CameraFileItem>[];
+    }
+  }
+
+  Future<int?> _fileLength(String? path) async {
+    if (path == null || path.isEmpty) return null;
+    try {
+      final f = File(path);
+      if (!await f.exists()) return null;
+      return await f.length();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// 给接下来入队的任务打批次标记（包围曝光 / 焦点堆叠 / 录像回传）。
+  void beginBatch(String batchGroupId) {
+    _activeBatchId = batchGroupId;
+  }
+
+  void endBatch() {
+    _activeBatchId = null;
+  }
+
+  /// 单条取消：排队中或等待重连的任务（正在下载的会在当前分块结束后由队列自然处理）。
   bool cancelTask(DownloadTask task) {
-    if (task.status != DownloadTaskStatus.queued) return false;
+    if (task.status != DownloadTaskStatus.queued &&
+        task.status != DownloadTaskStatus.pausedWaitingReconnect) {
+      return false;
+    }
     task.status = DownloadTaskStatus.canceled;
     notifyListeners();
     return true;
@@ -314,11 +556,17 @@ class DownloadManager extends ChangeNotifier {
 
   /// 添加下载任务并入队
   void enqueue(CameraFileItem file) {
-    if (_tasks.any((t) => t.fileItem.handle == file.handle)) return; // 避免重复添加
+    final id = DownloadQueueEntry.buildId(
+      storageId: file.storageId,
+      fileName: file.fileName,
+      captureDate: file.captureDate,
+    );
+    if (_tasks.any((t) => t.id == id)) return; // 避免重复添加
 
     final task = DownloadTask(
       fileItem: file,
       totalBytes: file.size,
+      batchGroupId: _activeBatchId,
     );
     _tasks.add(task);
     notifyListeners();
@@ -329,9 +577,17 @@ class DownloadManager extends ChangeNotifier {
   /// 批量添加任务
   void enqueueAll(List<CameraFileItem> files) {
     for (final f in files) {
-      if (!_tasks.any((t) => t.fileItem.handle == f.handle)) {
-        _tasks.add(DownloadTask(fileItem: f, totalBytes: f.size));
-      }
+      final id = DownloadQueueEntry.buildId(
+        storageId: f.storageId,
+        fileName: f.fileName,
+        captureDate: f.captureDate,
+      );
+      if (_tasks.any((t) => t.id == id)) continue;
+      _tasks.add(DownloadTask(
+        fileItem: f,
+        totalBytes: f.size,
+        batchGroupId: _activeBatchId,
+      ));
     }
     notifyListeners();
     checkPowerState();
@@ -528,6 +784,7 @@ class DownloadManager extends ChangeNotifier {
       while (pendingTask.retryCount <= 4 && !success) {
         try {
           partial ??= await _partialFileFor(pendingTask);
+          pendingTask.partPath = partial.path;
 
           // 断点续传：沿用已写入的字节数，从缺口处继续
           final existing = await partial.exists() ? await partial.length() : 0;
@@ -599,8 +856,14 @@ class DownloadManager extends ChangeNotifier {
             notifyListeners();
             await Future.delayed(Duration(seconds: delaySec));
           } else {
-            pendingTask.status = DownloadTaskStatus.failed;
-            pendingTask.error = CameraErrorMapper.describe(e, L10n.current);
+            if (!driver.isConnected) {
+              // 掉线不是任务失败：保留 .part，重连后从这里继续。
+              pendingTask.status = DownloadTaskStatus.pausedWaitingReconnect;
+              pendingTask.error = '相机已断开，等待重连后续传';
+            } else {
+              pendingTask.status = DownloadTaskStatus.failed;
+              pendingTask.error = CameraErrorMapper.describe(e, L10n.current);
+            }
             break;
           }
         }
@@ -615,5 +878,13 @@ class DownloadManager extends ChangeNotifier {
   void clearCompleted() {
     _tasks.removeWhere((t) => t.status == DownloadTaskStatus.completed);
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    // 退出前把防抖中的队列快照落盘，否则刚入队的任务会丢。
+    unawaited(_store?.flush());
+    _store?.dispose();
+    super.dispose();
   }
 }

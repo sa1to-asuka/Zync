@@ -78,6 +78,30 @@ class PtpOpCodes {
   static const int nikonPropIso = 0xD0B4; // Nikon ISO
 
   // ==========================================
+  // 2d. 录像与包围曝光设备属性 (v2.6.0)
+  // ==========================================
+  static const int devicePropLiveViewSelector = 0xD1A6; // 0=拍照 1=录像
+  static const int devicePropMovieRecProhibition = 0xD0A4; // 禁录原因位掩码
+  static const int devicePropMovieScreenSize = 0xD0A0; // 分辨率与帧率
+  static const int devicePropMovieFileType = 0xD0AF; // MOV / MP4
+  static const int devicePropMovieShutterSpeed = 0xD1A8; // 视频快门
+  static const int devicePropMovieFNumber = 0xD1A9; // 视频光圈
+  static const int devicePropMovieIso = 0xD1AA; // 视频 ISO
+  static const int devicePropMovieExposureBias = 0xD1AB; // 视频曝光补偿
+  static const int devicePropMovieIsoAutoControl = 0xD0AD; // 视频自动 ISO 开关
+  static const int devicePropEnableAeBracketing = 0xD0C0; // 机内包围曝光开关
+  static const int devicePropAeBracketingStep = 0xD0C1; // 机内包围步长
+  static const int devicePropAeBracketingPattern = 0xD0C2; // 机内包围张数/顺序
+
+  // ==========================================
+  // 2e. 相机事件码 (EventCode)
+  // ==========================================
+  static const int eventObjectAdded = 0x4002; // 新对象落盘
+  static const int eventNikonMovieRecInterrupted = 0xC105; // 录像异常中断
+  static const int eventNikonMovieRecComplete = 0xC108; // 录像封盘完成
+  static const int eventNikonMovieRecStarted = 0xC10A; // 录像已开始
+
+  // ==========================================
   // 3. PTP/IP 协议包类型编号 (PacketType)
   // ==========================================
   static const int ptpIpInitCommandRequest = 1;
@@ -92,6 +116,8 @@ class PtpOpCodes {
   static const int ptpIpDataPacket = 10;
   static const int ptpIpCancelTransaction = 11;
   static const int ptpIpEndDataPacket = 12;
+  static const int ptpIpProbeRequest = 13; // 相机探活要求，必须原样回 0x0E
+  static const int ptpIpProbeResponse = 14;
 
   // ==========================================
   // 4. PTP 响应代码 (Response Codes)

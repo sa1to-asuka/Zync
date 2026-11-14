@@ -1,19 +1,29 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
+import '../../core/constants/network_config.dart';
 import '../../core/settings/app_settings.dart';
 import '../../core/utils/exif_helper.dart';
 import '../../engine/capture/capture_controller.dart';
 import '../../engine/capture/interval_shooting_controller.dart';
 import '../../engine/capture/exposure_settings_controller.dart';
+import '../../engine/capture/movie_recording_controller.dart';
+import '../../engine/capture/bracket_ports.dart';
+import '../../engine/capture/exposure_bracketing_controller.dart';
+import '../../engine/capture/focus_stacking_controller.dart';
 import '../../engine/liveview/live_view_analyzer.dart';
 import '../../engine/liveview/live_view_analysis.dart';
 import '../../engine/liveview/live_view_controller.dart';
 import '../../engine/liveview/manual_focus_drive_controller.dart';
 import '../../engine/transfer/download_manager.dart';
+import '../../engine/transfer/download_queue_store.dart';
 import '../../engine/transfer/shoot_and_transfer.dart';
 import '../../engine/update/app_update_manager.dart';
 import '../../l10n/l10n.dart';
 import '../../protocol/camera_native_bridge.dart';
+import '../../protocol/connection_recovery_controller.dart';
 import '../../protocol/nikon_driver.dart';
 import 'design/design.dart';
 import 'screens/capture_screen.dart';
@@ -73,6 +83,7 @@ class _RootScaffoldState extends State<RootScaffold>
 
   late final NikonDriver _driver;
   late final DownloadManager _downloadManager;
+  late final ConnectionRecoveryController _recoveryController;
   late final ShootAndTransferController _shootAndTransferController;
   late final LiveViewAnalyzer _liveViewAnalyzer;
   late final LiveViewController _liveViewController;
@@ -80,6 +91,9 @@ class _RootScaffoldState extends State<RootScaffold>
   late final CaptureController _captureController;
   late final ExposureSettingsController _exposureController;
   late final IntervalShootingController _intervalController;
+  late final MovieRecordingController _movieController;
+  late final ExposureBracketingController _bracketController;
+  late final FocusStackingController _focusStackController;
   late final AnimationController _tabFadeController;
   late final Animation<double> _tabFadeAnimation;
   late final Animation<double> _tabScaleAnimation;
@@ -102,6 +116,16 @@ class _RootScaffoldState extends State<RootScaffold>
     WidgetsBinding.instance.addObserver(this);
     _driver = NikonDriver();
     _downloadManager = DownloadManager(driver: _driver);
+    _recoveryController = ConnectionRecoveryController(
+      reconnect: () => _driver.reconnect(),
+      restoreSession: _restoreSessionAfterReconnect,
+      probe: () => probeCameraPort(
+        NetworkConfig.cameraIp,
+        NetworkConfig.cameraPort,
+      ),
+    );
+    _driver.onUnexpectedDisconnect = _handleUnexpectedDisconnect;
+    unawaited(_attachDownloadQueueStore());
     _shootAndTransferController = ShootAndTransferController(
       driver: _driver,
       downloadManager: _downloadManager,
@@ -131,6 +155,20 @@ class _RootScaffoldState extends State<RootScaffold>
     _intervalController = IntervalShootingController(
       capture: () => _captureController.capture(),
     );
+    _movieController = MovieRecordingController(driver: _driver);
+    _bracketController = ExposureBracketingController(
+      port: ExposureSettingsBracketPort(
+        driver: _driver,
+        exposure: _exposureController,
+        captureController: _captureController,
+      ),
+    );
+    _focusStackController = FocusStackingController(
+      port: DriverFocusStackPort(
+        driver: _driver,
+        captureController: _captureController,
+      ),
+    );
     AppSettings.instance.addListener(_syncLiveViewSettings);
 
     _tabFadeController = AnimationController(
@@ -158,9 +196,37 @@ class _RootScaffoldState extends State<RootScaffold>
     });
   }
 
+  /// 队列持久化：把上次没传完的任务接回来，冷启动后自动续传。
+  Future<void> _attachDownloadQueueStore() async {
+    try {
+      final base = await getApplicationSupportDirectory();
+      await _downloadManager.attachStore(DownloadQueueStore(directory: base));
+    } catch (e) {
+      // 持久化不可用不应影响正常传输，退化为纯内存队列。
+      debugPrint('download queue persistence unavailable: $e');
+    }
+  }
+
+  void _handleUnexpectedDisconnect() {
+    _downloadManager.pauseForReconnect();
+    _recoveryController.notifyUnexpectedDisconnect();
+  }
+
+  /// 重连成功后把会话现场拉回来：重启取景 + 恢复续传队列。
+  Future<void> _restoreSessionAfterReconnect() async {
+    // 断线时取景一定已经停了。只有在拍摄页、且设置为自动开始时才自动重启，
+    // 否则用户在相册页被重连拽回取景会很突兀。
+    if (_currentIndex == _captureTabIndex &&
+        AppSettings.instance.liveViewAutoStart) {
+      try {
+        await _liveViewController.start();
+      } catch (_) {}
+    }
+    await _downloadManager.resumeAfterReconnect();
+  }
+
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
+  void didChangeAppLifecycleState(AppLifecycleState state) {    if (state == AppLifecycleState.resumed) {
       _checkIncomingExternalFiles();
       if (_currentIndex == _captureTabIndex) {
         _captureKey.currentState?.onTabVisible();
@@ -186,12 +252,18 @@ class _RootScaffoldState extends State<RootScaffold>
     _tabFadeController.dispose();
     AppSettings.instance.removeListener(_syncLiveViewSettings);
     _intervalController.dispose();
+    _movieController.dispose();
+    _bracketController.dispose();
+    _focusStackController.dispose();
     _manualFocusController.dispose();
     _liveViewController.dispose();
     _liveViewAnalyzer.dispose();
     _captureController.dispose();
     _exposureController.dispose();
     _shootAndTransferController.dispose();
+    _recoveryController.cancel();
+    _recoveryController.dispose();
+    _driver.onUnexpectedDisconnect = null;
     _driver.dispose();
     super.dispose();
   }
@@ -336,7 +408,9 @@ class _RootScaffoldState extends State<RootScaffold>
         driver: _driver,
         downloadManager: _downloadManager,
         shootAndTransferController: _shootAndTransferController,
+        onDisconnect: _recoveryController.cancel,
         onConnected: () {
+          _recoveryController.acknowledge();
           _galleryKey.currentState?.reloadFiles();
           _pictureControlKey.currentState?.refreshCameraSlots();
           if (mounted) setState(() {});
@@ -370,7 +444,10 @@ class _RootScaffoldState extends State<RootScaffold>
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => TransferCenterScreen(manager: _downloadManager),
+              builder: (_) => TransferCenterScreen(
+                manager: _downloadManager,
+                recovery: _recoveryController,
+              ),
             ),
           );
         },
@@ -386,6 +463,9 @@ class _RootScaffoldState extends State<RootScaffold>
         exposureController: _exposureController,
         manualFocusController: _manualFocusController,
         intervalController: _intervalController,
+        movieController: _movieController,
+        bracketController: _bracketController,
+        focusStackController: _focusStackController,
         onNavigateToConnect: () => _onTabSelected(_connectTabIndex),
       ),
       GalleryScreen(

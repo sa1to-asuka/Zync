@@ -14,6 +14,8 @@ class _FakeTransport implements PtpTransport {
   @override
   Stream<PtpPacket> get events => const Stream.empty();
   @override
+  set onUnexpectedDisconnect(void Function()? callback) {}
+  @override
   Future<void> connect() async {}
   @override
   Future<void> disconnect() async {}

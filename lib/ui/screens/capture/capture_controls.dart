@@ -380,3 +380,245 @@ class CaptureIntervalBar extends StatelessWidget {
     );
   }
 }
+
+/// 拍照 / 录像模式切换胶囊。
+///
+/// 只负责展示与回调：真正的 `0xD1A6` 写入由 [MovieRecordingController] 处理，
+/// 失败时（Z 30 拨杆在拍照档）由上层提示用户拨动实体拨杆。
+class CaptureModePill extends StatelessWidget {
+  const CaptureModePill({
+    super.key,
+    required this.videoMode,
+    required this.enabled,
+    required this.photoLabel,
+    required this.videoLabel,
+    required this.onChanged,
+    this.width = 176,
+  });
+
+  final bool videoMode;
+  final bool enabled;
+  final String photoLabel;
+  final String videoLabel;
+  final ValueChanged<bool> onChanged;
+
+  /// 胶囊总宽：两段等分，外层可能是无界宽度的 Row，所以这里必须给死。
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    final zc = context.zc;
+    final zt = context.zt;
+
+    Widget segment(String label, IconData icon, bool selected, bool isVideo) {
+      final color = selected
+          ? (isVideo ? zc.danger : zc.accent)
+          : zc.textSecondary;
+      return Expanded(
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: enabled ? () => onChanged(isVideo) : null,
+          child: AnimatedContainer(
+            duration: ZMotion.short,
+            curve: ZMotion.standard,
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            decoration: BoxDecoration(
+              color: selected ? color.withAlpha(30) : ZSwatch.transparent,
+              borderRadius: ZRadius.brSm,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Icon(icon, size: 15, color: color),
+                const SizedBox(width: 5),
+                Text(
+                  label,
+                  style: zt.caption.copyWith(
+                    color: color,
+                    fontWeight:
+                        selected ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      width: width,
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        color: zc.surfaceHigh,
+        borderRadius: ZRadius.brSm,
+        border: Border.all(color: zc.outline, width: 0.8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          segment(photoLabel, Icons.photo_camera_outlined, !videoMode, false),
+          const SizedBox(width: 2),
+          segment(videoLabel, Icons.videocam_outlined, videoMode, true),
+        ],
+      ),
+    );
+  }
+}
+
+/// 录像启停键：待机是红色圆点，录制中是红色方块。
+class CaptureRecordButton extends StatelessWidget {
+  const CaptureRecordButton({
+    super.key,
+    required this.label,
+    required this.recording,
+    required this.busy,
+    required this.onTap,
+    this.size = 72,
+  });
+
+  final String label;
+  final bool recording;
+  final bool busy;
+  final VoidCallback onTap;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final zc = context.zc;
+    final color = zc.danger;
+
+    return Semantics(
+      button: true,
+      label: label,
+      child: GestureDetector(
+        onTap: busy ? null : onTap,
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: recording ? color.withAlpha(38) : color.withAlpha(24),
+            border: Border.all(color: color, width: 2.5),
+          ),
+          child: Center(
+            child: AnimatedContainer(
+              duration: ZMotion.short,
+              curve: ZMotion.standard,
+              width: recording ? size * 0.30 : size * 0.46,
+              height: recording ? size * 0.30 : size * 0.46,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius:
+                    BorderRadius.circular(recording ? 4 : size * 0.23),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 取景器上的 REC 角标 + 计时 + 双声道音频电平。
+class CaptureRecordingBadge extends StatelessWidget {
+  const CaptureRecordingBadge({
+    super.key,
+    required this.label,
+    required this.elapsed,
+    required this.leftLevel,
+    required this.rightLevel,
+    this.finalizingLabel,
+    this.maxLevel = 14,
+  });
+
+  final String label;
+  final String elapsed;
+
+  /// 0..[maxLevel]
+  final int leftLevel;
+  final int rightLevel;
+  final String? finalizingLabel;
+  final int maxLevel;
+
+  @override
+  Widget build(BuildContext context) {
+    final zc = context.zc;
+    final zt = context.zt;
+
+    Widget meter(int level) {
+      final ratio = (level / maxLevel).clamp(0.0, 1.0);
+      return SizedBox(
+        width: 42,
+        height: 3,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: ZSwatch.white54,
+            borderRadius: BorderRadius.circular(2),
+          ),
+          child: FractionallySizedBox(
+            alignment: Alignment.centerLeft,
+            widthFactor: ratio,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: ratio > 0.85 ? zc.danger : zc.accent,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: ZSwatch.black54,
+        borderRadius: ZRadius.brSm,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: zc.danger,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: zt.caption.copyWith(
+              color: ZSwatch.pureWhite,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            elapsed,
+            style: zt.numericSmall.copyWith(color: ZSwatch.pureWhite),
+          ),
+          if (finalizingLabel != null) ...<Widget>[
+            const SizedBox(width: 8),
+            Text(
+              finalizingLabel!,
+              style: zt.caption.copyWith(color: ZSwatch.white70),
+            ),
+          ],
+          const SizedBox(width: 8),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              meter(leftLevel),
+              const SizedBox(height: 2),
+              meter(rightLevel),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}

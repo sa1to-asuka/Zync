@@ -12,9 +12,13 @@ import '../../engine/capture/capture_controller.dart';
 import '../../engine/capture/exposure_capability.dart';
 import '../../engine/capture/exposure_settings_controller.dart';
 import '../../engine/capture/interval_shooting_controller.dart';
+import '../../engine/capture/exposure_bracketing_controller.dart';
+import '../../engine/capture/focus_stacking_controller.dart';
+import '../../engine/capture/movie_recording_controller.dart';
 import '../../engine/liveview/live_view_controller.dart';
 import '../../engine/liveview/live_view_frame_pipeline.dart';
 import '../../engine/liveview/manual_focus_drive_controller.dart';
+import '../../l10n/engine_l10n.dart';
 import '../../l10n/l10n.dart';
 import '../../protocol/camera_driver.dart';
 import '../../protocol/ptp_ip_client.dart' show PtpException;
@@ -23,6 +27,7 @@ import '../design/design.dart';
 import 'capture/capture_controls.dart';
 import 'capture/capture_interval_sheet.dart';
 import 'capture/capture_overlays.dart';
+import 'capture/capture_sequence_sheet.dart';
 
 /// 拍摄台：实时取景 + 遥控快门 + 参数读写 + 对焦与叠加辅助。
 ///
@@ -37,6 +42,9 @@ class CaptureScreen extends StatefulWidget {
     required this.exposureController,
     required this.manualFocusController,
     required this.intervalController,
+    required this.movieController,
+    required this.bracketController,
+    required this.focusStackController,
     required this.onNavigateToConnect,
   });
 
@@ -46,6 +54,9 @@ class CaptureScreen extends StatefulWidget {
   final ExposureSettingsController exposureController;
   final ManualFocusDriveController manualFocusController;
   final IntervalShootingController intervalController;
+  final MovieRecordingController movieController;
+  final ExposureBracketingController bracketController;
+  final FocusStackingController focusStackController;
   final VoidCallback onNavigateToConnect;
 
   @override
@@ -63,6 +74,7 @@ class CaptureScreenState extends State<CaptureScreen> {
   int _orientation = 0;
   Offset? _focusPoint;
   CameraParameter? _expandedParameter;
+  bool? _lastCameraRecording;
 
   @override
   void initState() {
@@ -74,10 +86,13 @@ class CaptureScreenState extends State<CaptureScreen> {
       setState(() => _connected = connected);
       if (connected) {
         widget.exposureController.refresh(force: true);
+        widget.movieController.refresh();
         _startOrientationPolling();
       } else {
         widget.exposureController.clear();
         widget.intervalController.stop();
+        widget.bracketController.stop();
+        widget.focusStackController.stop();
         widget.manualFocusController.cancel();
         widget.liveViewController.stop();
         _stopOrientationPolling();
@@ -85,10 +100,23 @@ class CaptureScreenState extends State<CaptureScreen> {
       }
     });
     if (_connected) _startOrientationPolling();
+    widget.movieController.attach();
+    widget.liveViewController.addListener(_syncMovieRecordingFlag);
+  }
+
+  /// 取景帧头是机身侧录像状态的唯一可靠来源：
+  /// 在机身上按红色录像键时，App 也会在几帧内切到录制态。
+  void _syncMovieRecordingFlag() {
+    final flag = widget.liveViewController.cameraRecording;
+    if (flag == _lastCameraRecording) return;
+    _lastCameraRecording = flag;
+    widget.movieController.syncRecordingFlag(flag);
   }
 
   @override
   void dispose() {
+    widget.liveViewController.removeListener(_syncMovieRecordingFlag);
+    widget.movieController.detach();
     _connectionSub?.cancel();
     _orientationTimer?.cancel();
     _modeTimer?.cancel();
@@ -355,6 +383,65 @@ class CaptureScreenState extends State<CaptureScreen> {
     showZToast(context, message, isError: isError, tone: tone);
   }
 
+  // ---------------------------------------------------------------- 序列工具
+
+  /// 四类长时间任务共用相机的排他通道，同时跑会互相打断。
+  bool get _sequenceBusy =>
+      widget.intervalController.isActive ||
+      widget.movieController.isRecording ||
+      widget.bracketController.isActive ||
+      widget.focusStackController.isActive;
+
+  Future<void> _openBracketSheet() async {
+    if (_sequenceBusy) {
+      _toast(EngineL10n.taskBusyHint(L10n.current.localeName), isError: true);
+      return;
+    }
+    final lang = L10n.current.localeName;
+    final wasActive = widget.liveViewController.isActive;
+    if (wasActive) await widget.liveViewController.stop();
+
+    final config = await showBracketConfigSheet(context);
+    if (config == null || !mounted) return;
+
+    final started = await widget.bracketController.start(config);
+    if (!mounted) return;
+    if (!started) {
+      if (widget.bracketController.state == BracketState.failed) {
+        _toast(EngineL10n.bracketBuiltinConflict(lang), isError: true);
+      } else {
+        _toast(context.l10n.captureFailed, isError: true);
+      }
+      return;
+    }
+    if (widget.bracketController.restoreFailed) {
+      _toast(EngineL10n.bracketRestoreWarning(lang), isError: true);
+    } else {
+      _toast(EngineL10n.bracketRestored(lang), tone: ZStatusTone.success);
+    }
+    if (wasActive && mounted) await widget.liveViewController.start();
+  }
+
+  Future<void> _openFocusStackSheet() async {
+    if (_sequenceBusy) {
+      _toast(EngineL10n.taskBusyHint(L10n.current.localeName), isError: true);
+      return;
+    }
+    final config = await showFocusStackConfigSheet(context);
+    if (config == null || !mounted) return;
+
+    final started = await widget.focusStackController.start(config);
+    if (!mounted) return;
+    if (!started) {
+      _toast(context.l10n.captureFailed, isError: true);
+    }
+  }
+
+  void _stopSequences() {
+    widget.bracketController.stop();
+    widget.focusStackController.stop();
+  }
+
   // ---------------------------------------------------------------- 视图
 
   @override
@@ -392,6 +479,9 @@ class CaptureScreenState extends State<CaptureScreen> {
             widget.captureController,
             widget.intervalController,
             widget.manualFocusController,
+            widget.movieController,
+            widget.bracketController,
+            widget.focusStackController,
           ]),
           builder: (context, _) {
             return wide ? _buildWideLayout() : _buildPhoneLayout();
@@ -581,6 +671,26 @@ class CaptureScreenState extends State<CaptureScreen> {
                         ),
                       ),
                     ),
+                  if (widget.movieController.isRecording)
+                    Positioned(
+                      top: ZSpace.sm,
+                      left: ZSpace.sm,
+                      child: IgnorePointer(
+                        child: CaptureRecordingBadge(
+                          label: EngineL10n.movieRecording(
+                              L10n.current.localeName),
+                          elapsed: widget.movieController.elapsedLabel,
+                          leftLevel: liveView.audioPeakLeft,
+                          rightLevel: liveView.audioPeakRight,
+                          finalizingLabel:
+                              widget.movieController.phase ==
+                                      MovieRecordingPhase.finalizing
+                                  ? EngineL10n.movieFinalizingHint(
+                                      L10n.current.localeName)
+                                  : null,
+                        ),
+                      ),
+                    ),
                   if (analysis != null &&
                       AppSettings.instance.liveViewHistogram)
                     Positioned(
@@ -651,6 +761,10 @@ class CaptureScreenState extends State<CaptureScreen> {
                 style: context.zt.caption.copyWith(color: zc.textSecondary),
               ),
             ),
+          _buildModeRow(),
+          if (widget.bracketController.isActive ||
+              widget.focusStackController.isActive)
+            _buildSequenceProgress(),
           if (interval.isActive)
             _intervalBar(interval, l10n)
           else ...<Widget>[
@@ -677,6 +791,106 @@ class CaptureScreenState extends State<CaptureScreen> {
         ],
       ),
     );
+  }
+
+  bool get _videoMode =>
+      widget.movieController.mode == CameraCaptureMode.video;
+
+  Widget _buildSequenceProgress() {
+    final zc = context.zc;
+    final zt = context.zt;
+    final lang = L10n.current.localeName;
+    final bracket = widget.bracketController;
+    final focus = widget.focusStackController;
+    final isBracket = bracket.isActive;
+    final current = isBracket ? bracket.currentShot : focus.currentShot;
+    final total = isBracket ? bracket.totalShots : focus.totalShots;
+
+    return Row(
+      children: <Widget>[
+        Icon(
+          isBracket ? Icons.exposure_outlined : Icons.blur_circular_outlined,
+          size: 18,
+          color: zc.accent,
+        ),
+        const SizedBox(width: ZSpace.sm),
+        Expanded(
+          child: Text(
+            '${isBracket ? EngineL10n.bracketTitle(lang) : EngineL10n.focusStackTitle(lang)}'
+            ' · ${EngineL10n.bracketRunning(current, total)}',
+            style: zt.body.copyWith(color: zc.textPrimary),
+          ),
+        ),
+        TextButton(
+          onPressed: _stopSequences,
+          child: Text(context.l10n.captureIntervalStop),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildModeRow() {
+    final l10n = L10n.current.localeName;
+    final busy = widget.intervalController.isActive ||
+        widget.captureController.isBusy ||
+        widget.movieController.phase != MovieRecordingPhase.idle;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: ZSpace.xs),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          CaptureModePill(
+            videoMode: _videoMode,
+            enabled: widget.driver.supportsRemoteCapture && !busy,
+            photoLabel: EngineL10n.capturePhotoMode(l10n),
+            videoLabel: EngineL10n.captureVideoMode(l10n),
+            onChanged: _toggleMovieMode,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _toggleMovieMode(bool toVideo) async {
+    if (_videoMode == toVideo) return;
+    final lang = L10n.current.localeName;
+    final ok = await widget.movieController.switchMode(
+      toVideo ? CameraCaptureMode.video : CameraCaptureMode.photo,
+    );
+    if (!mounted) return;
+    if (!ok) {
+      // Z 30 的实体拨杆在拍照档时，写 0xD1A6 会被相机拒绝。
+      _toast(EngineL10n.movieNeedPhysicalLever(lang), isError: true);
+      return;
+    }
+    if (toVideo) await widget.movieController.refresh();
+  }
+
+  Future<void> _toggleRecording() async {
+    final movie = widget.movieController;
+    final lang = L10n.current.localeName;
+
+    if (movie.phase == MovieRecordingPhase.recording) {
+      await movie.stopRecording();
+      return;
+    }
+    if (movie.phase != MovieRecordingPhase.idle) return;
+
+    final ok = await movie.startRecording();
+    if (!mounted) return;
+    if (ok) return;
+
+    final prohibition = movie.prohibition;
+    if (prohibition.needsPhysicalLever ||
+        movie.mode == CameraCaptureMode.lockedByPhysicalLever) {
+      _toast(EngineL10n.movieNeedPhysicalLever(lang), isError: true);
+    } else if (prohibition.isBlocked) {
+      final bit = prohibition.reasons.first;
+      _toast(EngineL10n.movieProhibitionReason(lang, bit), isError: true);
+    } else {
+      _toast(context.l10n.captureFailed, isError: true);
+    }
   }
 
   Widget _intervalBar(
@@ -749,6 +963,7 @@ class CaptureScreenState extends State<CaptureScreen> {
     final l10n = context.l10n;
     final manual = widget.manualFocusController;
     final liveView = widget.liveViewController;
+    final movie = widget.movieController;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -765,20 +980,33 @@ class CaptureScreenState extends State<CaptureScreen> {
         CaptureHoldButton(
           icon: Icons.arrow_back,
           semanticLabel: l10n.captureFocusNear,
-          enabled: manual.canDrive,
+          enabled: manual.canDrive && !_videoMode,
           onPress: () => manual.press(MfDirection.near),
           onRelease: manual.release,
         ),
-        CaptureShutterButton(
-          label: l10n.captureShutter,
-          busy: widget.captureController.isBusy,
-          onTap: _shoot,
-          size: compact ? 68 : 72,
-        ),
+        if (_videoMode)
+          CaptureRecordButton(
+            label: movie.isRecording
+                ? EngineL10n.movieRecording(L10n.current.localeName)
+                : EngineL10n.captureVideoMode(L10n.current.localeName),
+            recording: movie.phase == MovieRecordingPhase.recording,
+            busy: movie.phase == MovieRecordingPhase.starting ||
+                movie.phase == MovieRecordingPhase.stopping ||
+                movie.phase == MovieRecordingPhase.finalizing,
+            onTap: _toggleRecording,
+            size: compact ? 68 : 72,
+          )
+        else
+          CaptureShutterButton(
+            label: l10n.captureShutter,
+            busy: widget.captureController.isBusy,
+            onTap: _shoot,
+            size: compact ? 68 : 72,
+          ),
         CaptureHoldButton(
           icon: Icons.arrow_forward,
           semanticLabel: l10n.captureFocusFar,
-          enabled: manual.canDrive,
+          enabled: manual.canDrive && !_videoMode,
           onPress: () => manual.press(MfDirection.far),
           onRelease: manual.release,
         ),
@@ -810,6 +1038,22 @@ class CaptureScreenState extends State<CaptureScreen> {
               style: context.zt.caption.copyWith(color: zc.textSecondary),
             ),
           ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: ZSpace.sm),
+          child: Row(
+            children: <Widget>[
+              CaptureModePill(
+                videoMode: _videoMode,
+                enabled: widget.driver.supportsRemoteCapture &&
+                    widget.movieController.phase == MovieRecordingPhase.idle &&
+                    !widget.intervalController.isActive,
+                photoLabel: EngineL10n.capturePhotoMode(L10n.current.localeName),
+                videoLabel: EngineL10n.captureVideoMode(L10n.current.localeName),
+                onChanged: _toggleMovieMode,
+              ),
+            ],
+          ),
+        ),
         ZSection(
           title: l10n.captureParamsTitle,
           children: <Widget>[
@@ -857,6 +1101,34 @@ class CaptureScreenState extends State<CaptureScreen> {
                 isLink: true,
                 onTap: _openIntervalSheet,
               ),
+          ],
+        ),
+        const SizedBox(height: ZSpace.md),
+        ZSection(
+          title: EngineL10n.bracketTitle(L10n.current.localeName),
+          children: <Widget>[
+            if (widget.bracketController.isActive ||
+                widget.focusStackController.isActive)
+              Padding(
+                padding: const EdgeInsets.all(ZSpace.sm),
+                child: _buildSequenceProgress(),
+              )
+            else ...<Widget>[
+              ZTile(
+                title: EngineL10n.bracketTitle(L10n.current.localeName),
+                subtitle: EngineL10n.bracketSubtitle(L10n.current.localeName),
+                leadingIcon: Icons.exposure_outlined,
+                isLink: true,
+                onTap: _sequenceBusy ? null : _openBracketSheet,
+              ),
+              ZTile(
+                title: EngineL10n.focusStackTitle(L10n.current.localeName),
+                subtitle: EngineL10n.focusStackSubtitle(L10n.current.localeName),
+                leadingIcon: Icons.blur_circular_outlined,
+                isLink: true,
+                onTap: _sequenceBusy ? null : _openFocusStackSheet,
+              ),
+            ],
           ],
         ),
         const SizedBox(height: ZSpace.lg),
@@ -946,6 +1218,24 @@ class CaptureScreenState extends State<CaptureScreen> {
                 onTap: () {
                   Navigator.of(ctx).pop();
                   _openIntervalSheet();
+                },
+              ),
+              ZTile(
+                title: EngineL10n.bracketTitle(L10n.current.localeName),
+                leadingIcon: Icons.exposure_outlined,
+                isLink: true,
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _openBracketSheet();
+                },
+              ),
+              ZTile(
+                title: EngineL10n.focusStackTitle(L10n.current.localeName),
+                leadingIcon: Icons.blur_circular_outlined,
+                isLink: true,
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _openFocusStackSheet();
                 },
               ),
             ],

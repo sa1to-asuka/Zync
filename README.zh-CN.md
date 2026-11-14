@@ -17,7 +17,7 @@
 Zync 是一款使用 Flutter 开发的开源摄影工具，围绕尼康 Z 系列相机整理出一条紧凑的工作流：连接相机、浏览与传输照片，然后完成调色、水印和导出。应用可直接通过 Wi-Fi PTP/IP 或 USB PTP 与相机通信，不依赖厂商账号、云服务或专有 SDK。
 
 - 项目地址：<https://github.com/sa1to-asuka/Zync>
-- 当前版本：`2.5.1`
+- 当前版本：`2.6.0`
 - 许可证：MIT
 - 主要平台：Android
 
@@ -62,6 +62,9 @@ Zync 是一款使用 Flutter 开发的开源摄影工具，围绕尼康 Z 系列
 - 峰值对焦、斑马纹、亮度直方图、构图网格与参考线都在本机根据取景画面计算，不影响导出的照片。
 - 按住手动对焦箭头可以平滑推拉焦点，按 AF 按钮会执行一次真正的自动对焦。
 - 间隔拍摄：设置间隔、张数与开始延时后自动连拍，照片同样走「边拍边传」。
+- 拍照 / 录像模式切换：在手机上启停录像，显示 REC 计时与双声道电平；直接在机身按红色录像键时，界面也会同步（取景帧头带录像标志）。
+- 包围曝光：EV / 快门 / ISO 三轴任选，设置张数与步长；无论正常结束、中途停止还是相机拒绝写入，都会还原到拍摄前的参数。
+- 焦点包围：按固定步长推进对焦马达并逐张拍摄，可设置拍完回到起点。
 - 手机端取景是从主页网格进入的全屏工具，平板端是带侧栏的双栏工作台。实时取景与遥控拍摄已在尼康 Z 30 上验证，其他机型可能表现不同，界面会明确提示。
 
 ### 相机相册
@@ -77,6 +80,9 @@ Zync 是一款使用 Flutter 开发的开源摄影工具，围绕尼康 Z 系列
 ### 传输引擎
 
 - 通过 `GetPartialObject` 按 512 KB 分块流式下载。
+- 下载队列写入磁盘，App 被杀或重连后从断点字节继续；相机端 ObjectHandle 按文件名、大小与拍摄时间重新匹配，匹配不到时明确提示而不是猜一个。
+- 超过 4 GiB 的文件自动改用 `0x9431 GetPartialObject64`，长视频不会在 32 位偏移边界被截断。
+- Wi-Fi 掉线或 USB 拔出时队列进入「等待重连」而不是判失败，重连成功后自动续传。
 - 大图和 RAW 下载不会阻塞界面其他操作。
 - 传输中心显示每条任务的进度与失败原因，支持暂停、继续、单条取消、失败重试和清理已完成任务。
 - 后台传输使用前台服务与常驻进度通知，锁屏或切换应用后可继续执行。
@@ -288,6 +294,10 @@ Wi-Fi 与 USB 传输遵循公开的 Picture Transfer Protocol 模型：
 | [Recipe Lab](https://github.com/voxivoid/recipe-lab-sony-pmca) | 色彩配方与胶片外观数据结构参考 | GPL-3.0 |
 | [Spektrafilm](https://github.com/andreavolpato/spektrafilm) | 独立原生光谱胶片引擎：H&D 密度曲线、DIR 抑制剂、红光晕、银盐颗粒与印相纸冲印 | 代码 GPL-3.0 / 档案 CC BY-SA 4.0 |
 | [NICO](https://github.com/haecksenwerk/nico) | USB 实时取景、对焦点选择与曝光属性读写参考 | MIT |
+| [OpenCine](https://github.com/erik-sutton95/OpenCine) | Z 系列能力分级、PTP/IP `0x000D` 探活、`0x9431` 分块与取景帧头遥测解析参考 | Apache-2.0 |
+| [OpenZCine](https://github.com/erik-sutton95/OpenZCine) | 断线重连状态机：单次超时、总恢复预算、退避与重连风暴防抖参考 | Apache-2.0 |
+| [digiCamControl](https://github.com/dukus/digiCamControl) | 包围曝光序列生成、参数还原与 A-B 点焦点堆叠交互参考 | MIT |
+| [airnef](https://github.com/besi/airnef) | 断点续传状态校验思路参考，未复用其源代码 | GPL-3.0 |
 | [Shotdeck](https://github.com/Fluoro-Antimonic-Acid/Shotdeck) | 实时取景、拍摄与对象落盘确认行为参考 | GPL-3.0 |
 | [LutCameraPro](https://github.com/laodamanbaout/LutCameraPro-) | PTP/IP 取景与连接边界参考 | Apache-2.0 |
 | [1dlut-z30-filters](https://github.com/haotiandi1011-lgtm/1dlut-z30-filters) | Z 30 影调曲线负载结构与 C1–C9 回读校验参考 | MIT |

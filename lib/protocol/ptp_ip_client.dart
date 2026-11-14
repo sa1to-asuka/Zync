@@ -33,6 +33,15 @@ class PtpIpClient implements PtpTransport {
   final int connectRetryCount;
   final Duration connectRetryDelay;
 
+  /// 非用户主动断开（对端关闭 / 网络错误）时回调一次，供重连状态机接入。
+  /// 主动 `disconnect()` 不触发。
+  void Function()? _onUnexpectedDisconnect;
+
+  @override
+  set onUnexpectedDisconnect(void Function()? callback) {
+    _onUnexpectedDisconnect = callback;
+  }
+
   Socket? _cmdSocket;
   Socket? _eventSocket;
 
@@ -80,11 +89,37 @@ class PtpIpClient implements PtpTransport {
     }
   }
 
+  /// 两个通道可能同时报错（Socket 异常 + onDone 顺序不定），
+  /// 这里合并成一次清理 + 一次回调，避免重连状态机被重复触发。
+  bool _unexpectedDisconnectHandled = false;
+
+  void _handleUnexpectedDisconnect(String channel) {
+    if (_unexpectedDisconnectHandled) return;
+    _unexpectedDisconnectHandled = true;
+    _log('$channel非预期断开，交由重连控制器处理');
+    final cb = _onUnexpectedDisconnect;
+    unawaited(disconnect());
+    cb?.call();
+  }
+
+  /// 相机发来的 `0x000D ProbeRequest` 必须原样回 `0x000E ProbeResponse`，
+  /// 否则部分机身会判定控制端失联并主动断开事件通道。
+  void _answerProbe(PtpPacket packet, Socket? socket, String channel) {
+    if (socket == null) return;
+    try {
+      socket.add(PtpPacket.buildProbeResponse(packet.payload).toBytes());
+      _log('已应答$channel探活 (0x000D → 0x000E)');
+    } catch (e) {
+      _log('$channel探活应答失败: $e');
+    }
+  }
+
   /// 建立命令与事件双通道并开启 PTP 会话。
   @override
   Future<void> connect({Duration timeout = const Duration(seconds: 10)}) async {
     if (_isConnected) return;
     _disconnecting = false;
+    _unexpectedDisconnectHandled = false;
 
     try {
       _log('【握手1/7】连接命令通道 TCP $host:$port ...');
@@ -93,11 +128,11 @@ class PtpIpClient implements PtpTransport {
         _onCommandData,
         onError: (err) {
           _log('命令通道异常断开: $err');
-          if (!_disconnecting) unawaited(disconnect());
+          if (!_disconnecting) _handleUnexpectedDisconnect('命令通道');
         },
         onDone: () {
           _log('命令通道连接关闭');
-          if (!_disconnecting) unawaited(disconnect());
+          if (!_disconnecting) _handleUnexpectedDisconnect('命令通道');
         },
       );
 
@@ -138,11 +173,11 @@ class PtpIpClient implements PtpTransport {
         _onEventData,
         onError: (err) {
           _log('事件通道异常断开: $err');
-          if (!_disconnecting) unawaited(disconnect());
+          if (!_disconnecting) _handleUnexpectedDisconnect('事件通道');
         },
         onDone: () {
           _log('事件通道连接关闭');
-          if (!_disconnecting) unawaited(disconnect());
+          if (!_disconnecting) _handleUnexpectedDisconnect('事件通道');
         },
       );
 
@@ -415,7 +450,9 @@ class PtpIpClient implements PtpTransport {
       if (packet == null) break; // 粘包未完整到达
 
       // 分发包类型
-      if (packet.type == PtpOpCodes.ptpIpInitCommandAck ||
+      if (packet.type == PtpOpCodes.ptpIpProbeRequest) {
+        _answerProbe(packet, _cmdSocket, '命令通道');
+      } else if (packet.type == PtpOpCodes.ptpIpInitCommandAck ||
           packet.type == PtpOpCodes.ptpIpInitFail) {
         // InitCommandAck (Type = 2) 或 InitFail (Type = 5)
         if (_pendingCmdAckCompleter != null &&
@@ -465,7 +502,9 @@ class PtpIpClient implements PtpTransport {
       final packet = _eventReceiveBuffer.parseNextPacket();
       if (packet == null) break;
 
-      if (packet.type == PtpOpCodes.ptpIpInitEventAck ||
+      if (packet.type == PtpOpCodes.ptpIpProbeRequest) {
+        _answerProbe(packet, _eventSocket, '事件通道');
+      } else if (packet.type == PtpOpCodes.ptpIpInitEventAck ||
           packet.type == PtpOpCodes.ptpIpInitFail) {
         // InitEventAck (Type = 4) 或 InitFail (Type = 5)
         if (_pendingEventAckCompleter != null &&

@@ -670,10 +670,17 @@ class MainActivity: FlutterActivity() {
     private fun closeUsbSessionForDevice(device: UsbDevice) {
         val suffix = ":${device.deviceName}"
         val ids = usbSessions.keys.filter { it.endsWith(suffix) }
+        if (ids.isEmpty()) return
         for (id in ids) {
             try {
                 usbSessions.remove(id)?.close()
             } catch (_: Exception) {}
+        }
+        // 通知 Dart 层这是「被动掉线」而非用户主动断开，供自动重连状态机接入。
+        Handler(Looper.getMainLooper()).post {
+            usbEventSink?.success(
+                mapOf("deviceName" to device.deviceName, "detached" to true)
+            )
         }
     }
 

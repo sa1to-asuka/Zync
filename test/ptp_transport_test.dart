@@ -22,6 +22,9 @@ class RecordingTransport implements PtpTransport {
   Stream<PtpPacket> get events => const Stream.empty();
 
   @override
+  set onUnexpectedDisconnect(void Function()? callback) {}
+
+  @override
   Future<void> connect() async {
     connected = true;
     calls.add('connect');

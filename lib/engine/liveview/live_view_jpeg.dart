@@ -33,6 +33,9 @@ class LiveViewJpeg {
     return -1;
   }
 
+  /// JPEG 起始偏移；取景帧头解析需要它来判断头部长度。
+  static int findSoi(Uint8List bytes) => _findSoi(bytes);
+
   /// 从尾部向前找 EOI，避开 JPEG 内部 `FF D9` 不可能出现在熵编码数据里的前提，
   /// 同时保证尾部填充不会让边界偏移。
   static int _findEoi(Uint8List bytes, int start) {

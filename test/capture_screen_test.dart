@@ -3,6 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:zync/engine/capture/capture_controller.dart';
 import 'package:zync/engine/capture/exposure_settings_controller.dart';
 import 'package:zync/engine/capture/interval_shooting_controller.dart';
+import 'package:zync/engine/capture/movie_recording_controller.dart';
+import 'package:zync/engine/capture/exposure_bracketing_controller.dart';
+import 'package:zync/engine/capture/focus_stacking_controller.dart';
 import 'package:zync/engine/liveview/live_view_controller.dart';
 import 'package:zync/engine/liveview/manual_focus_drive_controller.dart';
 import 'package:zync/protocol/camera_driver.dart';
@@ -13,6 +16,53 @@ import 'helpers/pump_app.dart';
 
 Future<void> _frameSleep(Duration _) =>
     Future<void>.delayed(const Duration(milliseconds: 1));
+
+/// 这些用例只关心拍照路径，序列工具用最小实现占位。
+class _NoopBracketPort implements BracketPort {
+  @override
+  bool get isConnected => true;
+  @override
+  Future<int?> readBuiltInBracketing() async => 0;
+  @override
+  Future<List<int>> optionsOf(BracketAxis axis) async => const [0, 1, 2];
+  @override
+  Future<int?> currentOf(BracketAxis axis) async => 1;
+  @override
+  Future<bool> write(BracketAxis axis, int raw) async => true;
+  @override
+  Future<void> capture() async {}
+  @override
+  Future<void> settle(Duration duration) async {}
+}
+
+class _NoopFocusPort implements FocusStackPort {
+  @override
+  bool get isConnected => true;
+  @override
+  Future<bool> drive(MfDirection direction, int steps) async => true;
+  @override
+  Future<void> capture() async {}
+  @override
+  Future<void> settle(Duration duration) async {}
+}
+class _NoopMovieDriver implements MovieRecordingDriver {
+  @override
+  bool get isConnected => true;
+  @override
+  bool get supportsMovieRecording => false;
+  @override
+  Stream<int> get eventCodes => const Stream.empty();
+  @override
+  Future<int?> readLiveViewSelector() async => 0;
+  @override
+  Future<int?> readMovieRecProhibition() async => 0;
+  @override
+  Future<void> setLiveViewSelector(int value) async {}
+  @override
+  Future<void> startMovieRecording() async {}
+  @override
+  Future<void> stopMovieRecording() async {}
+}
 
 Widget _build(
   FakeCaptureDriver driver, {
@@ -43,6 +93,9 @@ Widget _build(
       capture: () async => const CaptureUnconfirmed(),
       sleep: (_) async {},
     ),
+    movieController: MovieRecordingController(driver: _NoopMovieDriver()),
+    bracketController: ExposureBracketingController(port: _NoopBracketPort()),
+    focusStackController: FocusStackingController(port: _NoopFocusPort()),
     onNavigateToConnect: onNavigateToConnect ?? () {},
   );
 }

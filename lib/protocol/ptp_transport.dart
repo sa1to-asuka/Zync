@@ -11,6 +11,10 @@ abstract class PtpTransport {
   /// 相机异步事件（如 ObjectAdded 0x4002）。
   Stream<PtpPacket> get events;
 
+  /// 非用户主动断开（对端关闭 / 网络错误 / USB 拔出）时回调一次。
+  /// 自动重连状态机由此接入；主动 `disconnect()` 不触发。
+  set onUnexpectedDisconnect(void Function()? callback);
+
   Future<void> connect();
 
   Future<void> disconnect();
