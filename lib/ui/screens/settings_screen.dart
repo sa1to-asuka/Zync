@@ -11,6 +11,7 @@ import '../../l10n/l10n.dart';
 import '../../protocol/camera_native_bridge.dart';
 import '../design/design.dart';
 import '../onboarding/onboarding_flow.dart';
+import 'usb_diagnostics.dart';
 import 'capture/storage_folder_sheet.dart';
 import '../widgets/adaptive_layout.dart';
 
@@ -1090,39 +1091,56 @@ class _DiagnosticsDetailContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: AppSettings.instance,
-      builder: (context, _) {
-        final l10n = context.l10n;
-        return ZSection(
-          title: l10n.settingsLogsSection,
+    final l10n = context.l10n;
+    return Column(
+      children: [
+        ZSection(
+          title: EngineL10n.usbDiagTitle(L10n.current.localeName),
           children: [
             ZTile(
-              title: l10n.settingsExportLogsTitle,
-              value: l10n.settingsExportLogsDescription,
-              isLink: true,
-              onTap: () => _exportLogs(context),
-            ),
-            ZTile(
-              title: l10n.settingsViewLogsTile,
-              value: l10n.settingsLogsCountValue(
-                  AppLogManager.instance.logs.length),
-              isLink: true,
-              onTap: () => _showLogsViewerSheet(context),
-            ),
-            ZTile(
-              title: l10n.settingsClearLogsTile,
-              value: l10n.commonClear,
+              title: EngineL10n.usbDiagTitle(L10n.current.localeName),
+              subtitle: EngineL10n.usbDiagSubtitle(L10n.current.localeName),
+              leadingIcon: Icons.usb,
               isLink: true,
               showDivider: false,
-              onTap: () {
-                AppLogManager.instance.clear();
-                showZToast(context, l10n.settingsClearedLogsToast);
-              },
+              onTap: () => showUsbDiagnosticsDialog(context),
             ),
           ],
-        );
-      },
+        ),
+        AnimatedBuilder(
+          animation: AppSettings.instance,
+          builder: (context, _) {
+            return ZSection(
+              title: l10n.settingsLogsSection,
+              children: [
+                ZTile(
+                  title: l10n.settingsExportLogsTitle,
+                  value: l10n.settingsExportLogsDescription,
+                  isLink: true,
+                  onTap: () => _exportLogs(context),
+                ),
+                ZTile(
+                  title: l10n.settingsViewLogsTile,
+                  value: l10n.settingsLogsCountValue(
+                      AppLogManager.instance.logs.length),
+                  isLink: true,
+                  onTap: () => _showLogsViewerSheet(context),
+                ),
+                ZTile(
+                  title: l10n.settingsClearLogsTile,
+                  value: l10n.commonClear,
+                  isLink: true,
+                  showDivider: false,
+                  onTap: () {
+                    AppLogManager.instance.clear();
+                    showZToast(context, l10n.settingsClearedLogsToast);
+                  },
+                ),
+              ],
+            );
+          },
+        ),
+      ],
     );
   }
 }
@@ -1309,15 +1327,6 @@ class _OpenSourceCreditTile extends StatelessWidget {
                   child: Text(credit.name, style: zt.title),
                 ),
                 const SizedBox(width: ZSpace.sm),
-                if (credit.commit != null) ...[
-                  ZTag(
-                    text: credit.commit!,
-                    color: zc.textSecondary,
-                    compact: true,
-                    isOutline: true,
-                  ),
-                  const SizedBox(width: ZSpace.xs),
-                ],
                 ZTag(
                   text: credit.trLicense(context),
                   color: zc.accent,
@@ -1330,36 +1339,6 @@ class _OpenSourceCreditTile extends StatelessWidget {
               credit.trDescription(context),
               style: zt.bodySmall,
             ),
-            if (credit.codePaths.isNotEmpty) ...[
-              const SizedBox(height: ZSpace.sm),
-              Text(
-                l10n.creditsCodePaths,
-                style: zt.caption.copyWith(color: zc.textSecondary),
-              ),
-              const SizedBox(height: 2),
-              for (final path in credit.codePaths)
-                Padding(
-                  padding: const EdgeInsets.only(top: 1),
-                  child: Text(
-                    path,
-                    style: zt.numericSmall.copyWith(color: zc.textSecondary),
-                  ),
-                ),
-            ],
-            if (credit.trZ30(context) != null) ...[
-              const SizedBox(height: ZSpace.sm),
-              Text(
-                '${l10n.creditsZ30Compat}: ${credit.trZ30(context)}',
-                style: zt.caption.copyWith(color: zc.textSecondary),
-              ),
-            ],
-            if (credit.trCompliance(context) != null) ...[
-              const SizedBox(height: 2),
-              Text(
-                '${l10n.creditsCompliance}: ${credit.trCompliance(context)}',
-                style: zt.caption.copyWith(color: zc.textSecondary),
-              ),
-            ],
             const SizedBox(height: ZSpace.xs),
             Text(
               credit.url,

@@ -7,6 +7,7 @@ import 'package:zync/engine/capture/interval_shooting_controller.dart';
 import 'package:zync/engine/capture/movie_recording_controller.dart';
 import 'package:zync/engine/capture/exposure_bracketing_controller.dart';
 import 'package:zync/engine/capture/focus_stacking_controller.dart';
+import 'package:zync/engine/capture/camera_folder_controller.dart';
 import 'package:zync/engine/capture/camera_hdr_controller.dart';
 import 'package:zync/engine/liveview/live_view_controller.dart';
 import 'package:zync/engine/liveview/manual_focus_drive_controller.dart';
@@ -46,6 +47,15 @@ class _NoopFocusPort implements FocusStackPort {
   Future<CameraFileItem?> capture() async => null;
   @override
   Future<void> settle(Duration duration) async {}
+}
+
+class _NoopFolderDriver implements CameraFolderDriver {
+  @override
+  bool get isConnected => true;
+  @override
+  Future<int?> readActiveFolder() async => 100;
+  @override
+  Future<void> writeActiveFolder(int folderNumber) async {}
 }
 
 class _NoopHdrDriver implements HdrDriver {
@@ -111,6 +121,7 @@ Widget _build(
       driver: _NoopHdrDriver(),
       capture: () async {},
     ),
+    cameraFolder: CameraFolderController(driver: _NoopFolderDriver()),
     downloadManager: DownloadManager(driver: driver),
     onNavigateToConnect: onNavigateToConnect ?? () {},
   );

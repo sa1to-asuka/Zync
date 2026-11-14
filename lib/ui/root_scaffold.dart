@@ -11,6 +11,7 @@ import '../../engine/capture/interval_shooting_controller.dart';
 import '../../engine/capture/exposure_settings_controller.dart';
 import '../../engine/capture/movie_recording_controller.dart';
 import '../../engine/capture/bracket_ports.dart';
+import '../../engine/capture/camera_folder_controller.dart';
 import '../../engine/capture/camera_hdr_controller.dart';
 import '../../engine/capture/exposure_bracketing_controller.dart';
 import '../../engine/capture/focus_stacking_controller.dart';
@@ -96,6 +97,7 @@ class _RootScaffoldState extends State<RootScaffold>
   late final ExposureBracketingController _bracketController;
   late final FocusStackingController _focusStackController;
   late final CameraHdrController _hdrController;
+  late final CameraFolderController _cameraFolderController;
   late final AnimationController _tabFadeController;
   late final Animation<double> _tabFadeAnimation;
   late final Animation<double> _tabScaleAnimation;
@@ -175,6 +177,7 @@ class _RootScaffoldState extends State<RootScaffold>
       driver: _driver,
       capture: () => _captureController.capture(),
     );
+    _cameraFolderController = CameraFolderController(driver: _driver);
     AppSettings.instance.addListener(_syncLiveViewSettings);
 
     _tabFadeController = AnimationController(
@@ -479,6 +482,7 @@ class _RootScaffoldState extends State<RootScaffold>
         bracketController: _bracketController,
         focusStackController: _focusStackController,
         hdrController: _hdrController,
+        cameraFolder: _cameraFolderController,
         downloadManager: _downloadManager,
         onNavigateToConnect: () => _onTabSelected(_connectTabIndex),
       ),

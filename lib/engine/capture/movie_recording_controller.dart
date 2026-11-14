@@ -229,7 +229,10 @@ class MovieRecordingController extends ChangeNotifier {
 
   Future<bool> startRecording() async {
     if (_phase != MovieRecordingPhase.idle) return false;
-    if (_mode == CameraCaptureMode.lockedByPhysicalLever) {
+    // 选择器读得到时才敢断定「拨杆不在录像档」；读不到就实际试一次，
+    // 由相机给出的响应码来判断，不要把用户挡在门外。
+    if (_mode == CameraCaptureMode.lockedByPhysicalLever &&
+        _selectorReadable) {
       _lastError = 'physicalLever';
       notifyListeners();
       return false;

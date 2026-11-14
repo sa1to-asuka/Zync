@@ -1065,9 +1065,5 @@
   "storageFolderHint": "文件夹名称（可用 / 分层）",
   "storageFolderCreate": "创建并使用",
   "storageFolderApply": "使用该文件夹",
-  "storageFolderPath": "DCIM/{folder}",
-  "creditsCodePaths": "关键代码位置",
-  "creditsZ30Compat": "Z 30 可用度",
-  "creditsCompliance": "源码合规边界",
-  "creditsCommit": "提交"
+  "storageFolderPath": "DCIM/{folder}"
 }

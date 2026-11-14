@@ -4,6 +4,7 @@ import '../core/constants/ptp_opcodes.dart';
 import '../core/settings/app_settings.dart';
 import '../core/utils/byte_buffer_ext.dart';
 import '../core/utils/camera_error_mapper.dart';
+import '../engine/capture/camera_folder_controller.dart';
 import '../engine/capture/camera_hdr_controller.dart';
 import '../engine/capture/movie_recording_controller.dart';
 import '../engine/picture_control/np3_codec.dart';
@@ -217,7 +218,7 @@ class NikonDeviceInfo {
 /// 尼康专属相机硬件协议驱动。
 /// Nikon 扩展操作码与设备属性读取。
 class NikonDriver
-    implements CameraDriver, MovieRecordingDriver, HdrDriver {
+    implements CameraDriver, MovieRecordingDriver, HdrDriver, CameraFolderDriver {
   PtpTransport? _client;
   CameraConnectionState _state = CameraConnectionState.disconnected;
   String _cameraModel = 'Nikon Camera';
@@ -1412,8 +1413,18 @@ class NikonDriver
     final client = _client;
     if (client == null || !isConnected) throw StateError('相机未连接');
     try {
-      await client.executeOperation(
-          PtpOpCodes.nikonStartMovieRecInCard, const <int>[0, 0]);
+      // 0x920A 在 libgphoto2 里是「无参数」操作码。多塞两个参数会被
+      // 部分固件判成 InvalidParameter，表现为「点了没反应」。
+      await client.executeOperation(PtpOpCodes.nikonStartMovieRecInCard);
+    } on PtpException catch (e) {
+      // 少数机身反过来要求 [0, 0]，只在这种情况下再试一次。
+      if (e.responseCode == 0x2006 || e.responseCode == 0x2005) {
+        await client.executeOperation(
+            PtpOpCodes.nikonStartMovieRecInCard, const <int>[0, 0]);
+        return;
+      }
+      _markUnsupported(PtpOpCodes.nikonStartMovieRecInCard, e);
+      rethrow;
     } catch (e) {
       _markUnsupported(PtpOpCodes.nikonStartMovieRecInCard, e);
       rethrow;
@@ -1454,6 +1465,28 @@ class NikonDriver
   @override
   Future<void> writeUintProperty(int propertyId, int value) async {
     await writeDevicePropValue(propertyId, Uint8List(1)..[0] = value & 0xFF);
+  }
+
+  // ---- CameraFolderDriver ----
+  @override
+  Future<int?> readActiveFolder() async {
+    if (!isConnected) return null;
+    try {
+      final data = await fetchDevicePropValue(PtpOpCodes.nikonPropActiveFolder);
+      if (data.length >= 2) {
+        return ByteData.sublistView(data, 0, 2).getUint16(0, Endian.little);
+      }
+      return data.isEmpty ? null : data[0];
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Future<void> writeActiveFolder(int folderNumber) async {
+    final payload = Uint8List(2)
+      ..buffer.asByteData().setUint16(0, folderNumber & 0xFFFF, Endian.little);
+    await writeDevicePropValue(PtpOpCodes.nikonPropActiveFolder, payload);
   }
 
   /// 属性宽度随机型不同：UINT8 返回 1 字节，UINT32 返回 4 字节。

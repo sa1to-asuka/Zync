@@ -65,6 +65,7 @@ class PtpOpCodes {
   static const int nikonPropActivePicCtrlItem = 0xD200; // 当前激活的优化校准项 (1..8, 101..120, 201..209)
   static const int nikonPropChangePicCtrlItem = 0xD201; // 优化校准变更通知项
   static const int nikonPropCameraOrientation = 0xD10E; // 机身朝向 (0=水平, 1=顺时针 90°...)
+  static const int nikonPropActiveFolder = 0xD15B; // 相机当前存储文件夹（UINT16）
 
   // ==========================================
   // 2c. 曝光相关设备属性 (拍摄台读写)

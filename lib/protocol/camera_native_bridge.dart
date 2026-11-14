@@ -536,6 +536,24 @@ class CameraNativeBridge {
     return [];
   }
 
+  /// USB 连接诊断：返回系统枚举到的**全部** USB 设备（不过滤）。
+  ///
+  /// 「连不上相机」时先看这里是不是空的，就能区分是系统根本没枚举到设备，
+  /// 还是枚举到了但能力判定没通过。
+  static Future<List<Map<String, dynamic>>> listUsbDiagnostics() async {
+    try {
+      final list =
+          await _channel.invokeMethod<List<dynamic>>('listUsbDiagnostics');
+      if (list == null) return const [];
+      return list
+          .whereType<Map<dynamic, dynamic>>()
+          .map((e) => e.map((k, v) => MapEntry('$k', v)))
+          .toList(growable: false);
+    } catch (_) {
+      return const [];
+    }
+  }
+
   /// 请求指定 USB 设备的访问权限，返回是否授权成功。
   static Future<bool> requestUsbPermission(String deviceName) async {
     try {

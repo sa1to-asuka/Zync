@@ -10,6 +10,7 @@ import '../../core/utils/exif_helper.dart';
 import '../../engine/transfer/download_manager.dart';
 import '../../engine/transfer/export_history_manager.dart';
 import '../../engine/transfer/shoot_and_transfer.dart';
+import '../../l10n/engine_l10n.dart';
 import '../../l10n/l10n.dart';
 import '../../protocol/camera_driver.dart';
 import '../../protocol/camera_native_bridge.dart';
@@ -19,6 +20,7 @@ import '../design/design.dart';
 import '../widgets/adaptive_layout.dart';
 import '../widgets/bento_card.dart';
 import 'gallery_screen.dart';
+import 'usb_diagnostics.dart';
 
 enum _ConnectionTransport { wifi, usb }
 
@@ -945,6 +947,21 @@ class ConnectScreenState extends State<ConnectScreen>
                       l10n.connectUsbPrepSub,
                       style: zt.caption.copyWith(color: zc.textSecondary),
                       overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: ZSpace.xs),
+                    Text(
+                      EngineL10n.usbNoDeviceHint(L10n.current.localeName),
+                      style: zt.caption.copyWith(color: zc.textSecondary),
+                    ),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton(
+                        onPressed: () => showUsbDiagnosticsDialog(context),
+                        child: Text(
+                          EngineL10n.usbOpenDiagnostics(
+                              L10n.current.localeName),
+                        ),
+                      ),
                     ),
                   ],
                 ],

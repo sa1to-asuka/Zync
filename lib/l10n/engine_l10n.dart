@@ -681,6 +681,22 @@ abstract final class EngineL10n {
     '灵活色彩': (en: 'Flexible Color', ja: 'フレキシブルカラー'),
 
     // ==================== v2.6.0 致谢明细 ====================
+    'Z 系列能力分级、0x000D 探活应答、0x9431 大文件分块与取景帧头遥测参考': (
+      en: 'Z-series capability tiers, 0x000D keep-alive probe, 0x9431 large-file chunking, and live-view header telemetry reference',
+      ja: 'Zシリーズの世代別ケイパビリティ、0x000D 生存確認、0x9431 大容量分割転送、ライブビューヘッダ解析のリファレンス',
+    ),
+    '断线重连状态机：单次超时、恢复预算、退避与重连风暴防抖参考': (
+      en: 'Reconnect state machine: per-attempt timeout, recovery budget, backoff and storm debouncing reference',
+      ja: '再接続ステートマシン（試行タイムアウト、復旧予算、バックオフ、再接続ストーム抑制）のリファレンス',
+    ),
+    'Z 30 模式编码、包围曝光序列与原值还原、A-B 点焦点堆叠参考': (
+      en: 'Z 30 mode encoding, bracketing sequence with value restoration, and A-B focus stacking reference',
+      ja: 'Z 30 のモード値、ブラケット撮影と元値復元、A-B フォーカススタッキングのリファレンス',
+    ),
+    '断点续传状态校验思路参考，未复用其源代码': (
+      en: 'Resumable-download validation approach reference; no source code reused',
+      ja: 'レジューム転送の検証方針のリファレンス。ソースコードは流用していません',
+    ),
     'Z 系列三代能力分级、0x000D 探活应答、0x9431 大文件分块、取景帧头遥测与录像控制参考': (
       en: 'Z-series generation tiers, 0x000D keep-alive probe, 0x9431 large-file chunking, live-view header telemetry, and movie-control reference',
       ja: 'Zシリーズの世代別ケイパビリティ、0x000D 生存確認、0x9431 大容量分割転送、ライブビューヘッダ解析、動画制御のリファレンス',
@@ -1703,5 +1719,108 @@ abstract final class EngineL10n {
         'ja' => 'RAW を含むためアプリ内合成はできません',
         'en' => 'In-app merging is not available for RAW sequences',
         _ => '序列里有 RAW，App 内合成暂不支持',
+      };
+
+  // ==================== 相机端文件夹 ====================
+
+  static String cameraFolderTitle(String langCode) => switch (langCode) {
+        'ja' => 'カメラ側フォルダー',
+        'en' => 'Camera folder',
+        _ => '相机文件夹',
+      };
+
+  static String cameraFolderCurrent(String langCode, int folder) =>
+      switch (langCode) {
+        'ja' => '現在: $folder',
+        'en' => 'Current: $folder',
+        _ => '当前：$folder',
+      };
+
+  static String cameraFolderUnreadable(String langCode) => switch (langCode) {
+        'ja' => 'カメラ側フォルダーを読み取れません',
+        'en' => 'Cannot read the camera folder',
+        _ => '读不到相机文件夹',
+      };
+
+  static String cameraFolderReadOnly(String langCode) => switch (langCode) {
+        'ja' =>
+          'この機種は外部からのフォルダー変更を受け付けません。カメラのメニューで作成・切り替えしてください',
+        'en' =>
+          'This body does not allow changing the folder over USB. Create or switch it in the camera menu.',
+        _ => '这台机身不允许通过数据线改文件夹，请在相机菜单里新建或切换',
+      };
+
+  static String cameraFolderHint(String langCode) => switch (langCode) {
+        'ja' => 'フォルダー番号（100–999）',
+        'en' => 'Folder number (100–999)',
+        _ => '文件夹编号（100–999）',
+      };
+
+  static String cameraFolderApplied(String langCode, int folder) =>
+      switch (langCode) {
+        'ja' => 'カメラ側フォルダーを $folder に切り替えました',
+        'en' => 'Camera folder switched to $folder',
+        _ => '相机文件夹已切换到 $folder',
+      };
+
+  static String cameraFolderFailed(String langCode) => switch (langCode) {
+        'ja' => 'フォルダーの切り替えに失敗しました',
+        'en' => 'Failed to switch the camera folder',
+        _ => '切换相机文件夹失败',
+      };
+
+  // ==================== USB 诊断 ====================
+
+  static String usbDiagTitle(String langCode) => switch (langCode) {
+        'ja' => 'USB 接続診断',
+        'en' => 'USB connection diagnostics',
+        _ => 'USB 连接诊断',
+      };
+
+  static String usbDiagSubtitle(String langCode) => switch (langCode) {
+        'ja' => '接続できないときに、端末が USB 機器を認識しているか確認します',
+        'en' => 'Check whether the phone even sees the camera as a USB device',
+        _ => '连不上时，先看手机有没有把相机识别成 USB 设备',
+      };
+
+  static String usbDiagEmpty(String langCode) => switch (langCode) {
+        'ja' => 'USB 機器が1台も認識されていません',
+        'en' => 'No USB devices are enumerated at all',
+        _ => '系统没有枚举到任何 USB 设备',
+      };
+
+  static String usbDiagEmptyHint(String langCode) => switch (langCode) {
+        'ja' =>
+          '端末の設定で USB OTG（ホストモード）を有効にし、データ転送対応のケーブルで接続し直してください。それでも変わらない場合は端末側の制限です',
+        'en' =>
+          'Enable USB OTG / host mode in system settings and reconnect with a data-capable cable. If it still shows nothing, the phone is blocking host mode.',
+        _ => '请在系统设置里打开 USB OTG（主机模式），换一根支持数据传输的线重插。如果仍然是空的，说明是手机系统侧有限制。',
+      };
+
+  static String usbDiagNoPtp(String langCode) => switch (langCode) {
+        'ja' => '認識はされていますが、静止画(PTP)インターフェースがありません',
+        'en' => 'Enumerated, but it exposes no Still Image (PTP) interface',
+        _ => '设备已被识别，但没有静态图像（PTP）接口',
+      };
+
+  static String usbDiagClose(String langCode) => switch (langCode) {
+        'ja' => '閉じる',
+        'en' => 'Close',
+        _ => '关闭',
+      };
+
+  /// 连接页：USB 插上却完全没有反应时的提示。
+  static String usbNoDeviceHint(String langCode) => switch (langCode) {
+        'ja' =>
+          '新しい Android 端末では USB ホスト（OTG）が制限され、ケーブルを挿しても何も起きないことがあります。他社アプリでも同じ症状が出る場合は端末側の制限です。設定で OTG を確認し、データ転送対応のケーブルで試してください',
+        'en' =>
+          'Some recent Android phones restrict USB host (OTG), so plugging the cable does nothing at all. If other camera apps behave the same way, it is the phone. Check OTG in system settings and use a data-capable cable.',
+        _ => '较新的安卓机型可能限制了 USB 主机（OTG），插上线也不会有任何反应。如果其他相机 App 也一样，那就是手机系统侧的限制。请在系统设置里确认 OTG，并换一根支持数据传输的线再试。',
+      };
+
+  static String usbOpenDiagnostics(String langCode) => switch (langCode) {
+        'ja' => 'USB 診断を見る',
+        'en' => 'Open USB diagnostics',
+        _ => '查看 USB 诊断',
       };
 }

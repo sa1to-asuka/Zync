@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../core/constants/ptp_opcodes.dart';
 import '../../core/settings/app_settings.dart';
+import '../../core/utils/app_log_manager.dart';
 import '../../engine/capture/af_area_mapper.dart';
 import '../../engine/capture/camera_property.dart';
 import '../../engine/capture/capture_controller.dart';
@@ -17,6 +18,7 @@ import '../../engine/capture/exposure_settings_controller.dart';
 import '../../engine/capture/interval_shooting_controller.dart';
 import '../../engine/capture/exposure_bracketing_controller.dart';
 import '../../engine/capture/focus_stacking_controller.dart';
+import '../../engine/capture/camera_folder_controller.dart';
 import '../../engine/capture/camera_hdr_controller.dart';
 import '../../engine/capture/jpeg_scaler.dart';
 import '../../engine/capture/sequence_compositor.dart';
@@ -54,6 +56,7 @@ class CaptureScreen extends StatefulWidget {
     required this.bracketController,
     required this.focusStackController,
     required this.hdrController,
+    required this.cameraFolder,
     required this.downloadManager,
     required this.onNavigateToConnect,
   });
@@ -68,6 +71,7 @@ class CaptureScreen extends StatefulWidget {
   final ExposureBracketingController bracketController;
   final FocusStackingController focusStackController;
   final CameraHdrController hdrController;
+  final CameraFolderController cameraFolder;
   final DownloadManager downloadManager;
   final VoidCallback onNavigateToConnect;
 
@@ -705,7 +709,10 @@ class CaptureScreenState extends State<CaptureScreen> {
   }
 
   Future<void> _pickStorageFolder() async {
-    final changed = await showStorageFolderSheet(context);
+    final changed = await showStorageFolderSheet(
+      context,
+      cameraFolder: widget.cameraFolder,
+    );
     if (!mounted || !changed) return;
     _toast(
       context.l10n.storageFolderPath(AppSettings.instance.exportFolder),
@@ -1161,10 +1168,20 @@ class CaptureScreenState extends State<CaptureScreen> {
     }
     if (movie.phase != MovieRecordingPhase.idle) return;
 
+    // 录像取景需要实时取景在跑：0x920A 在取景关闭时会被部分固件拒绝。
+    if (!widget.liveViewController.isActive) {
+      _autoStarted = true;
+      _startLiveView();
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      if (!mounted) return;
+    }
+
     final ok = await movie.startRecording();
     if (!mounted) return;
     if (ok) return;
 
+    AppLogManager.instance
+        .add('[movie] start recording failed: ${movie.lastError ?? 'n/a'}');
     final prohibition = movie.prohibition;
     if (prohibition.needsPhysicalLever ||
         movie.mode == CameraCaptureMode.lockedByPhysicalLever) {

@@ -3478,16 +3478,4 @@ class AppLocalizationsZh extends AppLocalizations {
   String storageFolderPath(Object folder) {
     return 'DCIM/$folder';
   }
-
-  @override
-  String get creditsCodePaths => '关键代码位置';
-
-  @override
-  String get creditsZ30Compat => 'Z 30 可用度';
-
-  @override
-  String get creditsCompliance => '源码合规边界';
-
-  @override
-  String get creditsCommit => '提交';
 }

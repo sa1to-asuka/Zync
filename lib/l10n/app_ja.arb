@@ -1065,9 +1065,5 @@
   "storageFolderHint": "フォルダー名（/ で階層化できます）",
   "storageFolderCreate": "作成して使用",
   "storageFolderApply": "このフォルダーを使用",
-  "storageFolderPath": "DCIM/{folder}",
-  "creditsCodePaths": "主要コード",
-  "creditsZ30Compat": "Z 30 での可用性",
-  "creditsCompliance": "ソース利用の境界",
-  "creditsCommit": "コミット"
+  "storageFolderPath": "DCIM/{folder}"
 }

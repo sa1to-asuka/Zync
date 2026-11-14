@@ -3615,16 +3615,4 @@ class AppLocalizationsEn extends AppLocalizations {
   String storageFolderPath(Object folder) {
     return 'DCIM/$folder';
   }
-
-  @override
-  String get creditsCodePaths => 'Key files';
-
-  @override
-  String get creditsZ30Compat => 'Z 30 support';
-
-  @override
-  String get creditsCompliance => 'Source compliance';
-
-  @override
-  String get creditsCommit => 'Commit';
 }

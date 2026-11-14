@@ -500,6 +500,10 @@ class MainActivity: FlutterActivity() {
                 }
                 // USB PTP over OTG
                 "listUsbDevices" -> result.success(listUsbDevices())
+                // 诊断用：不做任何过滤，把系统枚举到的所有 USB 设备原样返回。
+                // 「连不上相机」时先看这里是不是空的，就能区分是系统没枚举到，
+                // 还是枚举到了但我们没通过能力判定。
+                "listUsbDiagnostics" -> result.success(usbDiagnostics())
                 "requestUsbPermission" -> {
                     val deviceName = call.argument<String>("deviceName")
                     if (deviceName.isNullOrBlank()) {
@@ -592,6 +596,28 @@ class MainActivity: FlutterActivity() {
                     "storageOnly" to storageOnly,
                 )
             }
+    }
+
+    private fun usbDiagnostics(): List<Map<String, Any>> {
+        val mgr = usbManager ?: return emptyList()
+        return try {
+            mgr.deviceList.values.map { device ->
+                mapOf(
+                    "deviceName" to device.deviceName,
+                    "vendorId" to device.vendorId,
+                    "productId" to device.productId,
+                    "deviceClass" to device.deviceClass,
+                    "interfaceCount" to device.interfaceCount,
+                    "productName" to (runCatching { device.productName }.getOrNull() ?: ""),
+                    "manufacturerName" to (runCatching { device.manufacturerName }.getOrNull() ?: ""),
+                    "hasPtp" to hasPtpInterface(device),
+                    "hasStorage" to hasStorageInterface(device),
+                    "hasPermission" to mgr.hasPermission(device),
+                )
+            }
+        } catch (_: Exception) {
+            emptyList()
+        }
     }
 
     private fun hasPtpInterface(device: UsbDevice): Boolean =
