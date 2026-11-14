@@ -126,27 +126,43 @@ class MovieRecordingController extends ChangeNotifier {
   }
 
   /// 读取机身当前模式与禁录原因。
+  ///
+  /// Z 30 这类带实体拨杆的机型：`0xD1A6` 由拨杆决定，App 写不进去。
+  /// 所以**读**才是主路径，写只是「有软开关的机型」上的锦上添花。
   Future<void> refresh() async {
     final selector = await driver.readLiveViewSelector();
     final mask = await driver.readMovieRecProhibition();
     _prohibitionMask = mask ?? 0;
+    _selectorReadable = selector != null;
+
     if (selector != null) {
+      // 选择器是权威：读得到就完全按它来。
       _mode = selector == 1
           ? CameraCaptureMode.video
-          : CameraCaptureMode.photo;
-    }
-    if (prohibition.needsPhysicalLever) {
+          : (prohibition.needsPhysicalLever
+              ? CameraCaptureMode.lockedByPhysicalLever
+              : CameraCaptureMode.photo);
+    } else if (prohibition.needsPhysicalLever) {
       _mode = CameraCaptureMode.lockedByPhysicalLever;
+    } else if (_mode == CameraCaptureMode.lockedByPhysicalLever) {
+      // 拨杆已经离开受限位置：不要让界面一直卡在「拨杆不对」。
+      _mode = CameraCaptureMode.photo;
     }
     notifyListeners();
   }
 
+  /// 是否读得到 `0xD1A6`。读不到时不能凭它锁死界面。
+  bool _selectorReadable = true;
+  bool get selectorReadable => _selectorReadable;
+
   /// 尝试切换拍照/录像模式。
   ///
-  /// 返回 false 表示机身不接受（Z 30 拨杆在拍照档），此时 UI 应提示拨杆。
+  /// 返回 false 表示切不过去。注意：**写入失败不一定代表失败**——
+  /// Z 30 上 `0xD1A6` 是只读的，拨杆到位后写入仍会被拒，此时应以回读结果为准。
   Future<bool> switchMode(CameraCaptureMode target) async {
     if (target == CameraCaptureMode.lockedByPhysicalLever) return false;
     if (_mode == target) return true;
+
     try {
       await driver.setLiveViewSelector(
           target == CameraCaptureMode.video ? 1 : 0);
@@ -156,10 +172,28 @@ class MovieRecordingController extends ChangeNotifier {
       return true;
     } catch (e) {
       _lastError = '$e';
+    }
+
+    // 写入被拒：回读一次，看是不是拨杆已经切过去了。
+    await refresh();
+    if (_mode == target) {
+      _lastError = null;
+      return true;
+    }
+
+    // 连选择器都读不到（部分固件不支持 0xD1A6）：不要卡死界面，
+    // 先让用户进到录像界面，真正不能录时由 0xD0A4 给出具体原因。
+    if (!_selectorReadable) {
+      _mode = target;
+      notifyListeners();
+      return true;
+    }
+
+    if (_mode != CameraCaptureMode.lockedByPhysicalLever) {
       _mode = CameraCaptureMode.lockedByPhysicalLever;
       notifyListeners();
-      return false;
     }
+    return false;
   }
 
   /// 取景帧头里的 `isRecording`：机身按键开始/停止录像时同步 UI。

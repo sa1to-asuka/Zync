@@ -140,6 +140,16 @@ class LiveViewController extends ChangeNotifier {
     _loopFuture = _runLoop();
   }
 
+  /// 序列拍摄（间隔 / 包围 / 焦点堆叠）期间禁止自动重启取景。
+  ///
+  /// 每张照片都会走一次「退出取景 → 快门 → 恢复」，如果序列本身已经把取景
+  /// 关掉了，就不该在每张之后又把它拉起来——否则相机的屏幕会在整个序列里亮着。
+  bool _suppressAutoRestart = false;
+
+  void setAutoRestartSuppressed(bool value) {
+    _suppressAutoRestart = value;
+  }
+
   /// 停止取景并释放相机。
   Future<void> stop() async {
     _stopRequested = true;
@@ -158,6 +168,21 @@ class LiveViewController extends ChangeNotifier {
     }
   }
 
+  /// 强制让相机退出取景。
+  ///
+  /// [stop] 只在本端认为「取景开着」时才发 `0x9202`；序列拍摄时状态可能与相机
+  /// 实际不同步（例如相机自己重启过取景），于是相机屏幕会一直亮着。
+  /// 这里无条件发一次，相机本来就已退出时返回的 0xA00B 直接忽略。
+  Future<void> forceClose() async {
+    await stop();
+    _driverLiveViewOpen = false;
+    try {
+      await _driver.endLiveView(force: true);
+    } catch (_) {
+      // 0xA00B（不在取景中）是正常情况。
+    }
+  }
+
   /// 独占执行一段相机操作：暂停取景 → 等在途帧落地 → 退出取景 → 执行 → 恢复。
   ///
   /// 释放快门和写设备属性时相机不接受并发的取景轮询，必须先退出。
@@ -169,7 +194,7 @@ class LiveViewController extends ChangeNotifier {
       if (wasRunning) await _closeDriverLiveView();
       return await action();
     } finally {
-      if (wasRunning && !_stopRequested && !_disposed) {
+      if (wasRunning && !_stopRequested && !_disposed && !_suppressAutoRestart) {
         try {
           await _driver.startLiveView();
           _driverLiveViewOpen = true;

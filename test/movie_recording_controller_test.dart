@@ -86,6 +86,50 @@ void main() {
     expect(controller.lastError, isNotNull);
   });
 
+  test('写入被拒但回读已是录像档：视为切换成功', () async {
+    // Z 30 的拨杆已经把 0xD1A6 改成 1，只是不接受 App 写入。
+    driver.rejectSelectorWrite = true;
+    driver.selector = 1;
+
+    final ok = await controller.switchMode(CameraCaptureMode.video);
+
+    expect(ok, isTrue);
+    expect(controller.mode, CameraCaptureMode.video);
+  });
+
+  test('选择器读不到时不锁死界面，允许进入录像', () async {
+    driver.rejectSelectorWrite = true;
+    driver.selector = null;
+
+    final ok = await controller.switchMode(CameraCaptureMode.video);
+
+    expect(ok, isTrue, reason: '读不到 0xD1A6 的固件不该被永久卡在拍照档');
+    expect(controller.mode, CameraCaptureMode.video);
+  });
+
+  test('轮询能把机身拨杆的状态反映到模式上', () async {
+    driver.selector = 0;
+    await controller.refresh();
+    expect(controller.mode, CameraCaptureMode.photo);
+
+    // 用户把拨杆拨到视频档。
+    driver.selector = 1;
+    await controller.refresh();
+    expect(controller.mode, CameraCaptureMode.video);
+    expect(controller.phase, MovieRecordingPhase.idle);
+  });
+
+  test('拨杆离开受限位置后不再卡在 lockedByPhysicalLever', () async {
+    driver.selector = null;
+    driver.prohibition = 1 << 13;
+    await controller.refresh();
+    expect(controller.mode, CameraCaptureMode.lockedByPhysicalLever);
+
+    driver.prohibition = 0;
+    await controller.refresh();
+    expect(controller.mode, CameraCaptureMode.photo);
+  });
+
   test('0xD0A4 bit 13 表示拨杆不在录像档', () async {
     driver.prohibition = 1 << 13;
     await controller.refresh();

@@ -195,7 +195,9 @@ abstract class CameraDriver {
   Future<Uint8List> fetchLiveViewFrame();
 
   /// 退出实时取景 (0x9202)。任何退出路径都应调用。
-  Future<void> endLiveView();
+  /// 退出实时取景。[force] 为 true 时即使本端认为取景未开启也照发 0x9202，
+  /// 用于修正「相机还在取景、App 状态已不同步」的情况。
+  Future<void> endLiveView({bool force = false});
 
   /// 释放快门 (0x100E)。被相机拒绝时抛出 [PtpException]，
   /// 便于调用方区分「忙」与「不支持」。

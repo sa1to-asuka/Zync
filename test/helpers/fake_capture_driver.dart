@@ -177,7 +177,7 @@ class FakeCaptureDriver implements CameraDriver {
   }
 
   @override
-  Future<void> endLiveView() async {
+  Future<void> endLiveView({bool force = false}) async {
     calls.add('endLiveView');
   }
 

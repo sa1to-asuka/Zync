@@ -1356,6 +1356,14 @@ abstract final class EngineL10n {
         _ => '请把机身顶部拨杆拨到视频档',
       };
 
+  /// 要切回拍照，但拨杆仍在视频档。
+  static String movieNeedPhysicalLeverToPhoto(String langCode) =>
+      switch (langCode) {
+        'ja' => '静止画に戻すには、カメラ上部のレバーを静止画アイコンに合わせてください',
+        'en' => 'Move the camera lever back to the still-image icon',
+        _ => '请把机身顶部拨杆拨回拍照档',
+      };
+
   /// 0xD0A4 禁录原因。bit 为位序号。
   static String movieProhibitionReason(String langCode, int bit) =>
       switch (bit) {
@@ -1537,5 +1545,13 @@ abstract final class EngineL10n {
         'ja' => '一定ステップでピントを送り、後工程で合成できる連写を撮ります',
         'en' => 'Steps the focus and captures a set for desktop stacking',
         _ => '按固定步长推进焦点，拍完整组供桌面端合成',
+      };
+
+  /// 序列拍摄期间关闭取景的提示。
+  static String liveViewClosedForSequence(String langCode) =>
+      switch (langCode) {
+        'ja' => 'バッテリー節約のため、シーケンス中はライブビューを停止しました',
+        'en' => 'Live view is off during the sequence to save battery',
+        _ => '为保证手机与相机电量，序列拍摄期间已关闭实时取景',
       };
 }

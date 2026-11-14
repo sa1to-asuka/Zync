@@ -67,6 +67,7 @@ class CaptureScreenState extends State<CaptureScreen> {
   StreamSubscription<CameraConnectionState>? _connectionSub;
   Timer? _orientationTimer;
   Timer? _modeTimer;
+  Timer? _movieModeTimer;
   Timer? _focusTimer;
 
   bool _connected = false;
@@ -95,6 +96,7 @@ class CaptureScreenState extends State<CaptureScreen> {
         widget.focusStackController.stop();
         widget.manualFocusController.cancel();
         widget.liveViewController.stop();
+        _stopModePolling();
         _stopOrientationPolling();
         _autoStarted = false;
       }
@@ -120,6 +122,7 @@ class CaptureScreenState extends State<CaptureScreen> {
     _connectionSub?.cancel();
     _orientationTimer?.cancel();
     _modeTimer?.cancel();
+    _movieModeTimer?.cancel();
     _focusTimer?.cancel();
     CameraNativeBridge.setKeepScreenOn(false);
     super.dispose();
@@ -128,6 +131,8 @@ class CaptureScreenState extends State<CaptureScreen> {
   /// 由导航壳在切换到本页时调用。
   void onTabVisible() {
     if (!_connected) return;
+    // 录像模式由机身拨杆决定，与是否支持取景无关，先起来。
+    _startMovieModePolling();
     if (!widget.driver.supportsLiveView) return;
     widget.exposureController.refresh();
     _startModePolling();
@@ -184,11 +189,26 @@ class CaptureScreenState extends State<CaptureScreen> {
         await widget.exposureController.refresh();
       }
     });
+    _startMovieModePolling();
+  }
+
+  /// 机身拨杆随时可能被拨动，`0xD1A6` 必须持续回读，否则界面会一直停在进页面时的模式。
+  void _startMovieModePolling() {
+    _movieModeTimer?.cancel();
+    _movieModeTimer =
+        Timer.periodic(const Duration(seconds: 2), (_) async {
+      if (!_connected || !mounted) return;
+      // 启停与封盘期间不插队，避免和 0x920A/0x920B 抢同一个通道。
+      if (widget.movieController.phase != MovieRecordingPhase.idle) return;
+      await widget.movieController.refresh();
+    });
   }
 
   void _stopModePolling() {
     _modeTimer?.cancel();
     _modeTimer = null;
+    _movieModeTimer?.cancel();
+    _movieModeTimer = null;
   }
 
   void _startOrientationPolling() {
@@ -372,10 +392,40 @@ class CaptureScreenState extends State<CaptureScreen> {
       intervalSeconds: config.interval.inSeconds,
       intervalCount: config.shotCount == 0 ? 1 : config.shotCount,
     );
-    if (!config.keepLiveView) {
-      await widget.liveViewController.stop();
+    await _runSequence(
+      keepLiveView: config.keepLiveView,
+      body: () => widget.intervalController.start(config),
+    );
+  }
+
+  /// 序列拍摄的统一入口。
+  ///
+  /// 默认在序列期间**同时**关掉手机预览和相机的实时取景：每张照片本来就要
+  /// 退出取景再拍，把取景留到最后只会让相机屏幕整段时间亮着耗电。
+  /// 序列结束后，如果开始前预览是开着的，再帮用户拉回来。
+  Future<void> _runSequence({
+    required bool keepLiveView,
+    required Future<void> Function() body,
+  }) async {
+    final live = widget.liveViewController;
+    final wasActive = live.isActive;
+
+    if (!keepLiveView) {
+      live.setAutoRestartSuppressed(true);
+      await live.forceClose();
+      _toast(EngineL10n.liveViewClosedForSequence(L10n.current.localeName));
     }
-    await widget.intervalController.start(config);
+
+    try {
+      await body();
+    } finally {
+      live.setAutoRestartSuppressed(false);
+      if (!keepLiveView) {
+        // 序列结束后再兜一次：中途相机可能自己回到取景。
+        await live.forceClose();
+        if (wasActive && mounted) await live.start();
+      }
+    }
   }
 
   void _toast(String message, {bool isError = false, ZStatusTone? tone}) {
@@ -398,13 +448,17 @@ class CaptureScreenState extends State<CaptureScreen> {
       return;
     }
     final lang = L10n.current.localeName;
-    final wasActive = widget.liveViewController.isActive;
-    if (wasActive) await widget.liveViewController.stop();
 
     final config = await showBracketConfigSheet(context);
     if (config == null || !mounted) return;
 
-    final started = await widget.bracketController.start(config);
+    var started = false;
+    await _runSequence(
+      keepLiveView: false,
+      body: () async {
+        started = await widget.bracketController.start(config);
+      },
+    );
     if (!mounted) return;
     if (!started) {
       if (widget.bracketController.state == BracketState.failed) {
@@ -419,7 +473,6 @@ class CaptureScreenState extends State<CaptureScreen> {
     } else {
       _toast(EngineL10n.bracketRestored(lang), tone: ZStatusTone.success);
     }
-    if (wasActive && mounted) await widget.liveViewController.start();
   }
 
   Future<void> _openFocusStackSheet() async {
@@ -429,6 +482,17 @@ class CaptureScreenState extends State<CaptureScreen> {
     }
     final config = await showFocusStackConfigSheet(context);
     if (config == null || !mounted) return;
+
+    // 焦点堆叠必须保持实时取景：0x9204 MfDrive 只在取景状态下有效，
+    // 所以这一项不能像间隔拍摄那样为了省电关掉预览。
+    final live = widget.liveViewController;
+    if (!live.isActive) {
+      _autoStarted = true;
+      _startLiveView();
+      // 等第一帧落地再开始推对焦，否则第一条 MfDrive 会被相机拒绝。
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      if (!mounted) return;
+    }
 
     final started = await widget.focusStackController.start(config);
     if (!mounted) return;
@@ -860,8 +924,13 @@ class CaptureScreenState extends State<CaptureScreen> {
     );
     if (!mounted) return;
     if (!ok) {
-      // Z 30 的实体拨杆在拍照档时，写 0xD1A6 会被相机拒绝。
-      _toast(EngineL10n.movieNeedPhysicalLever(lang), isError: true);
+      // Z 30 的实体拨杆决定模式，App 写不进去。提示要指向正确的那一档。
+      _toast(
+        toVideo
+            ? EngineL10n.movieNeedPhysicalLever(lang)
+            : EngineL10n.movieNeedPhysicalLeverToPhoto(lang),
+        isError: true,
+      );
       return;
     }
     if (toVideo) await widget.movieController.refresh();

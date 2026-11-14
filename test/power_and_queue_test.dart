@@ -110,7 +110,7 @@ class MockCameraDriver implements CameraDriver {
   @override
   Future<Uint8List> fetchLiveViewFrame() async => Uint8List(0);
   @override
-  Future<void> endLiveView() async {}
+  Future<void> endLiveView({bool force = false}) async {}
   @override
   Future<void> initiateCapture() async {}
   @override

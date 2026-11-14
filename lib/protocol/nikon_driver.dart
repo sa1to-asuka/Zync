@@ -1282,11 +1282,11 @@ class NikonDriver implements CameraDriver, MovieRecordingDriver {
   }
 
   @override
-  Future<void> endLiveView() async {
+  Future<void> endLiveView({bool force = false}) async {
     final client = _client;
     final wasActive = _liveViewActive;
     _liveViewActive = false;
-    if (client == null || !wasActive) return;
+    if (client == null || (!wasActive && !force)) return;
     try {
       await client.executeOperation(PtpOpCodes.nikonEndLiveView);
     } catch (_) {
