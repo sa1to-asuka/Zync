@@ -1,4 +1,5 @@
 import '../../core/constants/ptp_opcodes.dart';
+import '../../core/utils/app_log_manager.dart';
 
 /// 机内 HDR 所需的相机能力。
 ///
@@ -74,7 +75,12 @@ class CameraHdrController {
   Future<CameraHdrState?> readState() async {
     if (!driver.isConnected) return null;
     final mode = await driver.readUintProperty(PtpOpCodes.nikonPropHdrMode);
-    if (mode == null) return null;
+    if (mode == null) {
+      // 记下来：Z 30 上如果这条读不到，说明机身没有通过 PTP 暴露
+      // 「高动态范围」开关，只能让用户在机身菜单里自己打开。
+      AppLogManager.instance.add('[hdr] 0xD130 read failed (property hidden)');
+      return null;
+    }
     return CameraHdrState(
       mode: mode,
       highDynamic:

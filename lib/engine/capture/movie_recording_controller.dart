@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../../core/constants/ptp_opcodes.dart';
+import '../../core/utils/app_log_manager.dart';
+import '../../core/utils/camera_error_mapper.dart';
 
 /// 相机当前的拍摄模式（拍照 / 录像）。
 ///
@@ -99,6 +101,10 @@ class MovieRecordingController extends ChangeNotifier {
   String? _lastError;
   String? get lastError => _lastError;
 
+  /// 最近一次启停失败对应的 PTP 响应码；0xA004 表示相机当前状态不接受录影。
+  int? _lastResponseCode;
+  int? get lastResponseCode => _lastResponseCode;
+
   DateTime? _startedAt;
   Duration _elapsed = Duration.zero;
   Duration get elapsed => _elapsed;
@@ -132,6 +138,14 @@ class MovieRecordingController extends ChangeNotifier {
   Future<void> refresh() async {
     final selector = await driver.readLiveViewSelector();
     final mask = await driver.readMovieRecProhibition();
+    if (selector != _lastLoggedSelector || mask != _lastLoggedMask) {
+      _lastLoggedSelector = selector;
+      _lastLoggedMask = mask;
+      AppLogManager.instance.add(
+        '[movie] selector=${selector ?? 'n/a'} '
+        'prohibition=${mask == null ? 'n/a' : '0x${mask.toRadixString(16)}'}',
+      );
+    }
     _prohibitionMask = mask ?? 0;
     _selectorReadable = selector != null;
 
@@ -153,6 +167,10 @@ class MovieRecordingController extends ChangeNotifier {
 
   /// 是否读得到 `0xD1A6`。读不到时不能凭它锁死界面。
   bool _selectorReadable = true;
+
+  /// 上一次记录的 selector / 禁录掩码，只在变化时写日志，避免 2 秒刷屏。
+  int? _lastLoggedSelector;
+  int? _lastLoggedMask;
   bool get selectorReadable => _selectorReadable;
 
   /// 尝试切换拍照/录像模式。
@@ -253,6 +271,7 @@ class MovieRecordingController extends ChangeNotifier {
     } catch (e) {
       _phase = MovieRecordingPhase.idle;
       _lastError = '$e';
+      _lastResponseCode = CameraErrorMapper.responseCodeOf(e);
       notifyListeners();
       // 启动失败最常见的两个原因：拨杆不在视频档、卡不可写。
       await refresh();

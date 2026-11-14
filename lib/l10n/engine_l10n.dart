@@ -1417,6 +1417,15 @@ abstract final class EngineL10n {
         _ => '正在封盘，请稍候…',
       };
 
+  /// 0xA004 InvalidStatus：相机当前状态不接受开始录制。
+  static String movieInvalidStatus(String langCode) => switch (langCode) {
+        'ja' =>
+          'カメラが現在の状態では録画を開始できません。本体が動画モードになっているか、再生／メニュー画面から戻っているかを確認してください',
+        'en' =>
+          'The camera will not start recording in its current state. Make sure the lever is on video and that you are not in playback or the menu.',
+        _ => '相机当前状态不接受开始录制：请确认机身已拨到录像档，并退出回放/菜单后再试',
+      };
+
   /// Z30 顶部拨杆不在视频档。
   static String movieNeedPhysicalLever(String langCode) => switch (langCode) {
         'ja' => 'カメラ上部のレバーを動画アイコンに合わせてください',
@@ -1652,15 +1661,35 @@ abstract final class EngineL10n {
       };
 
   static String hdrUnsupported(String langCode) => switch (langCode) {
-        'ja' => 'この機種ではカメラ内 HDR を利用できません',
-        'en' => 'In-camera HDR is not available on this body',
-        _ => '这台机身不支持机内 HDR',
+        'ja' =>
+          'カメラ内 HDR を USB から操作できませんでした。カメラのメニューで「HDR（ハイダイナミックレンジ）」をオンにしてから、通常のシャッターで撮影してください。合成はカメラが行います',
+        'en' =>
+          'In-camera HDR cannot be driven over USB on this body. Turn on HDR in the camera menu first, then use the normal shutter — the camera does the merge itself.',
+        _ => '无法通过数据线控制机内 HDR。请在相机菜单里开启「高动态范围」后再用普通快门拍摄，相机会自己合成。',
       };
 
   static String hdrCaptureFailed(String langCode) => switch (langCode) {
         'ja' => 'カメラ内 HDR の撮影に失敗しました',
         'en' => 'In-camera HDR capture failed',
         _ => '机内 HDR 拍摄失败',
+      };
+
+  static String hdrProbeAction(String langCode) => switch (langCode) {
+        'ja' => '診断: カメラのプロパティをスキャン',
+        'en' => 'Diagnose: scan camera properties',
+        _ => '诊断：扫描相机属性',
+      };
+
+  static String hdrProbeRunning(String langCode) => switch (langCode) {
+        'ja' => 'プロパティをスキャン中…',
+        'en' => 'Scanning camera properties…',
+        _ => '正在扫描相机属性…',
+      };
+
+  static String hdrProbeDone(String langCode, int count) => switch (langCode) {
+        'ja' => '$count 件のプロパティを検出し、ログに記録しました',
+        'en' => 'Found $count properties; written to the log',
+        _ => '扫描完成：检测到 $count 个属性，已写入日志',
       };
 
   static String hdrKeepsOriginals(String langCode) => switch (langCode) {
@@ -1683,6 +1712,16 @@ abstract final class EngineL10n {
         'en' =>
           'You captured $count frames. The originals stay on the camera card. Merge them into one image in the app? (Share-resolution output)',
         _ => '这次拍了 $count 张，原片都还在相机存储卡里。要在 App 内合成一张吗？（合成图是分享级分辨率）',
+      };
+
+  /// RAW 序列的合成说明：只能借内嵌预览图。
+  static String compositeOfferBodyRaw(String langCode, int count) =>
+      switch (langCode) {
+        'ja' =>
+          '今回は RAW を $count 枚撮影しました。元画像はカードに残ります。アプリ内合成は内蔵プレビュー画像を使うため解像度は低めです。合成しますか？',
+        'en' =>
+          'You captured $count RAW frames. The originals stay on the card. In-app merging uses the embedded previews, so the result is lower resolution. Merge anyway?',
+        _ => '这次拍了 $count 张 RAW，原片仍在存储卡里。App 合成只能借用 RAW 内嵌的预览图，分辨率会低一些。要合成吗？',
       };
 
   static String compositeConfirm(String langCode) => switch (langCode) {
@@ -1715,10 +1754,10 @@ abstract final class EngineL10n {
         _ => '合成失败，原片仍在相机里',
       };
 
-  static String compositeRawUnsupported(String langCode) => switch (langCode) {
-        'ja' => 'RAW を含むためアプリ内合成はできません',
-        'en' => 'In-app merging is not available for RAW sequences',
-        _ => '序列里有 RAW，App 内合成暂不支持',
+  static String compositeNeedTwo(String langCode) => switch (langCode) {
+        'ja' => '合成には2枚以上必要です',
+        'en' => 'At least two frames are needed to merge',
+        _ => '至少需要两张才能合成',
       };
 
   // ==================== 相机端文件夹 ====================

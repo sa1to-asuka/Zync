@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import '../../core/constants/ptp_opcodes.dart';
 import '../../core/settings/app_settings.dart';
 import '../../core/utils/app_log_manager.dart';
+import '../../core/utils/raw_preview_extractor.dart';
 import '../../engine/capture/af_area_mapper.dart';
 import '../../engine/capture/camera_property.dart';
 import '../../engine/capture/capture_controller.dart';
@@ -93,6 +94,9 @@ class CaptureScreenState extends State<CaptureScreen> {
   CameraParameter? _expandedParameter;
   bool? _lastCameraRecording;
 
+  /// 当前取景会话是在哪种模式下开的。模式切换后必须重开，否则相机会拒绝录像。
+  CameraCaptureMode? _liveViewStartedInMode;
+
   @override
   void initState() {
     super.initState();
@@ -171,6 +175,7 @@ class CaptureScreenState extends State<CaptureScreen> {
   bool handleSystemBack() => false;
 
   void _startLiveView() {
+    _liveViewStartedInMode = widget.movieController.mode;
     widget.liveViewController.start();
     if (AppSettings.instance.liveViewKeepScreenOn) {
       CameraNativeBridge.setKeepScreenOn(true);
@@ -544,8 +549,12 @@ class CaptureScreenState extends State<CaptureScreen> {
     if (files.length < 2 || !mounted) return;
     final lang = L10n.current.localeName;
 
-    if (files.any((f) => f.isRaw)) {
-      _toast(EngineL10n.compositeRawUnsupported(lang), isError: true);
+    // JPEG 够两张就优先用 JPEG；只有 RAW 时退而用其中的内嵌预览图，
+    // 分辨率低一些但至少能合成，不用把用户挡在门外。
+    final jpegCount = files.where((f) => !f.isRaw).length;
+    final rawCount = files.where((f) => f.isRaw).length;
+    if (jpegCount < 2 && rawCount < 2) {
+      _toast(EngineL10n.compositeNeedTwo(lang), isError: true);
       return;
     }
 
@@ -553,7 +562,9 @@ class CaptureScreenState extends State<CaptureScreen> {
       context: context,
       builder: (ctx) => ZDialog(
         title: EngineL10n.compositeOfferTitle(lang),
-        message: EngineL10n.compositeOfferBody(lang, files.length),
+        message: jpegCount >= 2
+            ? EngineL10n.compositeOfferBody(lang, files.length)
+            : EngineL10n.compositeOfferBodyRaw(lang, files.length),
         confirmLabel: EngineL10n.compositeConfirm(lang),
         cancelLabel: EngineL10n.compositeKeepOriginals(lang),
         onConfirm: () => Navigator.of(ctx).pop(true),
@@ -571,15 +582,26 @@ class CaptureScreenState extends State<CaptureScreen> {
     final lang = L10n.current.localeName;
     _toast(EngineL10n.compositeWorking(lang));
 
+    // 有 JPEG 就用 JPEG；全是 RAW 时用 NEF 内嵌的预览图。
+    final jpegs = files.where((f) => !f.isRaw).toList(growable: false);
+    final raws = files.where((f) => f.isRaw).toList(growable: false);
+    final sources = jpegs.length >= 2 ? jpegs : raws;
+
     final frames = <img.Image>[];
-    for (final file in files) {
+    for (final file in sources) {
       if (!mounted) return;
       final temp = await widget.downloadManager
           .downloadToTemp(file, suffix: '_seq');
       if (temp == null) continue;
       try {
+        var bytes = await temp.readAsBytes();
+        if (file.isRaw) {
+          final preview = await RawPreviewExtractor.extractEmbeddedJpeg(bytes);
+          if (preview == null) continue;
+          bytes = preview;
+        }
         final image = await decodeScaledJpeg(
-          await temp.readAsBytes(),
+          bytes,
           maxEdge: SequenceCompositor.defaultMaxEdge,
         );
         if (image != null) frames.add(image);
@@ -644,6 +666,10 @@ class CaptureScreenState extends State<CaptureScreen> {
     final lang = L10n.current.localeName;
     final dynamicEv = await _showHdrSheet(lang);
     if (dynamicEv == null || !mounted) return;
+    if (dynamicEv == -1) {
+      await _probeCameraProperties();
+      return;
+    }
 
     var result = HdrResult.unsupported;
     await _runSequence(
@@ -663,7 +689,49 @@ class CaptureScreenState extends State<CaptureScreen> {
     }
   }
 
-  /// 选择 HDR 动态范围；返回 null 表示取消，0 表示自动。
+  /// 扫描一段厂商属性 ID，把存在的那些写进日志。
+  ///
+  /// Z 30 的「高动态范围」如果没有通过 0xD130 暴露，就只能靠这一步找出
+  /// 它真正的属性号，而不是继续猜。
+  Future<void> _probeCameraProperties() async {
+    final lang = L10n.current.localeName;
+    _toast(EngineL10n.hdrProbeRunning(lang));
+
+    final live = widget.liveViewController;
+    final wasActive = live.isActive;
+    if (wasActive) await live.stop();
+
+    final ids = <int>[
+      for (var id = 0xD0A0; id <= 0xD0D0; id++) id,
+      for (var id = 0xD120; id <= 0xD145; id++) id,
+      for (var id = 0xD1A0; id <= 0xD1B0; id++) id,
+    ];
+
+    final found = <String>[];
+    for (final id in ids) {
+      if (!mounted) break;
+      try {
+        final desc = await widget.driver.fetchDevicePropDesc(id);
+        if (desc.isNotEmpty) {
+          found.add('0x${id.toRadixString(16)}:t${desc[0]}:${desc.length}B');
+        }
+      } catch (_) {
+        // 不支持即抛 0x2005，继续下一个。
+      }
+    }
+
+    AppLogManager.instance
+        .add('[probe] ${found.length} props: ${found.join(' | ')}');
+    if (wasActive && mounted) await live.start();
+    if (mounted) {
+      _toast(
+        EngineL10n.hdrProbeDone(lang, found.length),
+        tone: ZStatusTone.success,
+      );
+    }
+  }
+
+  /// 选择 HDR 动态范围；返回 null 表示取消，0 表示自动，-1 表示扫描属性。
   Future<int?> _showHdrSheet(String lang) {
     final zc = context.zc;
     final zt = context.zt;
@@ -701,6 +769,13 @@ class CaptureScreenState extends State<CaptureScreen> {
               const SizedBox(height: ZSpace.xs),
               Text(EngineL10n.hdrKeepsOriginals(lang),
                   style: zt.caption.copyWith(color: zc.textSecondary)),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(-1),
+                  child: Text(EngineL10n.hdrProbeAction(lang)),
+                ),
+              ),
             ],
           ),
         ),
@@ -1155,7 +1230,19 @@ class CaptureScreenState extends State<CaptureScreen> {
       );
       return;
     }
-    if (toVideo) await widget.movieController.refresh();
+    if (!toVideo) return;
+
+    await widget.movieController.refresh();
+    if (!mounted) return;
+    // 切到录像档后必须重开一次取景：相机的取景会话是在进入时按当时的模式建立的，
+    // 沿用拍照模式的取景会一直拒绝 0x920A（返回 0xA004 InvalidStatus）。
+    final live = widget.liveViewController;
+    if (live.isActive) {
+      await live.stop();
+      if (!mounted) return;
+      _autoStarted = true;
+      _startLiveView();
+    }
   }
 
   Future<void> _toggleRecording() async {
@@ -1168,8 +1255,16 @@ class CaptureScreenState extends State<CaptureScreen> {
     }
     if (movie.phase != MovieRecordingPhase.idle) return;
 
-    // 录像取景需要实时取景在跑：0x920A 在取景关闭时会被部分固件拒绝。
-    if (!widget.liveViewController.isActive) {
+    // 录像前先同步一次相机状态，并确保取景会话是「录像模式」建立的：
+    // 沿用拍照模式的取景时，0x920A 会直接返回 0xA004 InvalidStatus。
+    await movie.refresh();
+    if (!mounted) return;
+    final live = widget.liveViewController;
+    final staleSession =
+        live.isActive && _liveViewStartedInMode != movie.mode;
+    if (!live.isActive || staleSession) {
+      if (live.isActive) await live.stop();
+      if (!mounted) return;
       _autoStarted = true;
       _startLiveView();
       await Future<void>.delayed(const Duration(milliseconds: 300));
@@ -1183,6 +1278,11 @@ class CaptureScreenState extends State<CaptureScreen> {
     AppLogManager.instance
         .add('[movie] start recording failed: ${movie.lastError ?? 'n/a'}');
     final prohibition = movie.prohibition;
+    if (movie.lastResponseCode == 0xA004) {
+      // InvalidStatus：相机状态不接受录影，多半是取景仍处于拍照模式。
+      _toast(EngineL10n.movieInvalidStatus(lang), isError: true);
+      return;
+    }
     if (prohibition.needsPhysicalLever ||
         movie.mode == CameraCaptureMode.lockedByPhysicalLever) {
       _toast(EngineL10n.movieNeedPhysicalLever(lang), isError: true);
