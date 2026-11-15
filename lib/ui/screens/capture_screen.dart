@@ -471,6 +471,11 @@ class CaptureScreenState extends State<CaptureScreen> {
     }
     final lang = L10n.current.localeName;
 
+    if (_videoMode) {
+      _toast(EngineL10n.sequenceNeedsPhotoMode(L10n.current.localeName),
+          isError: true);
+      return;
+    }
     final config = await showBracketConfigSheet(context);
     if (config == null || !mounted) return;
 
@@ -506,6 +511,11 @@ class CaptureScreenState extends State<CaptureScreen> {
       _toast(EngineL10n.taskBusyHint(L10n.current.localeName), isError: true);
       return;
     }
+    if (_videoMode) {
+      _toast(EngineL10n.sequenceNeedsPhotoMode(L10n.current.localeName),
+          isError: true);
+      return;
+    }
     final config = await showFocusStackConfigSheet(context);
     if (config == null || !mounted) return;
 
@@ -524,6 +534,11 @@ class CaptureScreenState extends State<CaptureScreen> {
     if (!mounted) return;
     if (!started) {
       _toast(context.l10n.captureFailed, isError: true);
+      return;
+    }
+    if (widget.focusStackController.captureFailed) {
+      _toast(EngineL10n.focusCaptureFailed(L10n.current.localeName),
+          isError: true);
       return;
     }
     await _offerComposite(

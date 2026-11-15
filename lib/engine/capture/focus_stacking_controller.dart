@@ -72,6 +72,11 @@ class FocusStackingController extends ChangeNotifier {
 
   bool _stopRequested = false;
   bool _hitEnd = false;
+  int _consecutiveMisses = 0;
+  bool _captureFailed = false;
+
+  /// 连续两张没拍到东西：多半是快门被相机拒绝，继续推进只会白走焦点。
+  bool get captureFailed => _captureFailed;
 
   /// 本次序列拍到的文件，用于结束后可选合成。
   final List<CameraFileItem> _captured = <CameraFileItem>[];
@@ -91,6 +96,8 @@ class FocusStackingController extends ChangeNotifier {
     _current = 0;
     _stopRequested = false;
     _hitEnd = false;
+    _consecutiveMisses = 0;
+    _captureFailed = false;
     _captured.clear();
     _state = FocusStackState.running;
     notifyListeners();
@@ -103,7 +110,17 @@ class FocusStackingController extends ChangeNotifier {
         notifyListeners();
 
         final file = await port.capture();
-        if (file != null) _captured.add(file);
+        if (file != null) {
+          _captured.add(file);
+          _consecutiveMisses = 0;
+        } else {
+          _consecutiveMisses++;
+          if (_consecutiveMisses >= 2) {
+            _captureFailed = true;
+            _state = FocusStackState.failed;
+            break;
+          }
+        }
         taken++;
 
         if (taken >= config.shotCount) break;

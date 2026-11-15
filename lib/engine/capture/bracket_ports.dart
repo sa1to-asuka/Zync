@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import '../../core/constants/ptp_opcodes.dart';
+import '../../core/utils/app_log_manager.dart';
 import '../../protocol/camera_driver.dart';
 import '../../protocol/ptp_ip_client.dart' show PtpException;
 import 'capture_controller.dart';
@@ -125,8 +126,21 @@ class DriverFocusStackPort implements FocusStackPort {
 
   @override
   Future<CameraFileItem?> capture() async {
-    final outcome = await captureController.capture(preserveFocus: true);
-    return outcome is CaptureConfirmed ? outcome.file : null;
+    // 不要走 0x9207 preserveFocus：部分固件对它会回「成功」却不真正落盘，
+    // 表现为焦点一直在动但相机没拍。镜头在 MF 档时普通快门同样不会重新对焦。
+    final outcome = await captureController.capture();
+    switch (outcome) {
+      case CaptureConfirmed(:final file):
+        return file;
+      case CaptureRejected(:final responseCode):
+        AppLogManager.instance.add(
+            '[focus] capture rejected 0x${responseCode.toRadixString(16)}');
+        return null;
+      case CaptureUnconfirmed():
+        AppLogManager.instance
+            .add('[focus] capture unconfirmed (no new object in time)');
+        return null;
+    }
   }
 
   @override

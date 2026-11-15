@@ -1618,6 +1618,21 @@ abstract final class EngineL10n {
         _ => 'EV / 快门 / ISO 三轴可选，自动还原原始参数',
       };
 
+  static String sequenceNeedsPhotoMode(String langCode) =>
+      switch (langCode) {
+        'ja' => 'この機能は静止画モードでのみ動作します。上部のレバーを静止画に合わせてください',
+        'en' => 'This works only in photo mode. Move the camera lever to still images.',
+        _ => '这个功能只能在拍照档使用，请把机身拨杆拨回拍照档',
+      };
+
+  static String focusCaptureFailed(String langCode) => switch (langCode) {
+        'ja' =>
+          'シャッターが切れませんでした。カメラが静止画モードで、再生やメニュー画面になっていないか確認してください',
+        'en' =>
+          'The shutter did not fire. Check that the camera is in photo mode and not showing playback or the menu.',
+        _ => '快门没有触发：请确认相机在拍照档，且不在回放或菜单界面',
+      };
+
   static String focusStackSubtitle(String langCode) => switch (langCode) {
         'ja' => '一定ステップでピントを送り、後工程で合成できる連写を撮ります',
         'en' => 'Steps the focus and captures a set for desktop stacking',

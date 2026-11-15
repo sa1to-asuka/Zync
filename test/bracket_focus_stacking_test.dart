@@ -55,9 +55,10 @@ class _FakeBracketPort implements BracketPort {
 }
 
 class _FakeFocusPort implements FocusStackPort {
-  _FakeFocusPort({this.maxMoves = 100});
+  _FakeFocusPort({this.maxMoves = 100, this.missCaptures = false});
 
   final int maxMoves;
+  final bool missCaptures;
   int moves = 0;
   int captures = 0;
 
@@ -73,7 +74,15 @@ class _FakeFocusPort implements FocusStackPort {
   @override
   Future<CameraFileItem?> capture() async {
     captures++;
-    return null;
+    if (missCaptures) return null;
+    return CameraFileItem(
+      handle: 1000 + captures,
+      storageId: 0x00010001,
+      format: 0x3801,
+      size: 4096,
+      fileName: 'FS_$captures.JPG',
+      captureDate: '20261115T120000',
+    );
   }
 
   @override
@@ -239,6 +248,18 @@ void main() {
       expect(port.captures, lessThan(10));
       expect(controller.hitFocusEnd, isTrue);
       expect(controller.state, FocusStackState.completed);
+    });
+
+    test('连续两张没拍到就中止，不再空推焦点', () async {
+      final port = _FakeFocusPort(missCaptures: true);
+      final controller = FocusStackingController(port: port);
+
+      await controller.start(const FocusStackConfig(shotCount: 10, step: 16));
+
+      expect(controller.state, FocusStackState.failed);
+      expect(controller.captureFailed, isTrue);
+      expect(port.captures, 2, reason: '第二张失败后立即停止');
+      expect(port.moves, lessThanOrEqualTo(1));
     });
 
     test('returnToStart 把对焦环退回起点', () async {
