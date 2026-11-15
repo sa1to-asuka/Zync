@@ -1,12 +1,17 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zync/core/constants/ptp_opcodes.dart';
 import 'package:zync/engine/capture/camera_hdr_controller.dart';
+import 'package:zync/engine/capture/ptp_device_prop_desc.dart';
 
 class _FakeHdrDriver implements HdrDriver {
-  _FakeHdrDriver({Map<int, int>? initial})
-      : values = <int, int>{...?initial};
+  _FakeHdrDriver({
+    Map<int, int>? initial,
+    Map<int, PtpDevicePropDesc>? descriptors,
+  })  : values = <int, int>{...?initial},
+        descriptors = <int, PtpDevicePropDesc>{...?descriptors};
 
   final Map<int, int> values;
+  final Map<int, PtpDevicePropDesc> descriptors;
 
   /// 拒绝写入的属性 id。
   final Set<int> rejected = <int>{};
@@ -18,6 +23,10 @@ class _FakeHdrDriver implements HdrDriver {
 
   @override
   bool get isConnected => true;
+
+  @override
+  Future<PtpDevicePropDesc?> readPropertyDesc(int propertyId) async =>
+      descriptors[propertyId];
 
   @override
   Future<int?> readUintProperty(int propertyId) async => values[propertyId];
@@ -135,5 +144,89 @@ void main() {
     expect(driver.values[PtpOpCodes.nikonPropHdrMode], 1);
     expect(driver.values[PtpOpCodes.nikonPropHdrHighDynamic], 3);
     expect(driver.values[PtpOpCodes.nikonPropHdrSmoothing], 4);
+  });
+
+  test('Nikon Z 30 枚举映射：0xD131 [6,12,18,255] 与 0xD132 [2,3,4]', () async {
+    final driver = _FakeHdrDriver(
+      initial: <int, int>{
+        PtpOpCodes.nikonPropHdrMode: 0,
+        PtpOpCodes.nikonPropHdrHighDynamic: 255,
+        PtpOpCodes.nikonPropHdrSmoothing: 3,
+        PtpOpCodes.nikonPropHdrSaveIndividual: 0,
+      },
+      descriptors: <int, PtpDevicePropDesc>{
+        PtpOpCodes.nikonPropHdrHighDynamic: const PtpDevicePropDesc(
+          property: PtpOpCodes.nikonPropHdrHighDynamic,
+          dataType: 0x0002,
+          writable: true,
+          factoryDefault: 255,
+          currentValue: 255,
+          form: PtpPropForm.enumeration,
+          enumValues: <int>[6, 12, 18, 255],
+        ),
+        PtpOpCodes.nikonPropHdrSmoothing: const PtpDevicePropDesc(
+          property: PtpOpCodes.nikonPropHdrSmoothing,
+          dataType: 0x0004,
+          writable: true,
+          factoryDefault: 3,
+          currentValue: 3,
+          form: PtpPropForm.enumeration,
+          enumValues: <int>[2, 3, 4],
+        ),
+      },
+    );
+
+    int? highDynDuringShot;
+    int? smoothingDuringShot;
+    final controller = CameraHdrController(
+      driver: driver,
+      capture: () async {
+        highDynDuringShot = driver.values[PtpOpCodes.nikonPropHdrHighDynamic];
+        smoothingDuringShot = driver.values[PtpOpCodes.nikonPropHdrSmoothing];
+      },
+    );
+
+    // 传入逻辑档位 2 (2EV) 与普通平滑 1，应自动映射到 Z 30 的 12 与 3
+    final result = await controller.shoot(highDynamic: 2, smoothing: 1);
+
+    expect(result, HdrResult.merged);
+    expect(highDynDuringShot, 12);
+    expect(smoothingDuringShot, 3);
+  });
+
+  test('RAW 模式下自动临时切换为 JPEG 并在拍摄后还原 0x5004', () async {
+    final driver = _FakeHdrDriver(
+      initial: <int, int>{
+        ..._defaults(),
+        PtpOpCodes.devicePropCompressionSetting: 4, // RAW (NEF)
+      },
+      descriptors: <int, PtpDevicePropDesc>{
+        PtpOpCodes.devicePropCompressionSetting: const PtpDevicePropDesc(
+          property: PtpOpCodes.devicePropCompressionSetting,
+          dataType: 0x0002,
+          writable: true,
+          factoryDefault: 4,
+          currentValue: 4,
+          form: PtpPropForm.enumeration,
+          enumValues: <int>[0, 1, 2, 4, 5, 6, 7],
+        ),
+      },
+    );
+
+    int? compressionDuringShot;
+    final controller = CameraHdrController(
+      driver: driver,
+      capture: () async {
+        compressionDuringShot =
+            driver.values[PtpOpCodes.devicePropCompressionSetting];
+      },
+    );
+
+    final result = await controller.shoot();
+
+    expect(result, HdrResult.merged);
+    expect(compressionDuringShot, 2, reason: '拍摄期间应临时切到 JPEG Fine (2)');
+    expect(driver.values[PtpOpCodes.devicePropCompressionSetting], 4,
+        reason: '拍摄结束后必须还原回 RAW (4)');
   });
 }

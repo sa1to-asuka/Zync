@@ -40,7 +40,10 @@ class CaptureController extends ChangeNotifier {
   ///
   /// 前置条件不满足（未连接、基线对象列表读不到）时直接抛异常，
   /// 此时快门**尚未**释放，调用方可以安全重试。
-  Future<CaptureOutcome> capture({bool enqueue = true}) async {
+  Future<CaptureOutcome> capture({
+    bool enqueue = true,
+    bool preserveFocus = false,
+  }) async {
     if (!_driver.isConnected) {
       throw StateError('相机未连接');
     }
@@ -54,64 +57,81 @@ class CaptureController extends ChangeNotifier {
     _busy = true;
     notifyListeners();
     try {
-      return await _liveView.runExclusive(() => _captureExclusive(enqueue));
+      return await _liveView.runExclusive(
+        () => _captureExclusive(enqueue, preserveFocus: preserveFocus),
+      );
     } finally {
       _busy = false;
       notifyListeners();
     }
   }
 
-  Future<CaptureOutcome> _captureExclusive(bool enqueue) async {
+  Future<CaptureOutcome> _captureExclusive(
+    bool enqueue, {
+    required bool preserveFocus,
+  }) async {
     // 基线必须在按快门之前取，否则无法区分新照片和旧照片。
     final before = (await _driver.listObjectHandles()).toSet();
 
     try {
-      await _driver.initiateCapture();
+      await _driver.initiateCapture(preserveFocus: preserveFocus);
     } on PtpException catch (e) {
       return CaptureRejected(e.responseCode);
     }
 
-    final file = await _awaitNewObject(before);
-    if (file == null) return const CaptureUnconfirmed();
+    final files = await _awaitNewObjects(before);
+    if (files.isEmpty) return const CaptureUnconfirmed();
 
-    if (enqueue && !file.isFolder) {
-      onCaptured?.call(file);
+    if (enqueue) {
+      for (final file in files) {
+        if (!file.isFolder) {
+          onCaptured?.call(file);
+        }
+      }
     }
-    return CaptureConfirmed(file);
+    // RAW+JPEG 同拍会产生两个对象句柄，优先返回非 RAW (JPEG) 供序列合成与预览使用。
+    final primary = files.firstWhere(
+      (f) => !f.isFolder && !f.isRaw,
+      orElse: () => files.last,
+    );
+    return CaptureConfirmed(primary);
   }
 
-  /// 同时监听 `ObjectAdded` 事件与轮询对象列表，谁先到用谁。
+  /// 同时监听 `ObjectAdded` 事件与轮询对象列表，返回本次快门产生的所有新文件。
   ///
-  /// 事件路径更快，但 USB 会话不保证每个固件都推送；轮询路径更可靠但更慢。
-  Future<CameraFileItem?> _awaitNewObject(Set<int> before) async {
-    CameraFileItem? fromEvent;
+  /// 事件路径更快，但 USB 会话不保证每个固件都推送；轮询路径还能补齐 RAW+JPEG 的伴生文件。
+  Future<List<CameraFileItem>> _awaitNewObjects(Set<int> before) async {
+    final Map<int, CameraFileItem> found = <int, CameraFileItem>{};
     final subscription = _driver.onPhotoCaptured.listen((file) {
-      if (!before.contains(file.handle)) {
-        fromEvent ??= file;
+      if (!before.contains(file.handle) && !file.isFolder) {
+        found[file.handle] = file;
       }
     });
 
     try {
       final deadline = DateTime.now().add(confirmTimeout);
       while (DateTime.now().isBefore(deadline)) {
-        if (fromEvent != null) return fromEvent;
-
         try {
           final handles = await _driver.listObjectHandles();
           final fresh = handles.where((h) => !before.contains(h)).toList();
-          if (fresh.isNotEmpty) {
-            final info = await _driver.getObjectInfo(fresh.last);
+          for (final h in fresh) {
+            if (found.containsKey(h)) continue;
+            final info = await _driver.getObjectInfo(h);
             if (info != null && !info.isFolder && info.size > 0) {
-              return info;
+              found[h] = info;
             }
           }
         } catch (_) {
           // 相机写卡期间会短暂拒绝对象查询，继续等即可。
         }
 
+        if (found.isNotEmpty) {
+          return found.values.toList(growable: false);
+        }
+
         await _sleep(pollInterval);
       }
-      return fromEvent;
+      return found.values.toList(growable: false);
     } finally {
       await subscription.cancel();
     }

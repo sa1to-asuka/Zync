@@ -70,13 +70,17 @@ class PtpOpCodes {
   // ==========================================
   // 2c. 曝光相关设备属性 (拍摄台读写)
   // ==========================================
+  static const int devicePropCompressionSetting = 0x5004; // 画质格式 (0..2=JPEG, 4=RAW, 5+=RAW+JPEG)
   static const int devicePropFNumber = 0x5007; // 光圈 (值 / 100)
   static const int devicePropExposureTime = 0x500D; // 标准快门速度 (100 µs)
   static const int devicePropExposureMode = 0x500E; // 曝光模式
   static const int devicePropExposureIndex = 0x500F; // 标准 ISO
   static const int devicePropExposureBias = 0x5010; // 曝光补偿 (1/1000 EV)
   static const int nikonPropShutterSpeed = 0xD100; // Nikon 快门速度 (分子/分母打包)
+  static const int nikonPropRecordingMedia = 0xD10B; // 记录介质 (0=Card, 1=SDRAM)
   static const int nikonPropIso = 0xD0B4; // Nikon ISO
+  static const int nikonPropLiveViewStatus = 0xD1A2; // 实时取景状态 (0=关, 1=开)
+  static const int nikonPropApplicationMode = 0xD1F0; // Gen 1 应用控制模式 (0=关, 1=开)
 
   // ==========================================
   // 2d. 录像与包围曝光设备属性 (v2.6.0)
@@ -95,11 +99,12 @@ class PtpOpCodes {
   static const int devicePropAeBracketingPattern = 0xD0C2; // 机内包围张数/顺序
   static const int devicePropAeBracketingCount = 0xD0C3; // 机内包围张数（只读）
 
-  // 机内 HDR：相机自己拍两张并合成一张，来源 libgphoto2 ptp.h / config.c
-  static const int nikonPropHdrMode = 0xD130; // 0=关 1=开
-  static const int nikonPropHdrHighDynamic = 0xD131; // 0=自动 1=±1EV 2=±2EV 3=±3EV
-  static const int nikonPropHdrSmoothing = 0xD132; // 0=强 1=标准 2=弱 3=自动 4=超强
-  static const int nikonPropHdrSaveIndividual = 0xD133; // 保存单张原片
+  // 机内 HDR：相机自己拍两张并合成一张，来源 libgphoto2 ptp.h / config.c / nikon-z30.txt
+  // 注意 Z 30 实机上 0xD130/0xD132 为 UINT16，0xD131 取值为 [6,12,18,255]
+  static const int nikonPropHdrMode = 0xD130; // 0=关, 1=单张开启, 257=持续开启
+  static const int nikonPropHdrHighDynamic = 0xD131; // Z30:[6=1EV,12=2EV,18=3EV,255=自动]；旧机身:[0..3]
+  static const int nikonPropHdrSmoothing = 0xD132; // Z30:[2=弱,3=标准,4=强]；旧机身:[0..4]
+  static const int nikonPropHdrSaveIndividual = 0xD133; // 保存单张原片 (0=关, 1=开)
 
   // ==========================================
   // 2e. 相机事件码 (EventCode)
@@ -147,6 +152,7 @@ class PtpOpCodes {
   // ==========================================
   static const int responseNikonOutOfFocus = 0xA002; // 自动对焦未合焦
   static const int responseNikonChangeModeFailed = 0xA003; // 切换相机模式失败
+  static const int responseNikonInvalidStatus = 0xA004; // 当前状态不接受该操作
   static const int responseNikonModeNotAdjustFNumber = 0xA00A; // 当前模式不允许调整光圈
   static const int responseNikonMfDriveStepEnd = 0xA00C; // 手动对焦已到行程尽头
   static const int responseNikonMfDriveStepInsufficiency = 0xA00E; // 手动对焦步长不足

@@ -199,9 +199,10 @@ abstract class CameraDriver {
   /// 用于修正「相机还在取景、App 状态已不同步」的情况。
   Future<void> endLiveView({bool force = false});
 
-  /// 释放快门 (0x100E)。被相机拒绝时抛出 [PtpException]，
+  /// 释放快门 (0x100E / 0x9207)。被相机拒绝时抛出 [PtpException]，
   /// 便于调用方区分「忙」与「不支持」。
-  Future<void> initiateCapture();
+  /// [preserveFocus] 为 true 时跳过快门前 AF 驱动（用于焦点包围 MF 步进后保持当前焦点）。
+  Future<void> initiateCapture({bool preserveFocus = false});
 
   /// 移动对焦点 (0x9205)，坐标为机身对焦区域坐标系。
   Future<void> moveAfArea(int x, int y);

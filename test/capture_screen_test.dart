@@ -58,7 +58,7 @@ class _NoopFolderDriver implements CameraFolderDriver {
   Future<void> writeActiveFolder(int folderNumber) async {}
 }
 
-class _NoopHdrDriver implements HdrDriver {
+class _NoopHdrDriver extends HdrDriver {
   @override
   bool get isConnected => true;
   @override
@@ -66,7 +66,7 @@ class _NoopHdrDriver implements HdrDriver {
   @override
   Future<void> writeUintProperty(int propertyId, int value) async {}
 }
-class _NoopMovieDriver implements MovieRecordingDriver {
+class _NoopMovieDriver extends MovieRecordingDriver {
   @override
   bool get isConnected => true;
   @override

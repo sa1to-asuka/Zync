@@ -182,8 +182,8 @@ class FakeCaptureDriver implements CameraDriver {
   }
 
   @override
-  Future<void> initiateCapture() async {
-    calls.add('capture');
+  Future<void> initiateCapture({bool preserveFocus = false}) async {
+    calls.add(preserveFocus ? 'capture:preserveFocus' : 'capture');
     final code = captureRejectCode;
     if (code != null) {
       throw PtpException(0x100E, code);

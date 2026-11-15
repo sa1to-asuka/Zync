@@ -134,4 +134,15 @@ void main() {
     await expectLater(controller.capture(), throwsStateError);
     await first;
   });
+
+  test('preserveFocus=true 时透传给驱动', () async {
+    final driver = FakeCaptureDriver();
+    final liveView = LiveViewController(driver: driver, sleep: _frameSleep);
+    final controller = _controller(driver, liveView);
+
+    final outcome = await controller.capture(preserveFocus: true);
+
+    expect(outcome, isA<CaptureConfirmed>());
+    expect(driver.calls, contains('capture:preserveFocus'));
+  });
 }

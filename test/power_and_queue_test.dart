@@ -112,7 +112,7 @@ class MockCameraDriver implements CameraDriver {
   @override
   Future<void> endLiveView({bool force = false}) async {}
   @override
-  Future<void> initiateCapture() async {}
+  Future<void> initiateCapture({bool preserveFocus = false}) async {}
   @override
   Future<void> moveAfArea(int x, int y) async {}
   @override

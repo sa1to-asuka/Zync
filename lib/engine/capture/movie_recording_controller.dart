@@ -39,6 +39,9 @@ abstract class MovieRecordingDriver {
   Future<void> startMovieRecording();
   Future<void> stopMovieRecording();
 
+  /// 封盘结束后退出应用模式（`0x9435(0)` / `0xD1F0=0`），恢复存储卡文件访问。
+  Future<void> exitMovieApplicationMode() async {}
+
   /// `0xD1A6`：0=拍照 1=录像；读不到返回 null。
   Future<int?> readLiveViewSelector();
   Future<void> setLiveViewSelector(int value);
@@ -242,6 +245,7 @@ class MovieRecordingController extends ChangeNotifier {
     }
     _phase = MovieRecordingPhase.idle;
     _stopTicker(keepElapsed: true);
+    unawaited(driver.exitMovieApplicationMode().catchError((_) {}));
     notifyListeners();
   }
 
@@ -301,6 +305,9 @@ class MovieRecordingController extends ChangeNotifier {
 
     try {
       await _finalizeGate!.future;
+    } catch (_) {}
+    try {
+      await driver.exitMovieApplicationMode();
     } catch (_) {}
     return true;
   }

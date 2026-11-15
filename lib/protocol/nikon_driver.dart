@@ -2,11 +2,13 @@ import 'dart:async';
 import 'dart:typed_data';
 import '../core/constants/ptp_opcodes.dart';
 import '../core/settings/app_settings.dart';
+import '../core/utils/app_log_manager.dart';
 import '../core/utils/byte_buffer_ext.dart';
 import '../core/utils/camera_error_mapper.dart';
 import '../engine/capture/camera_folder_controller.dart';
 import '../engine/capture/camera_hdr_controller.dart';
 import '../engine/capture/movie_recording_controller.dart';
+import '../engine/capture/ptp_device_prop_desc.dart';
 import '../engine/picture_control/np3_codec.dart';
 import 'camera_driver.dart';
 import 'camera_io_coordinator.dart';
@@ -276,6 +278,15 @@ class NikonDriver
   /// 会话内已被相机明确拒绝 (0x2005) 的操作码，避免逐帧重复尝试。
   final Set<int> _unsupportedOps = <int>{};
 
+  /// 是否已通过 0x9435 进入尼康 Application Mode（录像期间置 true，停止后退回 0）。
+  bool _inMovieAppMode = false;
+
+  /// 重建取景会话期间的门闩，防止后台取景拉帧在 0x9202->0x9201 空窗期插入 0x9203。
+  Future<void>? _liveViewCycleGate;
+
+  /// 属性描述块缓存（用于判定属性字节宽度与枚举值）。
+  final Map<int, PtpDevicePropDesc> _propDescCache = <int, PtpDevicePropDesc>{};
+
   @override
   CameraConnectionState get state => _state;
 
@@ -458,7 +469,12 @@ class NikonDriver
   @override
   Future<void> disconnect() async {
     _userDisconnect = true;
-    // 先退出取景，避免相机停留在取景模式无法休眠。
+    // 先退出 Application Mode 与取景，避免相机停留在取景模式或锁死存储卡访问。
+    if (_inMovieAppMode) {
+      try {
+        await exitMovieApplicationMode();
+      } catch (_) {}
+    }
     try {
       await endLiveView();
     } catch (_) {}
@@ -471,6 +487,8 @@ class NikonDriver
     // 注意：不重置 _lastWasUsb / _lastWifiHost，重连需要它们。
     _transportKind = CameraTransportKind.wifi;
     _unsupportedOps.clear();
+    _inMovieAppMode = false;
+    _propDescCache.clear();
     // dispose 场景下控制器可能已关闭，避免向已关闭的 StreamController 发送事件
     if (!_stateController.isClosed) {
       _stateController.add(_state);
@@ -1277,6 +1295,10 @@ class NikonDriver
 
   @override
   Future<Uint8List> fetchLiveViewFrame() async {
+    final gate = _liveViewCycleGate;
+    if (gate != null) {
+      await gate;
+    }
     final client = _client;
     if (client == null || !isConnected) {
       throw StateError('相机未连接');
@@ -1298,10 +1320,27 @@ class NikonDriver
   }
 
   @override
-  Future<void> initiateCapture() async {
+  Future<void> initiateCapture({bool preserveFocus = false}) async {
     final client = _client;
     if (client == null || !isConnected) {
       throw StateError('相机未连接');
+    }
+    // 焦点包围步进后需要保持当前 MF 焦点位置，优先使用 0x9207 [1, 0]（不重新触发 AF）。
+    if (preserveFocus && _supports(PtpOpCodes.nikonCaptureToCard)) {
+      try {
+        await _retryOnBusy(
+          () => client.executeOperation(
+              PtpOpCodes.nikonCaptureToCard, const <int>[1, 0]),
+          attempts: 2,
+        );
+        return;
+      } on PtpException catch (e) {
+        if (e.responseCode != PtpOpCodes.responseOperationNotSupported &&
+            e.responseCode != 0x2006 &&
+            e.responseCode != PtpOpCodes.responseNikonInvalidStatus) {
+          rethrow;
+        }
+      }
     }
     try {
       await _retryOnBusy(
@@ -1408,13 +1447,85 @@ class NikonDriver
       _supports(PtpOpCodes.nikonStartMovieRecInCard) &&
       _supports(PtpOpCodes.nikonEndMovieRec);
 
-  @override
-  Future<void> startMovieRecording() async {
+  Future<void> _enterMovieApplicationMode() async {
     final client = _client;
-    if (client == null || !isConnected) throw StateError('相机未连接');
+    if (client == null || !isConnected) return;
+    if (_supports(PtpOpCodes.nikonChangeAppMode)) {
+      try {
+        await client.executeOperation(
+            PtpOpCodes.nikonChangeAppMode, const <int>[1]);
+        _inMovieAppMode = true;
+        AppLogManager.instance
+            .add('[movie] entered application mode (0x9435=1)');
+        return;
+      } on PtpException catch (e) {
+        _markUnsupported(PtpOpCodes.nikonChangeAppMode, e);
+        AppLogManager.instance.add(
+            '[movie] 0x9435(1) returned 0x${e.responseCode.toRadixString(16)}');
+      } catch (e) {
+        AppLogManager.instance.add('[movie] 0x9435(1) failed: $e');
+      }
+    }
+    // 兜底：部分机型通过属性 0xD1F0 (ApplicationMode) 切换。
     try {
-      // 0x920A 在 libgphoto2 里是「无参数」操作码。多塞两个参数会被
-      // 部分固件判成 InvalidParameter，表现为「点了没反应」。
+      await writeUintProperty(PtpOpCodes.nikonPropApplicationMode, 1);
+      _inMovieAppMode = true;
+      AppLogManager.instance.add('[movie] entered application mode (0xD1F0=1)');
+    } catch (_) {}
+  }
+
+  @override
+  Future<void> exitMovieApplicationMode() async {
+    final client = _client;
+    if (!_inMovieAppMode) return;
+    _inMovieAppMode = false;
+    if (client == null || !isConnected) return;
+    if (_supports(PtpOpCodes.nikonChangeAppMode)) {
+      try {
+        await client.executeOperation(
+            PtpOpCodes.nikonChangeAppMode, const <int>[0]);
+        AppLogManager.instance
+            .add('[movie] exited application mode (0x9435=0)');
+        return;
+      } catch (e) {
+        AppLogManager.instance.add('[movie] 0x9435(0) failed: $e');
+      }
+    }
+    try {
+      await writeUintProperty(PtpOpCodes.nikonPropApplicationMode, 0);
+    } catch (_) {}
+  }
+
+  /// 在已进入 Application Mode (0x9435=1) 的前提下重建视频取景会话并等待就绪。
+  /// 参考 libgphoto2 `camera_nikon_movie_capture` (config.c L10346-10396)。
+  Future<void> _cycleMovieLiveViewSession() async {
+    final completer = Completer<void>();
+    _liveViewCycleGate = completer.future;
+    try {
+      if (_liveViewActive) {
+        try {
+          await endLiveView(force: true);
+        } catch (_) {}
+      }
+      await _enterMovieApplicationMode();
+      try {
+        await writeUintProperty(PtpOpCodes.nikonPropRecordingMedia, 1);
+      } catch (_) {}
+      await startLiveView();
+      for (int i = 0; i < 8; i++) {
+        final rc = await deviceReady();
+        if (rc != PtpOpCodes.responseDeviceBusy) break;
+        await Future<void>.delayed(const Duration(milliseconds: 80));
+      }
+    } finally {
+      _liveViewCycleGate = null;
+      if (!completer.isCompleted) completer.complete();
+    }
+  }
+
+  Future<void> _sendStartMovieRecOp(PtpTransport client) async {
+    try {
+      // 0x920A 在 libgphoto2 里是「无参数」操作码。
       await client.executeOperation(PtpOpCodes.nikonStartMovieRecInCard);
     } on PtpException catch (e) {
       // 少数机身反过来要求 [0, 0]，只在这种情况下再试一次。
@@ -1423,9 +1534,48 @@ class NikonDriver
             PtpOpCodes.nikonStartMovieRecInCard, const <int>[0, 0]);
         return;
       }
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> startMovieRecording() async {
+    final client = _client;
+    if (client == null || !isConnected) throw StateError('相机未连接');
+    bool cycledLiveView = false;
+    try {
+      // 1. 尼康 Z 系列通过 USB/PTP 启动录像前必须先进入 Application Mode (0x9435=1)，
+      //    否则 0xD0A4 bit 14 (0x4000, Not in application mode) 置位且 0x920A 返回 0xA004。
+      await _enterMovieApplicationMode();
+
+      // 2. 若取景尚未开启，或 0xD0A4 bit 14 仍置位（说明旧取景是在非 Application Mode 下开启的），
+      //    按 libgphoto2 流程重建一次视频取景并等待 0x90C8 DeviceReady。
+      final prohibit = await readMovieRecProhibition();
+      if (!_liveViewActive || (prohibit != null && (prohibit & 0x4000) != 0)) {
+        cycledLiveView = true;
+        await _cycleMovieLiveViewSession();
+      }
+
+      // 3. 发送 0x920A；若首次仍报 0xA004 且尚未重建过取景，则重建一次取景后再试。
+      try {
+        await _sendStartMovieRecOp(client);
+      } on PtpException catch (e) {
+        if (e.responseCode == PtpOpCodes.responseNikonInvalidStatus &&
+            !cycledLiveView) {
+          AppLogManager.instance.add(
+              '[movie] 0x920A returned 0xA004, cycling LiveView under ApplicationMode(1)');
+          await _cycleMovieLiveViewSession();
+          await _sendStartMovieRecOp(client);
+          return;
+        }
+        rethrow;
+      }
+    } on PtpException catch (e) {
+      await exitMovieApplicationMode();
       _markUnsupported(PtpOpCodes.nikonStartMovieRecInCard, e);
       rethrow;
     } catch (e) {
+      await exitMovieApplicationMode();
       _markUnsupported(PtpOpCodes.nikonStartMovieRecInCard, e);
       rethrow;
     }
@@ -1459,11 +1609,57 @@ class NikonDriver
 
   // ---- HdrDriver ----
   @override
+  Future<PtpDevicePropDesc?> readPropertyDesc(int propertyId) async {
+    if (!isConnected) return null;
+    final cached = _propDescCache[propertyId];
+    if (cached != null) return cached;
+    try {
+      final raw = await fetchDevicePropDesc(propertyId);
+      final parsed = PtpDevicePropDesc.parse(raw);
+      if (parsed != null) {
+        _propDescCache[propertyId] = parsed;
+      }
+      return parsed;
+    } catch (e) {
+      AppLogManager.instance
+          .add('[prop] desc 0x${propertyId.toRadixString(16)} failed: $e');
+      return null;
+    }
+  }
+
+  @override
   Future<int?> readUintProperty(int propertyId) =>
       _readUintProperty(propertyId);
 
+  static bool _isKnownUint16Property(int propertyId) {
+    switch (propertyId) {
+      case PtpOpCodes.nikonPropHdrMode: // 0xD130 (UINT16 on Z 30)
+      case PtpOpCodes.nikonPropHdrSmoothing: // 0xD132 (UINT16 on Z 30)
+      case PtpOpCodes.nikonPropActiveFolder: // 0xD15B
+      case PtpOpCodes.devicePropAeBracketingPattern: // 0xD0C2
+      case PtpOpCodes.nikonPropActivePicCtrlItem: // 0xD200
+      case PtpOpCodes.devicePropFNumber: // 0x5007
+      case PtpOpCodes.devicePropExposureMode: // 0x500E
+      case PtpOpCodes.devicePropExposureIndex: // 0x500F
+        return true;
+      default:
+        return false;
+    }
+  }
+
   @override
   Future<void> writeUintProperty(int propertyId, int value) async {
+    final desc = await readPropertyDesc(propertyId);
+    if (desc != null) {
+      await writeDevicePropValue(propertyId, desc.encodeValue(value));
+      return;
+    }
+    if (_isKnownUint16Property(propertyId)) {
+      final payload = Uint8List(2)
+        ..buffer.asByteData().setUint16(0, value & 0xFFFF, Endian.little);
+      await writeDevicePropValue(propertyId, payload);
+      return;
+    }
     await writeDevicePropValue(propertyId, Uint8List(1)..[0] = value & 0xFF);
   }
 
@@ -1489,7 +1685,7 @@ class NikonDriver
     await writeDevicePropValue(PtpOpCodes.nikonPropActiveFolder, payload);
   }
 
-  /// 属性宽度随机型不同：UINT8 返回 1 字节，UINT32 返回 4 字节。
+  /// 属性宽度随机型不同：UINT8 返回 1 字节，UINT16 返回 2 字节，UINT32 返回 4 字节。
   Future<int?> _readUintProperty(int propertyId) async {
     if (!isConnected) return null;
     try {
@@ -1498,8 +1694,13 @@ class NikonDriver
       if (data.length >= 4) {
         return ByteData.sublistView(data, 0, 4).getUint32(0, Endian.little);
       }
+      if (data.length >= 2) {
+        return ByteData.sublistView(data, 0, 2).getUint16(0, Endian.little);
+      }
       return data[0];
-    } catch (_) {
+    } catch (e) {
+      AppLogManager.instance
+          .add('[prop] read 0x${propertyId.toRadixString(16)} failed: $e');
       return null;
     }
   }

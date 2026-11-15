@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
@@ -617,7 +618,9 @@ class CaptureScreenState extends State<CaptureScreen> {
       return;
     }
 
-    final result = SequenceCompositor.composeFrames(frames, mode: mode);
+    final result = await Isolate.run(
+      () => SequenceCompositor.composeFrames(frames, mode: mode),
+    );
     if (!result.isSuccess) {
       if (mounted) _toast(EngineL10n.compositeFailed(lang), isError: true);
       return;
@@ -1278,17 +1281,15 @@ class CaptureScreenState extends State<CaptureScreen> {
     AppLogManager.instance
         .add('[movie] start recording failed: ${movie.lastError ?? 'n/a'}');
     final prohibition = movie.prohibition;
-    if (movie.lastResponseCode == 0xA004) {
-      // InvalidStatus：相机状态不接受录影，多半是取景仍处于拍照模式。
-      _toast(EngineL10n.movieInvalidStatus(lang), isError: true);
-      return;
-    }
     if (prohibition.needsPhysicalLever ||
         movie.mode == CameraCaptureMode.lockedByPhysicalLever) {
       _toast(EngineL10n.movieNeedPhysicalLever(lang), isError: true);
     } else if (prohibition.isBlocked) {
       final bit = prohibition.reasons.first;
       _toast(EngineL10n.movieProhibitionReason(lang, bit), isError: true);
+    } else if (movie.lastResponseCode == 0xA004) {
+      // InvalidStatus：相机状态不接受录影，多半是取景仍处于拍照模式。
+      _toast(EngineL10n.movieInvalidStatus(lang), isError: true);
     } else {
       _toast(context.l10n.captureFailed, isError: true);
     }

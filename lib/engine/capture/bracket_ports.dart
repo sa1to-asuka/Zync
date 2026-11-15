@@ -98,21 +98,34 @@ class DriverFocusStackPort implements FocusStackPort {
 
   @override
   Future<bool> drive(MfDirection direction, int steps) async {
-    try {
-      await driver.mfDrive(direction, steps);
-      return true;
-    } on PtpException catch (e) {
-      // 0xA00C：已经到行程尽头，继续推进会得到一串完全相同的照片。
-      if (e.responseCode == PtpOpCodes.responseNikonMfDriveStepEnd) {
-        return false;
+    for (int attempt = 0; attempt < 4; attempt++) {
+      try {
+        await driver.mfDrive(direction, steps);
+        return true;
+      } on PtpException catch (e) {
+        // 0xA00C：已经到行程尽头，继续推进会得到一串完全相同的照片。
+        if (e.responseCode == PtpOpCodes.responseNikonMfDriveStepEnd) {
+          return false;
+        }
+        // 拍摄恢复取景后相机可能短暂处于 Busy (0x2019) 或取景尚未就绪 (0xA004)，稍等重试。
+        if ((e.responseCode == PtpOpCodes.responseDeviceBusy ||
+                e.responseCode == PtpOpCodes.responseNikonInvalidStatus) &&
+            attempt < 3) {
+          await Future<void>.delayed(const Duration(milliseconds: 90));
+          try {
+            await driver.deviceReady();
+          } catch (_) {}
+          continue;
+        }
+        rethrow;
       }
-      rethrow;
     }
+    return false;
   }
 
   @override
   Future<CameraFileItem?> capture() async {
-    final outcome = await captureController.capture();
+    final outcome = await captureController.capture(preserveFocus: true);
     return outcome is CaptureConfirmed ? outcome.file : null;
   }
 

@@ -46,6 +46,11 @@ class _FakeMovieDriver implements MovieRecordingDriver {
     calls.add('stop');
   }
 
+  @override
+  Future<void> exitMovieApplicationMode() async {
+    calls.add('exitAppMode');
+  }
+
   Future<void> dispose() => _events.close();
 }
 
@@ -164,7 +169,10 @@ void main() {
     await stopFuture;
 
     expect(controller.phase, MovieRecordingPhase.idle);
-    expect(driver.calls, containsAllInOrder(<String>['start', 'stop']));
+    expect(
+      driver.calls,
+      containsAllInOrder(<String>['start', 'stop', 'exitAppMode']),
+    );
   });
 
   test('收不到 0xC108 时按超时兜底结束', () async {
