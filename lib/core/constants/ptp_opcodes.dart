@@ -30,11 +30,13 @@ class PtpOpCodes {
   static const int getPartialObject = 0x101B; // 4123 (用于 4MB 分块流式拉取)
 
   // ==========================================
-  // 2. Nikon 厂商专属私有操作码 (0x9000 - 0x94FF)
+  // 2. Nikon 厂商专属私有操作码 (0x9000 - 0x95FF)
   // ==========================================
-  static const int nikonGetLargeThumb = 0x90C4; // 37060 获取大尺寸预览缩略图 (640x480)
-  static const int nikonDeviceReady = 0x90C8; // 37064 设备就绪探测
   static const int nikonAfDrive = 0x90C1; // 37057 触发自动对焦（无参数）
+  static const int nikonChangeCameraMode = 0x90C2; // 37058 切换相机模式 [0=机身, 1=主机控制]
+  static const int nikonGetLargeThumb = 0x90C4; // 37060 获取大尺寸预览缩略图 (640x480)
+  static const int nikonGetEvent = 0x90C7; // 37063 读取相机事件队列
+  static const int nikonDeviceReady = 0x90C8; // 37064 设备就绪探测
   static const int nikonStartLiveView = 0x9201; // 37377 进入实时取景
   static const int nikonEndLiveView = 0x9202; // 37378 退出实时取景
   static const int nikonGetLiveViewImage = 0x9203; // 37379 拉取一帧取景画面
@@ -48,16 +50,24 @@ class PtpOpCodes {
   static const int nikonCaptureToCard = 0x9207; // 37383 拍照并存入机身卡
   static const int nikonStartMovieRecInCard = 0x920A; // 37386 启动机内录像
   static const int nikonEndMovieRec = 0x920B; // 37387 结束机内录像
+  static const int nikonConfirmPairing = 0x935A; // 37722 提交 STA 无线配对确认 [0x2001]
   static const int nikonEndSpotWhiteBalance = 0x9403; // 37891 结束点测白平衡
   static const int nikonGetEventEx = 0x941C; // 37916 扩展事件轮询
   static const int nikonGetObjectSize = 0x9421; // 37921 获取对象实际尺寸
   static const int nikonStartTracking = 0x9424; // 37924 启动对象对焦跟踪
   static const int nikonEndTracking = 0x9425; // 37925 结束对象对焦跟踪
+  static const int nikonGetLiveViewImageEx = 0x9428; // 37928 获取 Z 系列扩展取景帧
   static const int nikonGetPartialObject64 = 0x9431; // 37937 64位大文件局部读取
   static const int nikonGetObjectMetadata = 0x9434; // 37940 获取镜头与日期私有元数据
   static const int nikonChangeAppMode = 0x9435; // 37941 切换应用控制模式
+  static const int nikonGetVendorCodes = 0x9439; // 37945 获取厂商支持码列表
   static const int nikonGetDevicePropDescEx = 0x943A; // 37946 扩展属性描述查询
   static const int nikonGetDevicePropValueEx = 0x943B; // 37947 扩展属性值查询
+  static const int nikonGetPairingInfo = 0x952B; // 38187 获取 STA 无线配对验证码 (4位)
+
+  // MTP 扩展对象属性操作码 (ISO/MTP 1.1，作为 0x1008 GetObjectInfo 的回退通道)
+  static const int mtpGetObjectPropValue = 0x9803; // 38915 读取单个对象属性
+  static const int mtpGetObjectPropList = 0x9805; // 38917 批量读取对象属性表
 
   // ==========================================
   // 2b. Nikon 优化校准专属设备属性 (Device Properties)
@@ -141,7 +151,9 @@ class PtpOpCodes {
   static const int responseInvalidTransactionId = 0x2004; // 事务ID无效
   static const int responseOperationNotSupported = 0x2005; // 操作不支持 (用于降级)
   static const int responseParameterNotSupported = 0x2006; // 参数不支持
+  static const int responseInvalidObjectHandle = 0x2009; // 对象句柄无效
   static const int responseDeviceBusy = 0x2019; // 相机正忙
+  static const int responseInvalidParentObject = 0x201A; // 非目录对象不能作为父目录遍历
   static const int responseSessionAlreadyOpen = 0x201E; // 会话已开启 (可复用)
   static const int responseStoreFull = 0x200C; // 存储卡已满
   static const int responseAccessDenied = 0x200F; // 拒绝访问/写入 (如相机未处于 P/S/A/M 档)

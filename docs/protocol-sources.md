@@ -108,12 +108,15 @@
 | [erik-sutton95/OpenZCine](https://github.com/erik-sutton95/OpenZCine) | 断线重连状态机与恢复预算策略参考 | Apache-2.0 |
 | [dukus/digiCamControl](https://github.com/dukus/digiCamControl) | `NikonZ30.cs` 模式编码、包围曝光序列与 A-B 点焦点堆叠参考 | MIT |
 | [besi/airnef](https://github.com/besi/airnef) | 断点续传状态校验思路参考（未复用源代码） | GPL-3.0 |
+| [laodamanbaout/LutCameraPro-](https://github.com/laodamanbaout/LutCameraPro-) | Nikon Z 无线 STA 连接（手机热点与路由器路由）、受限配对态判定与厂商操作参考 | Apache-2.0 |
+| [open-nikonz/zf-capture-one-helper](https://github.com/open-nikonz/zf-capture-one-helper) | `_ptp._tcp` Bonjour 广播字段与「连接到计算机 (STA)」首次配对序列（`0x952B` / `0x935A`）抓包参考 | Apache-2.0 |
+| [AchooLuv/NikonLink](https://github.com/AchooLuv/NikonLink) | TCP 建链后短延迟 settle、事件通道容错降级与 `0x9428` 取景帧行为对照（未复制源代码） | 仓库未声明许可证 |
 
 > 第三方项目的版权与许可证归原作者所有，具体以各仓库当前许可证文件为准。
 
 ## 5. 实现边界
 
-- Wi-Fi 连接只面向手机加入相机热点的直连场景，不提供局域网相机发现或手动 IP 扫描。
+- Wi-Fi 连接支持三种拓扑：手机加入相机热点（AP 直连）、相机以 STA 加入同一路由器 Wi-Fi、以及相机以 STA 加入手机个人热点。STA 模式通过 `_ptp._tcp` Bonjour 串行广播发现与原生多子网 `15740` 端口扫描自动查找，并支持手动输入 IP。
 - USB 传输不依赖厂商 SDK，设备识别覆盖标准 Still Image 类接口及常见相机厂商 ID。
 - Nikon 私有操作码只在设备能力集或协议操作码支持时使用。
 - 实时取景与遥控拍摄以 Nikon Z 30 为验证目标；其他机型按能力位尝试，失败时界面会明确提示而不是静默降级。
@@ -133,3 +136,20 @@
 - **机内 HDR**：`0xD130 HDRMode`（0=关 1=开）、`0xD131 HDRHighDynamic`（0=自动 1=±1EV 2=±2EV 3=±3EV）、`0xD132 HDRSmoothing`（0=强 1=标准 2=弱 3=自动 4=超强）、`0xD133 HDRSaveIndividualImages`。相机自行拍两张并合成一张，原片可保留在卡上。写入顺序把 `HDRMode` 放最后，失败时逐项还原。
 - **机内包围（Z 30 / Gen 2 编码）**：`0xD0C1` 步长 `2=1/3EV 3=1/2EV 4=2/3EV 6=1EV 12=2EV 18=3EV`；`0xD0C2` 模式 `0x102/0x202/0x103/0x203/0x403/0x405/0x407/0x409`（低字节为张数，中段为跨度）。与 Gen 1 的 `nikon_aebracketstep` 编码不同，不能混用。
 - **焦点堆叠没有机内合成**：libgphoto2 中没有对应的 Nikon 合成属性/操作码，只能在 App 内或桌面端合成。
+
+## 7. v2.7.0 新增协议边界（STA 局域网连接与首次配对）
+
+- **相机 STA / 「连接到计算机」分代行为**：
+  - 菜单路径为「设定菜单 → 连接到计算机 → 网络设定 → 创建配置文件 → 搜索 Wi-Fi 网络」，加入手机个人热点或路由器后 IP 选「自动获得」。
+  - **免配对机型/固件**（如初代 Z 5 / Z 6 / Z 7 / Z 50 或已完成配对并信任当前客户端 GUID 的配置文件）：TCP `15740` 双通道握手 → `OpenSession(1)` → `GetDeviceInfo (0x1001)` 直接返回完整操作集。
+  - **首次配对受限态机型/固件**（如 Z f、Z 6III、Z 50II、ZR 及 Z 30 新版固件在首次创建配置文件停于「正在与计算机配对」画面时）：相机广播 `apps=PAIR`，`GetDeviceInfo` 仅公布包含 `0x952B` 与 `0x935A` 且不含 `0x9201`/`0x9203`/`0x9428` 的受限操作集。此时客户端必须轮询 `0x952B GetPairingInfo` 读取 4 位验证码（末尾 4 字节数字或 ASCII/UTF-16/BCD），由用户与相机屏幕比对一致后发送 `0x935A ConfirmPairing (0x2001)`，并在用户在机身按 OK 保存配置文件后关闭临时会话、等待 `1200ms` 槽位释放后以**同一持久化客户端 GUID** 重连进入完整控制会话。
+- **`Init_Fail` 错误分类（CIPA DC-005 §2.3.5）**：
+  - `0x0001 (rejectedInitiator)`：相机当前启用的配置文件绑定的客户端 GUID 与本应用不一致（例如重装应用后 GUID 改变，或相机选错了给电脑配对的配置文件）。此时绝不能盲目自动重试，应提示用户在相机新建配置文件或导入旧 32 位 GUID。
+  - `0x0002 (busy)`：相机正被另一台设备占用或上一会话槽位尚未释放。
+- **Android 串行 Bonjour 发现与多子网路由隔离**：
+  - Android `NsdManager.resolveService` 不支持并发调用（并发会报 `FAILURE_ALREADY_ACTIVE = 3`），必须通过队列严格串行解析，并在主线程回传结果，同时提取 TXT 中的 `model`、`guid`、`apps=PAIR`。
+  - **同一路由器 STA** 与 **手机个人热点 STA** 的路由策略不同：同一路由器下目标 IP 属于 `ConnectivityManager` 的 `TRANSPORT_WIFI` 网络，扫描与连接均需绑定该 Wi-Fi `Network`（防止蜂窝移动数据抢走无外网路由）；而手机开启个人热点时，热点接口（`ap*` / `swlan*`）不在 `TRANSPORT_WIFI` 客户端列表中，必须解除进程网络绑定（`bindProcessToNetwork(null)`）走系统本地直连路由。
+- **地址格式与实机传输加固**：
+  - Z 30 等机身屏幕会以 `010.151.169.075` 这种前导补零形式显示 IP，进入网络层前必须逐段去掉前导零，避免 POSIX 将其当作八进制解析。
+  - **TCP 建链后 300ms settle**：实测 Z 50II 等机身在 TCP SYN-ACK 后立刻收到 `Init_Command_Request` 会直接断链，短暂等待 300ms 后握手更加稳定。
+  - **事件通道容错降级与 `0x9428` 取景兜底**：少数固件在特定网络下拒绝事件通道绑定时，降级保留命令通道以维持选片下载与遥控；当 `0x9203 GetLiveViewImage` 不在能力集或返回 `0x2005`/`0xA00B` 且支持 `0x9428 GetLiveViewImageEx` 时，自动切换至 `0x9428` 取帧。

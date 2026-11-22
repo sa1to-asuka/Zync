@@ -42,7 +42,7 @@ void main() {
     expect(stack().index, 2);
   });
 
-  testWidgets('宽屏下内容居中限宽(≤720dp)', (tester) async {
+  testWidgets('宽屏下主页内容居中限宽(≤1200dp)', (tester) async {
     tester.view.physicalSize = const Size(1600, 1000);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
@@ -57,8 +57,8 @@ void main() {
         .descendant(of: content.first, matching: find.byType(ConstrainedBox))
         .first;
     final boxRect = tester.getRect(box);
-    expect(boxRect.width, lessThanOrEqualTo(720.5),
-        reason: '大屏内容宽度应被限制在 720dp 以内');
+    expect(boxRect.width, lessThanOrEqualTo(1200.5),
+        reason: '平板仪表盘内容宽度应限制在 1200dp 以内');
 
     // 内容应在可用区域内水平居中（左右留白基本相等）
     final stackRect = tester.getRect(find.byType(IndexedStack));

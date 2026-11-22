@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
-import '../../core/constants/network_config.dart';
 import '../../core/settings/app_settings.dart';
 import '../../core/utils/exif_helper.dart';
 import '../../engine/capture/capture_controller.dart';
@@ -123,10 +122,13 @@ class _RootScaffoldState extends State<RootScaffold>
     _recoveryController = ConnectionRecoveryController(
       reconnect: () => _driver.reconnect(),
       restoreSession: _restoreSessionAfterReconnect,
-      probe: () => probeCameraPort(
-        NetworkConfig.cameraIp,
-        NetworkConfig.cameraPort,
-      ),
+      probe: () {
+        if (_driver.lastConnectionWasUsb) {
+          return Future<bool>.value(true);
+        }
+        final host = _driver.lastWifiHost ?? AppSettings.instance.cameraIp;
+        return probeCameraPort(host, _driver.lastWifiPort);
+      },
     );
     _driver.onUnexpectedDisconnect = _handleUnexpectedDisconnect;
     unawaited(_attachDownloadQueueStore());
@@ -345,12 +347,22 @@ class _RootScaffoldState extends State<RootScaffold>
     if (index == _currentIndex) return;
 
     // 离开拍摄台时立即退出取景，否则相机会一直保持在取景模式。
-    if (_currentIndex == _captureTabIndex) {
-      _captureKey.currentState?.onTabHidden();
-    }
+    final Future<void>? leaveCaptureFuture = _currentIndex == _captureTabIndex
+        ? _captureKey.currentState?.onTabHidden()
+        : null;
 
     if (index == _galleryTabIndex && _driver.isConnected) {
-      _galleryKey.currentState?.reloadFilesIfEmpty();
+      if (leaveCaptureFuture != null) {
+        unawaited(leaveCaptureFuture.whenComplete(() {
+          if (mounted &&
+              _currentIndex == _galleryTabIndex &&
+              _driver.isConnected) {
+            _galleryKey.currentState?.reloadFilesIfEmpty();
+          }
+        }));
+      } else {
+        _galleryKey.currentState?.reloadFilesIfEmpty();
+      }
     } else if (index == _pictureControlTabIndex && _driver.isConnected) {
       _pictureControlKey.currentState?.refreshCameraSlots();
     } else if (index == _captureTabIndex) {

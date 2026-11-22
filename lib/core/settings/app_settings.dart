@@ -17,6 +17,10 @@ class AppSettings extends ChangeNotifier {
 
   static const String defaultCameraIp = '192.168.0.1';
   static const int defaultCameraPort = 15740;
+  static const String defaultStaLanHost = '';
+  static const int defaultStaLanPort = 15740;
+  static const String defaultStaSubMode = 'router';
+  static const String defaultLastLinkMethod = 'hotspot';
   static const bool defaultAutoBindNetwork = true;
   static const bool defaultAutoKeepAlive = true;
   static const bool defaultDownloadRaw = false;
@@ -94,6 +98,12 @@ class AppSettings extends ChangeNotifier {
 
   String cameraIp = defaultCameraIp;
   int cameraPort = defaultCameraPort;
+  String staLanHost = defaultStaLanHost;
+  int staLanPort = defaultStaLanPort;
+  String staSubMode = defaultStaSubMode;
+  String staRouterHost = defaultStaLanHost;
+  String staHotspotHost = defaultStaLanHost;
+  String lastLinkMethod = defaultLastLinkMethod;
   bool autoBindNetwork = defaultAutoBindNetwork;
   bool autoKeepAlive = defaultAutoKeepAlive;
   bool downloadRaw = defaultDownloadRaw;
@@ -181,6 +191,14 @@ class AppSettings extends ChangeNotifier {
       final m = Map<String, dynamic>.from(raw);
       cameraIp = _readString(m, 'cameraIp', defaultCameraIp);
       cameraPort = _readInt(m, 'cameraPort', defaultCameraPort);
+      staLanHost = _readString(m, 'staLanHost', defaultStaLanHost);
+      staLanPort = _readInt(m, 'staLanPort', defaultStaLanPort);
+      final rawSubMode = _readString(m, 'staSubMode', defaultStaSubMode);
+      staSubMode = rawSubMode == 'hotspot' ? 'hotspot' : 'router';
+      staRouterHost = _readString(m, 'staRouterHost', staLanHost);
+      staHotspotHost = _readString(m, 'staHotspotHost', '');
+      lastLinkMethod =
+          _readString(m, 'lastLinkMethod', defaultLastLinkMethod);
       autoBindNetwork = _readBool(m, 'autoBindNetwork', defaultAutoBindNetwork);
       autoKeepAlive = _readBool(m, 'autoKeepAlive', defaultAutoKeepAlive);
       downloadRaw = _readBool(m, 'downloadRaw', defaultDownloadRaw);
@@ -334,6 +352,12 @@ class AppSettings extends ChangeNotifier {
       await file.writeAsString(jsonEncode({
         'cameraIp': cameraIp,
         'cameraPort': cameraPort,
+        'staLanHost': staLanHost,
+        'staLanPort': staLanPort,
+        'staSubMode': staSubMode,
+        'staRouterHost': staRouterHost,
+        'staHotspotHost': staHotspotHost,
+        'lastLinkMethod': lastLinkMethod,
         'autoBindNetwork': autoBindNetwork,
         'autoKeepAlive': autoKeepAlive,
         'downloadRaw': downloadRaw,
@@ -424,6 +448,60 @@ class AppSettings extends ChangeNotifier {
   void setCameraPort(int value) {
     if (value <= 0 || value > 65535 || value == cameraPort) return;
     cameraPort = value;
+    notifyListeners();
+    _scheduleSave();
+  }
+
+  void setStaLanHost(String value) {
+    final v = value.trim();
+    if (v == staLanHost && staHostForSubMode(staSubMode) == v) return;
+    staLanHost = v;
+    if (staSubMode == 'hotspot') {
+      staHotspotHost = v;
+    } else {
+      staRouterHost = v;
+    }
+    notifyListeners();
+    _scheduleSave();
+  }
+
+  void setStaSubMode(String value) {
+    final normalized = value == 'hotspot' ? 'hotspot' : 'router';
+    if (normalized == staSubMode) return;
+    staSubMode = normalized;
+    notifyListeners();
+    _scheduleSave();
+  }
+
+  String staHostForSubMode(String subMode) {
+    if (subMode == 'hotspot') {
+      return staHotspotHost.isNotEmpty ? staHotspotHost : staLanHost;
+    }
+    return staRouterHost.isNotEmpty ? staRouterHost : staLanHost;
+  }
+
+  void setStaHostForSubMode(String subMode, String host) {
+    final v = host.trim();
+    staLanHost = v;
+    if (subMode == 'hotspot') {
+      staHotspotHost = v;
+    } else {
+      staRouterHost = v;
+    }
+    notifyListeners();
+    _scheduleSave();
+  }
+
+  void setStaLanPort(int value) {
+    if (value <= 0 || value > 65535 || value == staLanPort) return;
+    staLanPort = value;
+    notifyListeners();
+    _scheduleSave();
+  }
+
+  void setLastLinkMethod(String value) {
+    if (value == lastLinkMethod) return;
+    lastLinkMethod = value;
     notifyListeners();
     _scheduleSave();
   }
@@ -685,6 +763,39 @@ class AppSettings extends ChangeNotifier {
     return bytes;
   }
 
+  /// 当前持久化的 32 位十六进制客户端 GUID（若尚未生成则立即初始化）。
+  String get ptpClientGuidHex {
+    final _ = ptpClientGuidBytes;
+    return ptpClientGuid;
+  }
+
+  /// 手动导入 32 位十六进制客户端 GUID（允许包含空格或 `-` 分隔符）。
+  /// 校验通过并保存时返回 true，格式非法返回 false。
+  bool setPtpClientGuid(String rawHex) {
+    final cleaned = rawHex.replaceAll(RegExp(r'[\s\-:]'), '').toLowerCase();
+    final decoded = _decodeGuid(cleaned);
+    if (decoded == null) return false;
+    final normalized = _encodeGuid(decoded);
+    if (normalized == ptpClientGuid) return true;
+    ptpClientGuid = normalized;
+    notifyListeners();
+    _scheduleSave();
+    return true;
+  }
+
+  /// 重新生成新的随机 16 字节客户端 GUID。
+  String regeneratePtpClientGuid() {
+    final bytes = Uint8List(16);
+    final random = Random.secure();
+    for (var i = 0; i < bytes.length; i++) {
+      bytes[i] = random.nextInt(256);
+    }
+    ptpClientGuid = _encodeGuid(bytes);
+    notifyListeners();
+    _scheduleSave();
+    return ptpClientGuid;
+  }
+
   void setThemeMode(AppThemeMode value) {
     if (value == themeMode) return;
     themeMode = value;
@@ -847,6 +958,12 @@ class AppSettings extends ChangeNotifier {
   void resetForTest() {
     cameraIp = defaultCameraIp;
     cameraPort = defaultCameraPort;
+    staLanHost = defaultStaLanHost;
+    staLanPort = defaultStaLanPort;
+    staSubMode = defaultStaSubMode;
+    staRouterHost = defaultStaLanHost;
+    staHotspotHost = defaultStaLanHost;
+    lastLinkMethod = defaultLastLinkMethod;
     autoBindNetwork = defaultAutoBindNetwork;
     autoKeepAlive = defaultAutoKeepAlive;
     downloadRaw = defaultDownloadRaw;

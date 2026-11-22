@@ -2,8 +2,10 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zync/ui/design/theme.dart';
+import 'package:zync/l10n/l10n.dart';
 import 'package:zync/protocol/camera_driver.dart';
+import 'package:zync/ui/design/theme.dart';
+import 'package:zync/ui/screens/connect/link_camera_screen.dart';
 import 'package:zync/ui/screens/connect_screen.dart';
 
 import 'download_integrity_test.dart' show FakeDriver;
@@ -56,7 +58,7 @@ void main() {
     expect(find.textContaining('50-250'), findsNothing);
     expect(tester.takeException(), isNull);
   });
-  testWidgets('连接页仅显示相机热点与 USB，蓝牙实验入口默认隐藏', (tester) async {
+  testWidgets('未连接时主页只保留「前往连接」入口', (tester) async {
     final driver = _LensDriver(const CameraExposureParams());
     driver.state = CameraConnectionState.disconnected;
     await tester.pumpWidget(MaterialApp(
@@ -65,15 +67,15 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('相机热点'), findsOneWidget);
-    expect(find.text('STA 局域网'), findsNothing);
-    expect(find.text('USB'), findsOneWidget);
+    final lang = L10n.current.localeName;
+    expect(find.text(EngineL10n.linkGoConnect(lang)), findsOneWidget);
     expect(find.text('蓝牙实验'), findsNothing);
+    expect(find.text('相机热点'), findsNothing);
+    expect(find.text('USB'), findsNothing);
 
-    await tester.tap(find.text('USB'));
+    await tester.tap(find.text(EngineL10n.linkGoConnect(lang)));
     await tester.pumpAndSettle();
-    expect(find.text('USB OTG 有线连接'), findsOneWidget);
-    expect(find.textContaining('USB'), findsWidgets);
+    expect(find.byType(LinkCameraScreen), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

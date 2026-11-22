@@ -13,6 +13,7 @@ import '../engine/picture_control/np3_codec.dart';
 import 'camera_driver.dart';
 import 'camera_io_coordinator.dart';
 import 'camera_native_bridge.dart';
+import 'nikon_sta_pairing.dart';
 import 'ptp_ip_client.dart';
 import 'ptp_transport.dart';
 import 'usb_ptp_transport.dart';
@@ -186,29 +187,47 @@ class NikonDeviceInfo {
     if (upper.contains('Z 30') ||
         upper.contains('Z30') ||
         upper.contains('Z_30')) return 'NIKON Z 30';
+    if (upper.contains('Z 50_2') ||
+        upper.contains('Z50_2') ||
+        upper.contains('Z 50II') ||
+        upper.contains('Z50II')) return 'NIKON Z50II';
     if (upper.contains('Z 50') ||
         upper.contains('Z50') ||
         upper.contains('Z_50')) return 'NIKON Z 50';
     if (upper.contains('Z FC') ||
         upper.contains('ZFC') ||
         upper.contains('Z_FC')) return 'NIKON Z fc';
+    if (upper.contains('Z F') ||
+        upper.contains('Z_F') ||
+        RegExp(r'\bZF\b').hasMatch(upper)) return 'NIKON Z f';
+    if (upper.contains('ZR') || upper.contains('Z R') || upper.contains('Z_R'))
+      return 'NIKON ZR';
     if (upper.contains('Z 8') || upper.contains('Z8') || upper.contains('Z_8'))
       return 'NIKON Z 8';
     if (upper.contains('Z 9') || upper.contains('Z9') || upper.contains('Z_9'))
       return 'NIKON Z 9';
     if (upper.contains('Z 6_3') ||
+        upper.contains('Z6_3') ||
         upper.contains('Z6III') ||
         upper.contains('Z 6III')) return 'NIKON Z 6III';
     if (upper.contains('Z 6_2') ||
+        upper.contains('Z6_2') ||
         upper.contains('Z6II') ||
         upper.contains('Z 6II')) return 'NIKON Z 6II';
     if (upper.contains('Z 6') || upper.contains('Z6') || upper.contains('Z_6'))
       return 'NIKON Z 6';
     if (upper.contains('Z 7_2') ||
+        upper.contains('Z7_2') ||
         upper.contains('Z7II') ||
         upper.contains('Z 7II')) return 'NIKON Z 7II';
     if (upper.contains('Z 7') || upper.contains('Z7') || upper.contains('Z_7'))
       return 'NIKON Z 7';
+    if (upper.contains('Z 5_2') ||
+        upper.contains('Z5_2') ||
+        upper.contains('Z 5II') ||
+        upper.contains('Z5II')) return 'NIKON Z5II';
+    if (upper.contains('Z 5') || upper.contains('Z5') || upper.contains('Z_5'))
+      return 'NIKON Z 5';
     if (upper.contains('D850')) return 'NIKON D850';
     if (upper.contains('D780')) return 'NIKON D780';
     if (upper.contains('D750')) return 'NIKON D750';
@@ -240,16 +259,33 @@ class NikonDriver
   List<int> _detectedStorageIds = [];
   final Map<int, CameraFileItem> _objectInfoCache = {};
   final Map<int, Uint8List> _thumbCache = {};
+  final Set<int> _knownFileHandles = <int>{};
+  int _objectInfoFailLogCount = 0;
+
+  void _log(String msg) {
+    final cb = _logCallback;
+    if (cb != null) {
+      cb(msg);
+    } else {
+      AppLogManager.instance.add(msg);
+    }
+  }
 
   final CameraIoCoordinator _io = CameraIoCoordinator();
   CameraTransportKind _transportKind = CameraTransportKind.wifi;
   bool _liveViewActive = false;
 
-  // ---- 自动重连支持 ----
+  // ---- 自动重连与 STA 配对状态支持 ----
+  /// 断开后再次发起 TCP PTP/IP Init 前的最小冷却时间，防止相机单会话槽位未释放而卡死。
+  static const Duration reconnectSettleDuration = Duration(milliseconds: 1200);
+
   String? _lastWifiHost;
   int _lastWifiPort = 15740;
+  String? _lastWifiRouteMode;
   String? _lastUsbDeviceName;
   bool _lastWasUsb = false;
+  bool _isRestrictedPairingSession = false;
+  DateTime? _lastDisconnectAt;
   StreamSubscription<PtpPacket>? _eventSub;
 
   /// 非用户主动断开（掉线 / USB 拔出 / 网络丢失）时回调一次。
@@ -258,9 +294,53 @@ class NikonDriver
   /// 用户是否正在主动断开；主动断开不触发重连。
   bool _userDisconnect = false;
 
+  /// 配对等流程自己管理连接生命周期时，屏蔽自动重连控制器，
+  /// 避免相机在配对中途关连接时上层同时发起重连。
+  bool _recoverySuppressed = false;
+
+  void setRecoverySuppressed(bool value) {
+    _recoverySuppressed = value;
+  }
+
+  /// 当前会话是否处于 STA 首次配对的受限能力态（仅开放 0x952B / 0x935A，尚未开放取景与常规控制）。
+  bool get isRestrictedPairingSession => _isRestrictedPairingSession;
+
+  /// 设备信息查询完成信号。
+  ///
+  /// `connected` 状态会在 GetDeviceInfo 之前就发出，此时还不知道相机是否
+  /// 处于受限配对态。依赖存储卡/属性的调用方应等待该 Future 再动手。
+  Completer<void>? _sessionInfoCompleter;
+
+  Future<void> get sessionInfoReady =>
+      _sessionInfoCompleter?.future ?? Future<void>.value();
+
+  void _beginSessionInfo() {
+    _sessionInfoCompleter = Completer<void>();
+  }
+
+  void _completeSessionInfo() {
+    final c = _sessionInfoCompleter;
+    if (c != null && !c.isCompleted) c.complete();
+  }
+
+  /// 当前 PTP/IP 会话的事件通道是否可用（部分机身事件通道被拒时降级为纯命令通道）。
+  bool get eventsAvailable {
+    final c = _client;
+    if (c is PtpIpClient) return c.eventsAvailable;
+    return isConnected;
+  }
+
+  /// 上次成功连接的 Wi-Fi 目标，自动重连探活要用真实地址。
+  String? get lastWifiHost => _lastWifiHost;
+  int get lastWifiPort => _lastWifiPort;
+  String? get lastWifiRouteMode => _lastWifiRouteMode;
+
   /// 重连目标是否仍然存在。
   bool get canReconnect =>
       _lastWasUsb ? _lastUsbDeviceName != null : _lastWifiHost != null;
+
+  /// 上次连接是否走 USB；重连探活只对 Wi-Fi 有意义。
+  bool get lastConnectionWasUsb => _lastWasUsb;
 
   /// 用上次成功的连接目标重建会话。
   Future<void> reconnect({void Function(String msg)? onLog}) async {
@@ -271,7 +351,12 @@ class NikonDriver
     } else {
       final host = _lastWifiHost;
       if (host == null) throw StateError('没有可重连的 Wi-Fi 目标');
-      await connect(host, port: _lastWifiPort, onLog: onLog);
+      await connect(
+        host,
+        port: _lastWifiPort,
+        onLog: onLog,
+        routeMode: _lastWifiRouteMode,
+      );
     }
   }
 
@@ -280,6 +365,9 @@ class NikonDriver
 
   /// 是否已通过 0x9435 进入尼康 Application Mode（录像期间置 true，停止后退回 0）。
   bool _inMovieAppMode = false;
+
+  /// STA 读卡时是否已尝试进入 Application Mode（每个会话只尝试一次）。
+  bool _staAppModeEnabled = false;
 
   /// 重建取景会话期间的门闩，防止后台取景拉帧在 0x9202->0x9201 空窗期插入 0x9203。
   Future<void>? _liveViewCycleGate;
@@ -334,23 +422,57 @@ class NikonDriver
   Stream<CameraFileItem> get onPhotoCaptured => _photoCapturedController.stream;
 
   @override
-  Future<void> connect(String host,
-      {int port = 15740, void Function(String msg)? onLog}) {
-    return _connectPtp(host, port: port, onLog: onLog);
+  Future<void> connect(
+    String host, {
+    int port = 15740,
+    void Function(String msg)? onLog,
+    String? routeMode,
+    Duration postConnectSettle = const Duration(milliseconds: 300),
+    bool allowEventChannelFallback = true,
+  }) {
+    return _connectPtp(
+      host,
+      port: port,
+      onLog: onLog,
+      routeMode: routeMode,
+      postConnectSettle: postConnectSettle,
+      allowEventChannelFallback: allowEventChannelFallback,
+    );
   }
 
   Future<void> _connectPtp(
     String host, {
     required int port,
     void Function(String msg)? onLog,
+    String? routeMode,
+    Duration postConnectSettle = const Duration(milliseconds: 300),
+    bool allowEventChannelFallback = true,
   }) async {
-    _logCallback = onLog;
+    if (onLog != null) _logCallback = onLog;
     _userDisconnect = false;
+    _isRestrictedPairingSession = false;
+    _staAppModeEnabled = false;
+    _knownFileHandles.clear();
+    _objectInfoFailLogCount = 0;
+    _beginSessionInfo();
     _lastWifiHost = host;
     _lastWifiPort = port;
+    _lastWifiRouteMode = routeMode;
     _lastWasUsb = false;
     _state = CameraConnectionState.connecting;
     _stateController.add(_state);
+
+    // 若刚断开连接不久，等待相机释放单会话槽位（配对完成后重连尤为关键）。
+    final lastDisc = _lastDisconnectAt;
+    if (lastDisc != null && postConnectSettle > Duration.zero) {
+      final elapsed = DateTime.now().difference(lastDisc);
+      if (elapsed < reconnectSettleDuration) {
+        final wait = reconnectSettleDuration - elapsed;
+        onLog?.call('等待相机释放上一会话槽位 (${wait.inMilliseconds}ms) ...');
+        await Future<void>.delayed(wait);
+      }
+    }
+
     PtpIpClient? client;
     try {
       // 优先从当前 Wi-Fi SSID 嗅探机型
@@ -377,7 +499,10 @@ class NikonDriver
       } catch (_) {}
 
       try {
-        await CameraNativeBridge.bindCameraWifi(targetHost: host);
+        await CameraNativeBridge.bindCameraWifi(
+          targetHost: host,
+          mode: routeMode,
+        );
       } catch (_) {}
 
       client = PtpIpClient(
@@ -385,10 +510,16 @@ class NikonDriver
         port: port,
         onLog: onLog,
         clientGuid: AppSettings.instance.ptpClientGuidBytes,
+        postConnectSettle: postConnectSettle,
+        allowEventChannelFallback: allowEventChannelFallback,
       );
       _client = client;
       client.onUnexpectedDisconnect = _notifyUnexpectedDisconnect;
       await client.connect();
+      if (client.cameraName.trim().isNotEmpty &&
+          _cameraModel == 'Nikon Camera') {
+        _cameraModel = NikonDeviceInfo.normalizeModelName(client.cameraName);
+      }
       _state = CameraConnectionState.connected;
       _stateController.add(_state);
 
@@ -402,15 +533,20 @@ class NikonDriver
       } catch (e) {
         onLog?.call('查询相机设备信息提示: $e');
       }
+      _completeSessionInfo();
 
-      // 查询电池电量 (0x5001 BatteryLevel)
-      try {
-        await _queryBatteryLevel();
-      } catch (_) {}
+      // 受限配对会话期间不查询电量，避免向待配对机身发送未授权属性请求
+      if (!_isRestrictedPairingSession) {
+        try {
+          await _queryBatteryLevel();
+        } catch (_) {}
+      }
     } catch (e) {
       try {
         await client?.disconnect();
       } catch (_) {}
+      _completeSessionInfo();
+      _lastDisconnectAt = DateTime.now();
       _state = CameraConnectionState.error;
       _stateController.add(_state);
       rethrow;
@@ -438,8 +574,13 @@ class NikonDriver
   Future<void> connectTransport(PtpTransport transport,
       {void Function(String msg)? onLog,
       CameraTransportKind kind = CameraTransportKind.wifi}) async {
-    _logCallback = onLog;
+    if (onLog != null) _logCallback = onLog;
     _transportKind = kind;
+    _isRestrictedPairingSession = false;
+    _staAppModeEnabled = false;
+    _knownFileHandles.clear();
+    _objectInfoFailLogCount = 0;
+    _beginSessionInfo();
     _state = CameraConnectionState.connecting;
     _stateController.add(_state);
     try {
@@ -456,10 +597,14 @@ class NikonDriver
       } catch (e) {
         onLog?.call('查询相机设备信息提示: $e');
       }
-      try {
-        await _queryBatteryLevel();
-      } catch (_) {}
+      _completeSessionInfo();
+      if (!_isRestrictedPairingSession) {
+        try {
+          await _queryBatteryLevel();
+        } catch (_) {}
+      }
     } catch (e) {
+      _completeSessionInfo();
       _state = CameraConnectionState.error;
       _stateController.add(_state);
       rethrow;
@@ -469,6 +614,7 @@ class NikonDriver
   @override
   Future<void> disconnect() async {
     _userDisconnect = true;
+    _completeSessionInfo();
     // 先退出 Application Mode 与取景，避免相机停留在取景模式或锁死存储卡访问。
     if (_inMovieAppMode) {
       try {
@@ -483,11 +629,14 @@ class NikonDriver
     _eventSub = null;
     await _client?.disconnect();
     _client = null;
+    _lastDisconnectAt = DateTime.now();
+    _isRestrictedPairingSession = false;
     _state = CameraConnectionState.disconnected;
     // 注意：不重置 _lastWasUsb / _lastWifiHost，重连需要它们。
     _transportKind = CameraTransportKind.wifi;
     _unsupportedOps.clear();
     _inMovieAppMode = false;
+    _staAppModeEnabled = false;
     _propDescCache.clear();
     // dispose 场景下控制器可能已关闭，避免向已关闭的 StreamController 发送事件
     if (!_stateController.isClosed) {
@@ -495,6 +644,8 @@ class NikonDriver
     }
     _objectInfoCache.clear();
     _thumbCache.clear();
+    _knownFileHandles.clear();
+    _objectInfoFailLogCount = 0;
     _detectedStorageIds.clear();
     try {
       await CameraNativeBridge.unbindWifi();
@@ -696,9 +847,14 @@ class NikonDriver
       final ids = _parseUint32Array(storageData);
       if (ids.isNotEmpty) {
         _detectedStorageIds = ids;
+        _logCallback?.call(
+            '【存储卷】GetStorageIDs 返回 ${ids.length} 个: ${ids.map((e) => '0x${e.toRadixString(16)}').join(', ')}');
         return _detectedStorageIds;
       }
-    } catch (_) {}
+      _logCallback?.call('【存储卷】GetStorageIDs 返回空列表');
+    } catch (e) {
+      _logCallback?.call('【存储卷】GetStorageIDs 失败: $e');
+    }
     if (_detectedStorageIds.isEmpty) {
       _detectedStorageIds = [0x00010001];
     }
@@ -707,111 +863,375 @@ class NikonDriver
 
   @override
   Future<List<int>> listObjectHandles([int? storageId]) async {
-    if (!isConnected) return [];
+    if (!isConnected) {
+      _log('[media] listObjectHandles skipped: not connected');
+      return [];
+    }
 
-    // 获取所有可用卡槽
-    List<int> storages = [];
+    // 取景进行中部分机型会以 0x2019 / 0x200F 拒绝存储遍历或 GetObjectInfo，先退出取景。
+    if (_liveViewActive) {
+      await endLiveView();
+    }
+
+    // 调用方明确指定卡槽时直接扫，不做猜测。
     if (storageId != null) {
-      storages = [storageId];
-    } else {
-      storages = await listStorageIds();
+      return _scanStorageFiles(storageId);
     }
 
-    if (storages.isEmpty) {
-      // 探测默认卡槽与通配卡槽 (Slot 1, Slot 2, 全卡槽)
-      storages = [0x00010001, 0x00020001, 0xFFFFFFFF];
-    }
+    var baseIds = await listStorageIds();
+    var candidates = _storageCandidates(baseIds);
 
-    final allFileHandles = <int>{};
-
-    for (final sId in storages) {
-      try {
-        final found = await _scanStorageFiles(sId);
-        if (found.isNotEmpty) {
-          allFileHandles.addAll(found);
-          _logCallback?.call(
-              '卡槽 0x${sId.toRadixString(16)} 成功检索到 ${found.length} 个媒体文件');
+    Future<List<int>?> probe() async {
+      for (final candidate in candidates) {
+        final handles = await _probeStorageCandidate(candidate, baseIds);
+        if (handles != null && handles.isNotEmpty) {
+          return handles;
         }
-      } catch (_) {}
+      }
+      return null;
     }
 
-    // 若按卡槽未找到且未指定卡槽，尝试全卡槽通配扫描
-    if (allFileHandles.isEmpty && storageId == null) {
+    var found = await probe();
+    if (found != null) return found;
+
+    // 刚完成配对的 STA 会话里，相机可能先应答握手、稍后才挂载存储卡。
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+    baseIds = await listStorageIds();
+    candidates = _storageCandidates(baseIds);
+    found = await probe();
+    if (found != null) return found;
+
+    // 部分机身（Z 30 的「连接到计算机」模式）在进入 Application Mode 之前
+    // 会返回存储卷但 0 个对象。NikonCameraControl 在 STA PC 模式下也是先发
+    // 0x9435(1) 再读卡。
+    if (_isStaSession && !_staAppModeEnabled) {
+      _log('[media] no objects in STA session, trying 0x9435(1) app mode');
+      if (await _enableStaApplicationMode()) {
+        baseIds = await listStorageIds();
+        candidates = _storageCandidates(baseIds);
+        found = await probe();
+        if (found != null) return found;
+      }
+    }
+
+    // 扁平查询不被支持时退回目录树遍历。
+    for (final id in baseIds) {
       try {
-        final found = await _scanStorageFiles(0xFFFFFFFF);
-        allFileHandles.addAll(found);
-      } catch (_) {}
+        final scanned = await _scanStorageFiles(id);
+        if (scanned.isNotEmpty) {
+          _log('卡槽 0x${id.toRadixString(16)} 成功检索到 ${scanned.length} 个媒体文件');
+          return scanned;
+        }
+      } catch (e) {
+        _log('[media] storage 0x${id.toRadixString(16)} scan failed: $e');
+      }
     }
 
-    return allFileHandles.toList();
+    return [];
   }
 
-  /// 扫描指定存储卷下的所有文件 (支持扁平递归与 DCIM/延时摄影目录树递归双引擎)
-  Future<List<int>> _scanStorageFiles(int storageId) async {
-    final allHandles = <int>[];
+  /// 探测单个存储卷候选 ID。
+  ///
+  /// 严格遵循 ISO 15740 §10.4.6：
+  /// - `Parent = 0x00000000` (`PTP_GOH_ALL_ASSOCS`) 表示整卡全部对象扁平返回；
+  /// - `Parent = 0xFFFFFFFF` (`PTP_GOH_ROOT_PARENT`) 仅返回根目录对象（部分旧固件也将其视为扁平）。
+  /// 优先尝试 `0x00000000`，不足时再试 `0xFFFFFFFF`；若仅得到根关联句柄则递归展开目录树。
+  Future<List<int>?> _probeStorageCandidate(
+    int candidate,
+    List<int> baseIds,
+  ) async {
+    List<int>? rootSeeds;
 
-    // 引擎 1: 标准 PTP 全局通配句柄查询 (Parent = 0xFFFFFFFF 查询存储卡内所有文件及目录)
-    try {
-      final handleData = await _client!.executeDataIn(
-        PtpOpCodes.getObjectHandles,
-        [storageId, 0, 0xFFFFFFFF],
-      );
-      final handles = _parseUint32Array(handleData);
-      if (handles.length > 2) {
-        // 0xFFFFFFFF 在 PTP 协议中代表存储卡内全部对象（包含星空延时新文件夹中的照片）
-        allHandles.addAll(handles);
-        _logCallback?.call('PTP 0xFFFFFFFF 全局扁平化检索到 ${handles.length} 个对象句柄');
-        return allHandles;
+    for (final parentParam in const <int>[0, 0xFFFFFFFF]) {
+      try {
+        final data = await _client!.executeDataIn(
+          PtpOpCodes.getObjectHandles,
+          [candidate, 0, parentParam],
+        );
+        final handles = _parseUint32Array(data);
+        final parentLabel = parentParam == 0 ? '0x0' : '0xffffffff';
+        _log(
+            '[media] storage 0x${candidate.toRadixString(16)} (parent=$parentLabel) -> ${handles.length} handles'
+            '${handles.isEmpty ? '' : ': ${handles.take(8).map((e) => '0x${e.toRadixString(16)}').join(', ')}'}');
+        if (handles.isEmpty) continue;
+
+        if (!baseIds.contains(candidate)) {
+          _detectedStorageIds = [candidate];
+          _log(
+              '[media] using storage 0x${candidate.toRadixString(16)} instead of reported ids');
+        }
+
+        if (handles.length > 2) {
+          // 少量句柄（如 DCIM / PRIVATE / MISC）可能全部是根文件夹，核对后再决定是否展开。
+          if (handles.length <= 8 && await _looksLikeFolderOnlyBatch(handles)) {
+            rootSeeds ??= handles;
+            continue;
+          }
+          return handles;
+        }
+        rootSeeds ??= handles;
+      } catch (e) {
+        final parentLabel = parentParam == 0 ? '0x0' : '0xffffffff';
+        _log(
+            '[media] storage 0x${candidate.toRadixString(16)} (parent=$parentLabel) probe failed: $e');
       }
-    } catch (e) {
-      _logCallback?.call('0xFFFFFFFF 全局查询异常，进入目录树扫描: $e');
     }
 
-    // 引擎 2: 标准 PTP 目录树遍历（覆盖根目录、DCIM 及子文件夹）
-    try {
-      // 1. 获取根目录对象 (Parent = 0)
-      final rootData = await _client!.executeDataIn(
-        PtpOpCodes.getObjectHandles,
-        [storageId, 0, 0],
-      );
-      final rootHandles = _parseUint32Array(rootData);
-      final folderQueue = <int>[];
+    if (rootSeeds != null && rootSeeds.isNotEmpty) {
+      final expanded = await _expandHandleTree(candidate, rootSeeds);
+      _log(
+          '[media] expanded ${rootSeeds.length} root handle(s) -> '
+          '${expanded.length} files (storage 0x${candidate.toRadixString(16)})');
+      if (expanded.isNotEmpty) return expanded;
+    }
+    return null;
+  }
 
-      for (final h in rootHandles) {
-        final info = await getObjectInfo(h);
-        if (info == null) continue;
-        if (info.isFolder || info.fileName.toUpperCase() == 'DCIM') {
-          folderQueue.add(h);
-        } else {
-          allHandles.add(h);
+  /// 检查少量句柄是否全部为目录对象，避免把根文件夹列表直接当成照片返回。
+  Future<bool> _looksLikeFolderOnlyBatch(List<int> handles) async {
+    var inspected = 0;
+    for (final h in handles) {
+      if (h == 0 || h == 0xFFFFFFFF) continue;
+      final info = await getObjectInfo(h);
+      if (info == null) return false;
+      inspected++;
+      if (!info.isFolder && info.fileName.toUpperCase() != 'DCIM') {
+        return false;
+      }
+    }
+    return inspected > 0;
+  }
+
+  /// 从根句柄递归展开目录树，收集实际媒体文件句柄。
+  ///
+  /// 关键容错：
+  /// 1. 若 `getObjectInfo` 返回 null 且以 `0x1007` 遍历返回 `0x201A (InvalidParentObject)`，
+  ///    说明该句柄本身就是媒体文件而非文件夹，必须回收进 `files` 而不是丢弃；
+  /// 2. 在 DCF 叶目录（depth >= 2，如 `DCIM/100NCZ_30/`）且条目较多时只探测首条句柄，
+  ///    确认为文件后整批直接收录，避免对数百张照片逐一发 `0x1008`/`0x1007` 阻塞相册加载。
+  Future<List<int>> _expandHandleTree(int storageId, List<int> seeds) async {
+    final files = <int>[];
+    final folders = <({int handle, int depth, int batchId, bool maybeFile})>[];
+    final visited = <int>{};
+    final invalidParentByBatch = <int, int>{};
+    var batchSeq = 0;
+
+    void recordFile(int h) {
+      files.add(h);
+      _knownFileHandles.add(h);
+    }
+
+    Future<void> classify(Iterable<int> handles, int depth) async {
+      final fresh = <int>[];
+      for (final h in handles) {
+        if (h == 0 || h == 0xFFFFFFFF) continue;
+        if (visited.add(h)) fresh.add(h);
+      }
+      if (fresh.isEmpty) return;
+
+      // DCF 叶目录快速判定：depth >= 2 (DCIM/100xxxxx 内部) 且文件数 > 4 时，
+      // 仅探测首条句柄，确认为文件后整批直接收录，交由相册流式按需拉取详情。
+      if (depth >= 2 && fresh.length > 4) {
+        final first = fresh.first;
+        final firstInfo = await getObjectInfo(first);
+        if (firstInfo != null &&
+            !firstInfo.isFolder &&
+            firstInfo.fileName.toUpperCase() != 'DCIM') {
+          for (final h in fresh) {
+            recordFile(h);
+          }
+          return;
+        }
+        if (firstInfo == null) {
+          try {
+            final probeData = await _client!.executeDataIn(
+              PtpOpCodes.getObjectHandles,
+              [storageId, 0, first],
+            );
+            // 首条真的是嵌套子目录：递归其子项，并继续正常分类同级剩余句柄。
+            await classify(_parseUint32Array(probeData), depth + 1);
+            await classify(fresh.skip(1), depth);
+            return;
+          } on PtpException catch (e) {
+            if (e.responseCode == PtpOpCodes.responseInvalidParentObject) {
+              for (final h in fresh) {
+                recordFile(h);
+              }
+              _log(
+                  '[media] leaf folder confirmed via 0x201a, collected ${fresh.length} file handle(s)');
+              return;
+            }
+          } catch (_) {}
         }
       }
 
-      // 2. 遍历扫描所有相册目录（重点包含星空延时 101NCZ_3, 102NCZ_3 等子文件夹）
-      while (folderQueue.isNotEmpty) {
-        final currentFolder = folderQueue.removeAt(0);
-        try {
-          final childData = await _client!.executeDataIn(
-            PtpOpCodes.getObjectHandles,
-            [storageId, 0, currentFolder],
-          );
-          final childHandles = _parseUint32Array(childData);
-
-          for (final ch in childHandles) {
-            final cInfo = await getObjectInfo(ch);
-            if (cInfo == null) continue;
-            if (cInfo.isFolder) {
-              // 发现子文件夹（例如 DCIM 下的 100NCZ_3, 101NCZ_3 延时拍摄文件夹）
-              folderQueue.add(ch);
-            } else {
-              allHandles.add(ch);
-            }
-          }
-        } catch (_) {}
+      final batchId = ++batchSeq;
+      for (final h in fresh) {
+        final info = await getObjectInfo(h);
+        if (info == null) {
+          // 信息暂不可读：标记 maybeFile 探测一次，若返回 0x201A 则回收为文件。
+          folders.add((
+            handle: h,
+            depth: depth + 1,
+            batchId: batchId,
+            maybeFile: true,
+          ));
+        } else if (info.isFolder ||
+            info.fileName.toUpperCase() == 'DCIM') {
+          folders.add((
+            handle: h,
+            depth: depth + 1,
+            batchId: batchId,
+            maybeFile: false,
+          ));
+        } else {
+          recordFile(h);
+        }
       }
-    } catch (_) {}
+    }
 
-    return allHandles;
+    final realSeeds = seeds.where((h) => h != 0 && h != 0xFFFFFFFF).toList();
+    if (realSeeds.isEmpty) {
+      var seeded = false;
+      for (final rootParam in const <int>[0xFFFFFFFF, 0]) {
+        try {
+          final rootData = await _client!.executeDataIn(
+            PtpOpCodes.getObjectHandles,
+            [storageId, 0, rootParam],
+          );
+          final rootHandles = _parseUint32Array(rootData);
+          if (rootHandles.isNotEmpty) {
+            await classify(rootHandles, 0);
+            seeded = true;
+            break;
+          }
+        } catch (e) {
+          _log('[media] root enumeration (parent=0x${rootParam.toRadixString(16)}) failed: $e');
+        }
+      }
+      if (!seeded) return files;
+    } else {
+      await classify(realSeeds, 0);
+    }
+
+    var guard = 0;
+    while (folders.isNotEmpty && guard++ < 256) {
+      final node = folders.removeAt(0);
+      try {
+        final data = await _client!.executeDataIn(
+          PtpOpCodes.getObjectHandles,
+          [storageId, 0, node.handle],
+        );
+        await classify(_parseUint32Array(data), node.depth);
+      } on PtpException catch (e) {
+        if (e.responseCode == PtpOpCodes.responseInvalidParentObject &&
+            node.maybeFile) {
+          recordFile(node.handle);
+          final count = (invalidParentByBatch[node.batchId] ?? 0) + 1;
+          invalidParentByBatch[node.batchId] = count;
+          if (count >= 2) {
+            // 同目录连续 2 条未知句柄均返回 0x201A，说明该目录其余待探测句柄都是媒体文件。
+            var rescued = 0;
+            folders.removeWhere((pending) {
+              if (pending.batchId == node.batchId && pending.maybeFile) {
+                recordFile(pending.handle);
+                rescued++;
+                return true;
+              }
+              return false;
+            });
+            _log(
+                '[media] 0x201a confirmed non-folder handles; rescued ${rescued + count} file(s) in batch ${node.batchId}');
+          }
+        } else {
+          _log(
+              '[media] folder 0x${node.handle.toRadixString(16)} enumeration failed: $e');
+        }
+      } catch (e) {
+        _log(
+            '[media] folder 0x${node.handle.toRadixString(16)} enumeration failed: $e');
+      }
+    }
+
+    return files;
+  }
+
+  /// 存储卷 ID 候选：相机报告值、+1、字节序交换及交换后 +1。
+  /// 尼康在不同连接模式 / 固件下会报告与实际不一致的 ID。
+  List<int> _storageCandidates(List<int> baseIds) {
+    final candidates = <int>[];
+    void consider(int id) {
+      final v = id & 0xFFFFFFFF;
+      if (v == 0) return;
+      if (!candidates.contains(v)) candidates.add(v);
+    }
+
+    for (final id in baseIds) {
+      consider(id);
+      consider(id + 1);
+      final swapped = _swapUint32(id);
+      consider(swapped);
+      consider(swapped + 1);
+    }
+    consider(0xFFFFFFFF);
+    return candidates;
+  }
+
+  /// 32 位字节序翻转（尼康部分固件按网络序上报存储卷 ID）。
+  static int _swapUint32(int value) {
+    final v = value & 0xFFFFFFFF;
+    return (((v & 0xFF) << 24) |
+            ((v & 0xFF00) << 8) |
+            ((v >> 8) & 0xFF00) |
+            ((v >> 24) & 0xFF)) &
+        0xFFFFFFFF;
+  }
+
+  bool get _isStaSession => (_lastWifiRouteMode ?? '').startsWith('sta');
+
+  /// STA PC 模式进入尼康 Application Mode，让相机把存储卡挂到当前会话。
+  Future<bool> _enableStaApplicationMode() async {
+    final client = _client;
+    if (client == null || !isConnected) return false;
+    try {
+      await client.executeOperation(PtpOpCodes.nikonChangeAppMode, const <int>[1]);
+      _staAppModeEnabled = true;
+      _inMovieAppMode = true;
+      AppLogManager.instance.add('[media] STA app mode enabled (0x9435=1)');
+      return true;
+    } catch (e) {
+      AppLogManager.instance.add('[media] 0x9435(1) rejected: $e');
+    }
+    try {
+      await writeUintProperty(PtpOpCodes.nikonPropApplicationMode, 1);
+      _staAppModeEnabled = true;
+      _inMovieAppMode = true;
+      AppLogManager.instance.add('[media] STA app mode enabled (0xD1F0=1)');
+      return true;
+    } catch (e) {
+      AppLogManager.instance.add('[media] app mode property rejected: $e');
+      return false;
+    }
+  }
+
+  /// 扫描指定存储卷下的所有文件 (支持 ISO 15740 扁平查询与目录树递归双引擎)
+  Future<List<int>> _scanStorageFiles(int storageId) async {
+    // 引擎 1: 优先按 ISO 15740 尝试扁平查询 (0x0) 与根/兼容查询 (0xFFFFFFFF)
+    final probed = await _probeStorageCandidate(storageId, [storageId]);
+    if (probed != null && probed.isNotEmpty) {
+      return probed;
+    }
+
+    // 引擎 2: 兜底显式展开根目录树
+    return _expandHandleTree(storageId, const <int>[]);
+  }
+
+  void _logObjectInfoFailure(int handle, String detail) {
+    if (_objectInfoFailLogCount >= 6) return;
+    _objectInfoFailLogCount++;
+    _log(
+        '[media] getObjectInfo(0x${handle.toRadixString(16)}) $detail '
+        '(staApp=$_staAppModeEnabled, lv=$_liveViewActive)');
   }
 
   @override
@@ -821,39 +1241,304 @@ class NikonDriver
       return _objectInfoCache[handle];
     }
 
+    // 1. 标准 PTP 0x1008 GetObjectInfo（相机忙 0x2019 时短暂退避重试）
+    if (_supports(PtpOpCodes.getObjectInfo)) {
+      final standard = await _fetchObjectInfoStandard(handle);
+      if (standard != null) {
+        _objectInfoCache[handle] = standard;
+        return standard;
+      }
+    }
+
+    // 2. 回退 MTP 0x9805 GetObjectPropList（部分固件在 PC 控制态下更偏好 MTP 属性表）
+    if (_supports(PtpOpCodes.mtpGetObjectPropList)) {
+      final viaList = await _fetchObjectInfoViaMtpPropList(handle);
+      if (viaList != null) {
+        _objectInfoCache[handle] = viaList;
+        return viaList;
+      }
+    }
+
+    // 3. 回退 MTP 0x9803 GetObjectPropValue 逐项读取核心元数据
+    if (_supports(PtpOpCodes.mtpGetObjectPropValue)) {
+      final viaProps = await _fetchObjectInfoViaMtpPropValue(handle);
+      if (viaProps != null) {
+        _objectInfoCache[handle] = viaProps;
+        return viaProps;
+      }
+    }
+
+    // 4. 终极兜底：已确认为文件句柄且支持 0x9421 NikonGetObjectSize 时合成基础条目，
+    //    确保即使元信息接口被固件拒绝，用户仍可浏览缩略图与下载原图。
+    if (_knownFileHandles.contains(handle) &&
+        _supports(PtpOpCodes.nikonGetObjectSize)) {
+      final viaSize = await _fetchObjectInfoViaNikonSize(handle);
+      if (viaSize != null) {
+        _objectInfoCache[handle] = viaSize;
+        return viaSize;
+      }
+    }
+
+    return null;
+  }
+
+  Future<CameraFileItem?> _fetchObjectInfoStandard(int handle) async {
+    for (var attempt = 0; attempt < 2; attempt++) {
+      try {
+        final data =
+            await _client!.executeDataIn(PtpOpCodes.getObjectInfo, [handle]);
+        if (data.length < 52) {
+          _logObjectInfoFailure(handle, '0x1008 payload too short (${data.length}B)');
+          return null;
+        }
+
+        final bd = ByteData.sublistView(data);
+        final storageId = bd.getUint32(0, Endian.little);
+        final format = bd.getUint16(4, Endian.little);
+        final size = bd.getUint32(8, Endian.little);
+        final pixWidth = bd.getUint32(26, Endian.little);
+        final pixHeight = bd.getUint32(30, Endian.little);
+
+        final reader = PtpByteReader(data.sublist(52));
+        final fileName = reader.readPtpString();
+        final captureDate = reader.readPtpString();
+
+        return CameraFileItem(
+          handle: handle,
+          storageId: storageId,
+          format: format,
+          size: size,
+          fileName: fileName.isEmpty
+              ? 'DSC_${handle.toRadixString(16).toUpperCase()}.JPG'
+              : fileName,
+          captureDate: captureDate,
+          pixelWidth: pixWidth,
+          pixelHeight: pixHeight,
+        );
+      } on PtpException catch (e) {
+        if (e.responseCode == PtpOpCodes.responseDeviceBusy && attempt == 0) {
+          await Future<void>.delayed(const Duration(milliseconds: 120));
+          continue;
+        }
+        _markUnsupported(PtpOpCodes.getObjectInfo, e);
+        _logObjectInfoFailure(handle, '0x1008 rejected: $e');
+        return null;
+      } catch (e) {
+        _logObjectInfoFailure(handle, '0x1008 error: $e');
+        return null;
+      }
+    }
+    return null;
+  }
+
+  Future<CameraFileItem?> _fetchObjectInfoViaMtpPropList(int handle) async {
     try {
-      // 0x1008: GetObjectInfo
-      final data =
-          await _client!.executeDataIn(PtpOpCodes.getObjectInfo, [handle]);
-      if (data.length < 52) return null;
+      // MTP 1.1 GetObjectPropList: [handle, format=0(all), propCode=0xFFFFFFFF(all), group=0, depth=0]
+      final data = await _client!.executeDataIn(
+        PtpOpCodes.mtpGetObjectPropList,
+        [handle, 0, 0xFFFFFFFF, 0, 0],
+      );
+      if (data.length < 4) return null;
 
-      final bd = ByteData.sublistView(data);
-      final storageId = bd.getUint32(0, Endian.little);
-      final format = bd.getUint16(4, Endian.little);
-      final size = bd.getUint32(8, Endian.little);
-      // 标准 PTP ObjectInfo 布局: 偏移 26/30 为 ImagePixWidth / ImagePixHeight
-      // (偏移 52 的文件名解析与规范 SequenceNumber 布局一致, 可交叉验证)
-      // 用于在不下载原图的情况下判断照片是横拍还是竖拍
-      final pixWidth = bd.getUint32(26, Endian.little);
-      final pixHeight = bd.getUint32(30, Endian.little);
+      final reader = PtpByteReader(data);
+      final count = reader.readUint32();
+      if (count <= 0 || count > 2000) return null;
 
-      // 解析偏移 52 处的文件名
-      final reader = PtpByteReader(data.sublist(52));
-      final fileName = reader.readPtpString();
-      final captureDate = reader.readPtpString();
+      int storageId =
+          _detectedStorageIds.isNotEmpty ? _detectedStorageIds.first : 0x00010001;
+      int format = 0;
+      int size = 0;
+      int pixWidth = 0;
+      int pixHeight = 0;
+      String fileName = '';
+      String captureDate = '';
+      var matched = false;
 
-      final item = CameraFileItem(
+      for (var i = 0; i < count && reader.remaining >= 8; i++) {
+        final objHandle = reader.readUint32();
+        final propCode = reader.readUint16();
+        final dataType = reader.readUint16();
+        final isTarget = objHandle == handle;
+
+        int? intVal;
+        String? strVal;
+        if (dataType == 0x0001 || dataType == 0x0002) {
+          if (reader.remaining < 1) break;
+          intVal = reader.readUint8();
+        } else if (dataType == 0x0003 || dataType == 0x0004) {
+          if (reader.remaining < 2) break;
+          intVal = reader.readUint16();
+        } else if (dataType == 0x0005 || dataType == 0x0006) {
+          if (reader.remaining < 4) break;
+          intVal = reader.readUint32();
+        } else if (dataType == 0x0007 || dataType == 0x0008) {
+          if (reader.remaining < 8) break;
+          final low = reader.readUint32();
+          final high = reader.readUint32();
+          intVal = (high << 32) | low;
+        } else if (dataType == 0x0009 || dataType == 0x000A) {
+          if (reader.remaining < 16) break;
+          reader.readBytes(16);
+        } else if (dataType == 0xFFFF) {
+          strVal = reader.readPtpString();
+        } else if (dataType >= 0x4001 && dataType <= 0x400A) {
+          if (reader.remaining < 4) break;
+          final arrLen = reader.readUint32();
+          final elemSize = switch (dataType & 0x00FF) {
+            0x01 || 0x02 => 1,
+            0x03 || 0x04 => 2,
+            0x05 || 0x06 => 4,
+            0x07 || 0x08 => 8,
+            0x09 || 0x0A => 16,
+            _ => 0,
+          };
+          if (elemSize == 0 || arrLen > 100000 || reader.remaining < arrLen * elemSize) {
+            break;
+          }
+          reader.readBytes(arrLen * elemSize);
+        } else {
+          break;
+        }
+
+        if (!isTarget) continue;
+        matched = true;
+        switch (propCode) {
+          case 0xDC01: // StorageID
+            if (intVal != null) storageId = intVal;
+          case 0xDC02: // ObjectFormat
+            if (intVal != null) format = intVal;
+          case 0xDC04: // ObjectSize (UINT64)
+            if (intVal != null) size = intVal;
+          case 0xDC07: // ObjectFileName
+            if (strVal != null && strVal.isNotEmpty) fileName = strVal;
+          case 0xDC08: // DateCreated
+            if (strVal != null && strVal.isNotEmpty) captureDate = strVal;
+          case 0xDC09: // DateModified
+            if (captureDate.isEmpty && strVal != null && strVal.isNotEmpty) {
+              captureDate = strVal;
+            }
+          case 0xDC87: // Width
+            if (intVal != null) pixWidth = intVal;
+          case 0xDC88: // Height
+            if (intVal != null) pixHeight = intVal;
+        }
+      }
+
+      if (!matched || (format == 0 && fileName.isEmpty && size == 0)) {
+        return null;
+      }
+      return CameraFileItem(
         handle: handle,
         storageId: storageId,
-        format: format,
+        format: format == 0 ? 0x3801 : format,
         size: size,
-        fileName: fileName.isEmpty ? 'DSC_$handle.JPG' : fileName,
+        fileName: fileName.isEmpty
+            ? 'DSC_${handle.toRadixString(16).toUpperCase()}.JPG'
+            : fileName,
         captureDate: captureDate,
         pixelWidth: pixWidth,
         pixelHeight: pixHeight,
       );
-      _objectInfoCache[handle] = item;
-      return item;
+    } on PtpException catch (e) {
+      _markUnsupported(PtpOpCodes.mtpGetObjectPropList, e);
+      _logObjectInfoFailure(handle, '0x9805 rejected: $e');
+      return null;
+    } catch (e) {
+      _logObjectInfoFailure(handle, '0x9805 error: $e');
+      return null;
+    }
+  }
+
+  Future<CameraFileItem?> _fetchObjectInfoViaMtpPropValue(int handle) async {
+    Future<Uint8List?> readProp(int propCode) async {
+      try {
+        return await _client!.executeDataIn(
+          PtpOpCodes.mtpGetObjectPropValue,
+          [handle, propCode],
+        );
+      } on PtpException catch (e) {
+        _markUnsupported(PtpOpCodes.mtpGetObjectPropValue, e);
+        return null;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    final formatData = await readProp(0xDC02);
+    if (!_supports(PtpOpCodes.mtpGetObjectPropValue)) return null;
+    final nameData = await readProp(0xDC07);
+    final sizeData = await readProp(0xDC04);
+    if (formatData == null && nameData == null && sizeData == null) {
+      return null;
+    }
+
+    final format = (formatData != null && formatData.length >= 2)
+        ? ByteData.sublistView(formatData).getUint16(0, Endian.little)
+        : 0x3801;
+    final fileName = (nameData != null && nameData.isNotEmpty)
+        ? PtpByteReader(nameData).readPtpString()
+        : '';
+    var size = 0;
+    if (sizeData != null && sizeData.length >= 8) {
+      final bd = ByteData.sublistView(sizeData);
+      final low = bd.getUint32(0, Endian.little);
+      final high = bd.getUint32(4, Endian.little);
+      size = (high << 32) | low;
+    } else if (sizeData != null && sizeData.length >= 4) {
+      size = ByteData.sublistView(sizeData).getUint32(0, Endian.little);
+    }
+
+    String captureDate = '';
+    final dateData = await readProp(0xDC08) ?? await readProp(0xDC09);
+    if (dateData != null && dateData.isNotEmpty) {
+      captureDate = PtpByteReader(dateData).readPtpString();
+    }
+
+    final storageData = await readProp(0xDC01);
+    final storageId = (storageData != null && storageData.length >= 4)
+        ? ByteData.sublistView(storageData).getUint32(0, Endian.little)
+        : (_detectedStorageIds.isNotEmpty
+            ? _detectedStorageIds.first
+            : 0x00010001);
+
+    return CameraFileItem(
+      handle: handle,
+      storageId: storageId,
+      format: format,
+      size: size,
+      fileName: fileName.isEmpty
+          ? 'DSC_${handle.toRadixString(16).toUpperCase()}.JPG'
+          : fileName,
+      captureDate: captureDate,
+    );
+  }
+
+  Future<CameraFileItem?> _fetchObjectInfoViaNikonSize(int handle) async {
+    try {
+      final data = await _client!.executeDataIn(
+        PtpOpCodes.nikonGetObjectSize,
+        [handle],
+      );
+      if (data.length < 4) return null;
+      final bd = ByteData.sublistView(data);
+      final size = data.length >= 8
+          ? ((bd.getUint32(4, Endian.little) << 32) |
+              bd.getUint32(0, Endian.little))
+          : bd.getUint32(0, Endian.little);
+      if (size <= 0) return null;
+      final storageId =
+          _detectedStorageIds.isNotEmpty ? _detectedStorageIds.first : 0x00010001;
+      return CameraFileItem(
+        handle: handle,
+        storageId: storageId,
+        format: 0x3801,
+        size: size,
+        fileName: 'DSC_${handle.toRadixString(16).toUpperCase()}.JPG',
+        captureDate: '',
+      );
+    } on PtpException catch (e) {
+      _markUnsupported(PtpOpCodes.nikonGetObjectSize, e);
+      return null;
     } catch (_) {
       return null;
     }
@@ -1105,7 +1790,7 @@ class NikonDriver
   /// 底层传输报告被动掉线：更新状态并交给上层重连控制器。
   /// 用户主动 `disconnect()` 不会走到这里。
   void _notifyUnexpectedDisconnect() {
-    if (_userDisconnect) return;
+    if (_userDisconnect || _recoverySuppressed) return;
     if (_state == CameraConnectionState.disconnected) return;
     _state = CameraConnectionState.error;
     if (!_stateController.isClosed) {
@@ -1139,8 +1824,29 @@ class NikonDriver
       if (_deviceInfo.model.isNotEmpty && _deviceInfo.model != 'Nikon Camera') {
         _cameraModel = _deviceInfo.model;
       }
+      _isRestrictedPairingSession =
+          isRestrictedStaPairingProfile(_deviceInfo.operationsSupported);
+      _log(
+          '【相机识别成功】型号: $_cameraModel, 固件: ${_deviceInfo.deviceVersion}, 序列号: ${_deviceInfo.serialNumber}, 受限配对态: $_isRestrictedPairingSession');
+      final ops = _deviceInfo.operationsSupported;
+      if (ops.isNotEmpty) {
+        _log(
+            '[media] ops(${ops.length}): '
+            '1007=${ops.contains(PtpOpCodes.getObjectHandles)} '
+            '1008=${ops.contains(PtpOpCodes.getObjectInfo)} '
+            '100A=${ops.contains(PtpOpCodes.getThumb)} '
+            '101B=${ops.contains(PtpOpCodes.getPartialObject)} '
+            '9805=${ops.contains(PtpOpCodes.mtpGetObjectPropList)} '
+            '9803=${ops.contains(PtpOpCodes.mtpGetObjectPropValue)} '
+            '9421=${ops.contains(PtpOpCodes.nikonGetObjectSize)} '
+            '9435=${ops.contains(PtpOpCodes.nikonChangeAppMode)}');
+      }
+    }
+
+    if (_isRestrictedPairingSession) {
       _logCallback?.call(
-          '【相机识别成功】型号: $_cameraModel, 固件: ${_deviceInfo.deviceVersion}, 序列号: ${_deviceInfo.serialNumber}');
+          '【STA 待配对】相机当前仅公布受限配对操作集 (0x952B/0x935A)，跳过存储卡与扩展属性查询，等待配对确认');
+      return;
     }
 
     // 备用机型探测: 若型号未能从 DeviceInfo 中解析出，尝试从厂商扩展属性 0xD1A2 读取
@@ -1164,6 +1870,69 @@ class NikonDriver
       _logCallback?.call(
           '【卡槽检索完成】识别到 ${_detectedStorageIds.length} 个存储卷，单卡槽机型判定: $isSingleSlotCamera');
     } catch (_) {}
+  }
+
+  /// 读取 STA 首次配对的 4 位验证码 (`0x952B`)。
+  ///
+  /// 部分机身刚进入配对向导时首次查询可能返回 `0x2019 DeviceBusy` 或空挑战，
+  /// 此处最多轮询 [maxAttempts] 次，每次间隔 [pollInterval]。
+  Future<NikonPairingChallenge> requestStaPairingChallenge({
+    int maxAttempts = 10,
+    Duration pollInterval = const Duration(milliseconds: 250),
+  }) async {
+    final client = _client;
+    if (client == null || !isConnected) {
+      throw StateError('相机未连接，无法获取配对码');
+    }
+
+    Object? lastError;
+    NikonPairingChallenge? lastChallenge;
+    final attempts = maxAttempts.clamp(1, 20);
+    for (var i = 1; i <= attempts; i++) {
+      try {
+        final data = await client.executeDataIn(PtpOpCodes.nikonGetPairingInfo);
+        final challenge = NikonPairingChallenge.parse(
+          data,
+          cameraName: _cameraModel,
+        );
+        lastChallenge = challenge;
+        if (challenge.hasPin || (data.isNotEmpty && i == attempts)) {
+          _logCallback?.call(
+              '【STA 配对】第 $i 次读取 0x952B 成功，PIN=${challenge.pin ?? "未知(${challenge.rawHex})"}');
+          return challenge;
+        }
+      } on PtpException catch (e) {
+        lastError = e;
+        if (e.responseCode != PtpOpCodes.responseDeviceBusy &&
+            i >= attempts) {
+          rethrow;
+        }
+      } catch (e) {
+        lastError = e;
+        if (i >= attempts) rethrow;
+      }
+      if (i < attempts && pollInterval > Duration.zero) {
+        await Future<void>.delayed(pollInterval);
+      }
+    }
+
+    if (lastChallenge != null) return lastChallenge;
+    throw StateError('无法从相机获取配对验证码: ${lastError ?? "响应为空"}');
+  }
+
+  /// 提交 STA 首次配对确认 (`0x935A`, 参数 `0x2001`)。
+  ///
+  /// 成功后相机屏幕上会提示配对完成并保存该客户端 GUID 到当前配置文件。
+  Future<void> confirmStaPairing() async {
+    final client = _client;
+    if (client == null || !isConnected) {
+      throw StateError('相机未连接，无法提交配对确认');
+    }
+    await client.executeOperation(
+      PtpOpCodes.nikonConfirmPairing,
+      [PtpOpCodes.responseOk],
+    );
+    _logCallback?.call('【STA 配对】已提交配对确认 (0x935A → 0x2001)');
   }
 
   Future<void> _queryBatteryLevel() async {
@@ -1227,9 +1996,12 @@ class NikonDriver
   }
 
   @override
-  bool get supportsLiveView =>
-      _supports(PtpOpCodes.nikonStartLiveView) &&
-      _supports(PtpOpCodes.nikonGetLiveViewImage);
+  bool get supportsLiveView {
+    if (_isRestrictedPairingSession) return false;
+    return _supports(PtpOpCodes.nikonStartLiveView) &&
+        (_supports(PtpOpCodes.nikonGetLiveViewImage) ||
+            _supports(PtpOpCodes.nikonGetLiveViewImageEx));
+  }
 
   @override
   bool get supportsRemoteCapture =>
@@ -1303,7 +2075,24 @@ class NikonDriver
     if (client == null || !isConnected) {
       throw StateError('相机未连接');
     }
-    return client.executeDataIn(PtpOpCodes.nikonGetLiveViewImage);
+    final preferEx = !_supports(PtpOpCodes.nikonGetLiveViewImage) &&
+        _supports(PtpOpCodes.nikonGetLiveViewImageEx);
+    if (preferEx) {
+      return client.executeDataIn(PtpOpCodes.nikonGetLiveViewImageEx);
+    }
+    try {
+      return await client.executeDataIn(PtpOpCodes.nikonGetLiveViewImage);
+    } on PtpException catch (e) {
+      final canFallbackEx = (e.responseCode ==
+                  PtpOpCodes.responseOperationNotSupported ||
+              e.responseCode == PtpOpCodes.responseNotLiveView) &&
+          _supports(PtpOpCodes.nikonGetLiveViewImageEx);
+      if (!canFallbackEx) rethrow;
+      _unsupportedOps.add(PtpOpCodes.nikonGetLiveViewImage);
+      _logCallback?.call(
+          '【取景降级】0x9203 返回 0x${e.responseCode.toRadixString(16)}，自动切换至 0x9428 GetLiveViewImageEx');
+      return client.executeDataIn(PtpOpCodes.nikonGetLiveViewImageEx);
+    }
   }
 
   @override

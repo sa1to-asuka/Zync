@@ -98,6 +98,12 @@ const List<OpenSourceCredit> openSourceProjectCredits = [
     license: 'Apache-2.0',
   ),
   OpenSourceCredit(
+    name: 'zf-capture-one-helper',
+    description: '尼康 Z 系列 _ptp._tcp Bonjour 广播字段与 STA 无线配对握手序列参考',
+    url: 'https://github.com/open-nikonz/zf-capture-one-helper',
+    license: 'Apache-2.0',
+  ),
+  OpenSourceCredit(
     name: 'digiCamControl',
     description: 'Z 30 模式编码、包围曝光序列与原值还原、A-B 点焦点堆叠参考',
     url: 'https://github.com/dukus/digiCamControl',

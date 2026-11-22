@@ -20,6 +20,56 @@ class PtpException implements Exception {
       'PtpException(opCode: 0x${opCode.toRadixString(16)}, code: 0x${responseCode.toRadixString(16)}, msg: $message)';
 }
 
+/// PTP/IP 握手阶段被相机明确拒绝 (Init_Fail Type=5) 的原因分类 (CIPA DC-005 §2.3.5)。
+enum PtpInitFailReason {
+  /// 1: 相机拒绝发起方身份（客户端 GUID 与当前相机配置文件保存的配对身份不匹配）。
+  rejectedInitiator(1),
+
+  /// 2: 相机正被另一个 PTP/IP 客户端占用，或单会话槽位尚未释放。
+  busy(2),
+
+  /// 3: 相机报告未指明的握手错误。
+  unspecified(3),
+
+  /// 其他未知错误码。
+  unknown(-1);
+
+  const PtpInitFailReason(this.code);
+  final int code;
+
+  static PtpInitFailReason fromCode(int code) {
+    for (final reason in PtpInitFailReason.values) {
+      if (reason.code == code) return reason;
+    }
+    return PtpInitFailReason.unknown;
+  }
+}
+
+/// PTP/IP Init_Command / Init_Event 握手被相机拒绝异常。
+class PtpInitFailException extends PtpException {
+  final PtpInitFailReason reason;
+  final String channel;
+
+  PtpInitFailException({
+    required int failCode,
+    required this.channel,
+    String? message,
+  })  : reason = PtpInitFailReason.fromCode(failCode),
+        super(
+          0,
+          failCode,
+          message ??
+              switch (PtpInitFailReason.fromCode(failCode)) {
+                PtpInitFailReason.rejectedInitiator =>
+                  '相机拒绝此配对身份 (Init_Fail 0x1)：当前 GUID 与相机配置文件不匹配',
+                PtpInitFailReason.busy =>
+                  '相机正忙或已被另一台设备连接占用 (Init_Fail 0x2)',
+                _ =>
+                  '相机拒绝 PTP/IP $channel握手 (Init_Fail 0x${failCode.toRadixString(16)})',
+              },
+        );
+}
+
 /// 纯 Dart PTP/IP 双通道 Socket 客户端。
 ///
 /// 封包布局与握手流程遵循 PTP/IP 传输层规范；命令通道负责操作请求与响应，
@@ -32,6 +82,13 @@ class PtpIpClient implements PtpTransport {
   final String clientName;
   final int connectRetryCount;
   final Duration connectRetryDelay;
+
+  /// TCP 三次握手完成后、发送首个 PTP/IP 包前的稳定等待时间。
+  /// 实测 Z 50II 等部分机身在 SYN-ACK 后立即收到 Init_Command_Request 会直接断链。
+  final Duration postConnectSettle;
+
+  /// 事件通道握手失败时是否允许降级继续（保留命令通道用于选片下载与拍摄控制）。
+  final bool allowEventChannelFallback;
 
   /// 非用户主动断开（对端关闭 / 网络错误）时回调一次，供重连状态机接入。
   /// 主动 `disconnect()` 不触发。
@@ -50,6 +107,7 @@ class PtpIpClient implements PtpTransport {
   String _cameraName = '';
   String _cameraGuid = '';
   bool _isConnected = false;
+  bool _eventsAvailable = false;
   bool _disconnecting = false;
   Timer? _heartbeatTimer;
 
@@ -73,10 +131,13 @@ class PtpIpClient implements PtpTransport {
     this.clientName = 'Zync',
     this.connectRetryCount = 3,
     this.connectRetryDelay = const Duration(milliseconds: 600),
+    this.postConnectSettle = const Duration(milliseconds: 300),
+    this.allowEventChannelFallback = true,
   });
 
   @override
   bool get isConnected => _isConnected;
+  bool get eventsAvailable => _eventsAvailable;
   int get transactionId => _transactionId;
   @override
   Stream<PtpPacket> get events => _eventController.stream;
@@ -120,6 +181,7 @@ class PtpIpClient implements PtpTransport {
     if (_isConnected) return;
     _disconnecting = false;
     _unexpectedDisconnectHandled = false;
+    _eventsAvailable = false;
 
     try {
       _log('【握手1/7】连接命令通道 TCP $host:$port ...');
@@ -135,6 +197,9 @@ class PtpIpClient implements PtpTransport {
           if (!_disconnecting) _handleUnexpectedDisconnect('命令通道');
         },
       );
+      if (postConnectSettle > Duration.zero) {
+        await Future<void>.delayed(postConnectSettle);
+      }
 
       _log('【握手2/7】发送 InitCommandRequest ...');
       final initCmdPacket = PtpPacket.buildInitCommandRequest(
@@ -153,8 +218,7 @@ class PtpIpClient implements PtpTransport {
 
       if (ack.type == PtpOpCodes.ptpIpInitFail) {
         final code = ack.payload.length >= 4 ? ack.getUint32(0) : 0;
-        throw PtpException(
-            0, code, '相机拒绝 PTP/IP 连接 (Init_Fail 0x${code.toRadixString(16)})');
+        throw PtpInitFailException(failCode: code, channel: '命令通道');
       }
       if (ack.type != PtpOpCodes.ptpIpInitCommandAck) {
         throw FormatException('命令通道握手响应类型异常: ${ack.type}');
@@ -167,39 +231,61 @@ class PtpIpClient implements PtpTransport {
       _log(
           '【握手3/7】会话编号 0x${_connectionNumber.toRadixString(16)}，相机=${_cameraName.isEmpty ? '未命名' : _cameraName}');
 
-      _log('【握手4/7】连接事件通道 TCP $host:$port ...');
-      _eventSocket = await _connectSocket('事件通道', timeout);
-      _eventSocket!.listen(
-        _onEventData,
-        onError: (err) {
-          _log('事件通道异常断开: $err');
-          if (!_disconnecting) _handleUnexpectedDisconnect('事件通道');
-        },
-        onDone: () {
-          _log('事件通道连接关闭');
-          if (!_disconnecting) _handleUnexpectedDisconnect('事件通道');
-        },
-      );
+      try {
+        _log('【握手4/7】连接事件通道 TCP $host:$port ...');
+        _eventSocket = await _connectSocket('事件通道', timeout);
+        _eventSocket!.listen(
+          _onEventData,
+          onError: (err) {
+            _log('事件通道异常断开: $err');
+            if (!_disconnecting && _eventsAvailable) {
+              _handleUnexpectedDisconnect('事件通道');
+            }
+          },
+          onDone: () {
+            _log('事件通道连接关闭');
+            if (!_disconnecting && _eventsAvailable) {
+              _handleUnexpectedDisconnect('事件通道');
+            }
+          },
+        );
+        if (postConnectSettle > Duration.zero) {
+          await Future<void>.delayed(postConnectSettle);
+        }
 
-      _log('【握手5/7】发送 InitEventRequest ...');
-      final eventCompleter = Completer<PtpPacket>();
-      _pendingEventAckCompleter = eventCompleter;
-      _eventSocket!
-          .add(PtpPacket.buildInitEventRequest(_connectionNumber).toBytes());
+        _log('【握手5/7】发送 InitEventRequest ...');
+        final eventCompleter = Completer<PtpPacket>();
+        _pendingEventAckCompleter = eventCompleter;
+        _eventSocket!
+            .add(PtpPacket.buildInitEventRequest(_connectionNumber).toBytes());
 
-      _log('【握手6/7】等待 InitEventAck ...');
-      final eventAck = await eventCompleter.future.timeout(
-        timeout,
-        onTimeout: () => throw TimeoutException('等待 InitEventAck 超时'),
-      );
-      _pendingEventAckCompleter = null;
-      if (eventAck.type == PtpOpCodes.ptpIpInitFail) {
-        final code = eventAck.payload.length >= 4 ? eventAck.getUint32(0) : 0;
-        throw PtpException(
-            0, code, '相机拒绝事件通道绑定 (Init_Fail 0x${code.toRadixString(16)})');
-      }
-      if (eventAck.type != PtpOpCodes.ptpIpInitEventAck) {
-        throw FormatException('事件通道握手响应类型异常: ${eventAck.type}');
+        _log('【握手6/7】等待 InitEventAck ...');
+        final eventAck = await eventCompleter.future.timeout(
+          timeout,
+          onTimeout: () => throw TimeoutException('等待 InitEventAck 超时'),
+        );
+        _pendingEventAckCompleter = null;
+        if (eventAck.type == PtpOpCodes.ptpIpInitFail) {
+          final code =
+              eventAck.payload.length >= 4 ? eventAck.getUint32(0) : 0;
+          throw PtpInitFailException(failCode: code, channel: '事件通道');
+        }
+        if (eventAck.type != PtpOpCodes.ptpIpInitEventAck) {
+          throw FormatException('事件通道握手响应类型异常: ${eventAck.type}');
+        }
+        _eventsAvailable = true;
+      } catch (e) {
+        _pendingEventAckCompleter = null;
+        try {
+          await _eventSocket?.close();
+        } catch (_) {}
+        _eventSocket = null;
+        _eventReceiveBuffer.clear();
+        if (!allowEventChannelFallback) {
+          rethrow;
+        }
+        _eventsAvailable = false;
+        _log('事件通道未就绪 ($e)，已降级为纯命令通道模式继续');
       }
 
       _log('【握手7/7】开启 PTP 会话 ...');
@@ -209,6 +295,7 @@ class PtpIpClient implements PtpTransport {
       _log('PTP/IP 会话已就绪');
     } catch (_) {
       _isConnected = false;
+      _eventsAvailable = false;
       _heartbeatTimer?.cancel();
       _heartbeatTimer = null;
       await _closeSockets();

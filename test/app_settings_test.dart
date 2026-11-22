@@ -159,4 +159,63 @@ void main() {
       expect(AppSettings.instance.recentExportFolders.first, 'Zync/f11');
     });
   });
+
+  group('局域网连接记忆', () {
+    setUp(() => AppSettings.instance.resetForTest());
+
+    test('默认值', () {
+      expect(AppSettings.instance.staLanHost, isEmpty);
+      expect(AppSettings.instance.staLanPort, 15740);
+      expect(AppSettings.instance.lastLinkMethod, 'hotspot');
+    });
+
+    test('保存相机 IP、端口与连接方式', () {
+      AppSettings.instance.setStaLanHost(' 192.168.43.23 ');
+      AppSettings.instance.setStaLanPort(15741);
+      AppSettings.instance.setLastLinkMethod('lan');
+
+      expect(AppSettings.instance.staLanHost, '192.168.43.23');
+      expect(AppSettings.instance.staLanPort, 15741);
+      expect(AppSettings.instance.lastLinkMethod, 'lan');
+    });
+
+    test('局域网端口拒绝非法值', () {
+      AppSettings.instance.setStaLanPort(0);
+      expect(AppSettings.instance.staLanPort, 15740);
+      AppSettings.instance.setStaLanPort(70000);
+      expect(AppSettings.instance.staLanPort, 15740);
+    });
+
+    test('路由器与手机热点 STA 子模式独立记忆各自 IP', () {
+      expect(AppSettings.instance.staSubMode, 'router');
+      AppSettings.instance.setStaHostForSubMode('router', '192.168.1.88');
+      AppSettings.instance.setStaSubMode('hotspot');
+      AppSettings.instance.setStaHostForSubMode('hotspot', '192.168.43.23');
+
+      expect(AppSettings.instance.staHostForSubMode('router'), '192.168.1.88');
+      expect(
+          AppSettings.instance.staHostForSubMode('hotspot'), '192.168.43.23');
+      expect(AppSettings.instance.staSubMode, 'hotspot');
+    });
+
+    test('PTP/IP 客户端 GUID 校验导入与重置', () {
+      expect(AppSettings.instance.setPtpClientGuid('not-valid'), isFalse);
+      expect(AppSettings.instance.setPtpClientGuid('00112233'), isFalse);
+
+      expect(
+        AppSettings.instance.setPtpClientGuid(
+            '00112233-4455-6677-8899-AABBCCDDEEFF'),
+        isTrue,
+      );
+      expect(
+        AppSettings.instance.ptpClientGuidHex,
+        equals('00112233445566778899aabbccddeeff'),
+      );
+      expect(AppSettings.instance.ptpClientGuidBytes.first, equals(0x00));
+      expect(AppSettings.instance.ptpClientGuidBytes.last, equals(0xFF));
+
+      final next = AppSettings.instance.regeneratePtpClientGuid();
+      expect(next.length, equals(32));
+    });
+  });
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'ptp_ip_client.dart';
 
 /// 断线恢复阶段。
 enum RecoveryPhase {
@@ -183,6 +184,13 @@ class ConnectionRecoveryController extends ChangeNotifier {
         _setPhase(RecoveryPhase.reconnecting);
         try {
           await _reconnect().timeout(attemptTimeout);
+        } on PtpInitFailException catch (e) {
+          // 相机明确拒绝配对身份 (InitFail 1) 或被其他设备占用 (InitFail 2)：
+          // 继续重试只会消耗电量并顶死相机会话槽位，立即停止自动重连交由用户处理。
+          _lastError = e.message;
+          if (token != _generation) return;
+          _setPhase(RecoveryPhase.exhausted);
+          return;
         } catch (e) {
           _lastError = '$e';
           if (token != _generation) return;

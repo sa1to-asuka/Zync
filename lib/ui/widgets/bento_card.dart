@@ -15,6 +15,9 @@ class ZBentoCard extends StatelessWidget {
   /// 不可用状态：降低不透明度，但仍然可点（点了给提示比完全点不动更好）。
   final bool dimmed;
 
+  /// 副标题默认允许两行，避免英文长句被截断。
+  final int subtitleMaxLines;
+
   const ZBentoCard({
     super.key,
     required this.title,
@@ -25,6 +28,7 @@ class ZBentoCard extends StatelessWidget {
     this.badgeText,
     required this.onTap,
     this.dimmed = false,
+    this.subtitleMaxLines = 2,
   });
 
   @override
@@ -86,7 +90,7 @@ class ZBentoCard extends StatelessWidget {
                 Text(
                   subtitle,
                   style: zt.caption.copyWith(color: zc.textSecondary),
-                  maxLines: 1,
+                  maxLines: subtitleMaxLines,
                   overflow: TextOverflow.ellipsis,
                 ),
                 if (progress != null) ...[

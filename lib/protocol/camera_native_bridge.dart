@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/services.dart';
+import 'ptp_host_scan.dart';
 
 /// 蓝牙设备元数据模型
 class BleDeviceInfo {
@@ -52,6 +53,119 @@ class WifiNetworkInfo {
   }
 }
 
+/// 局域网里通过 Bonjour (`_ptp._tcp`) 或端口扫描发现的 PTP/IP 相机。
+class DiscoveredPtpCamera {
+  final String name;
+  final String host;
+  final int port;
+
+  /// 相机广播 `apps=PAIR`：正等待首次配对。
+  final bool pairing;
+
+  /// TXT 记录中的相机型号（例如 `Nikon Z f` / `NIKON Z 30`）。
+  final String model;
+
+  /// TXT 记录中的相机 GUID。
+  final String guid;
+
+  /// 发现来源：`'bonjour'` 或 `'scan'`。
+  final String source;
+
+  const DiscoveredPtpCamera({
+    required this.name,
+    required this.host,
+    required this.port,
+    this.pairing = false,
+    this.model = '',
+    this.guid = '',
+    this.source = 'bonjour',
+  });
+
+  String get displayName {
+    final m = model.trim();
+    final n = name.trim();
+    if (m.isNotEmpty && n.isNotEmpty && !n.toLowerCase().contains(m.toLowerCase())) {
+      return '$m ($n)';
+    }
+    if (m.isNotEmpty) return m;
+    if (n.isNotEmpty) return n;
+    return host;
+  }
+
+  DiscoveredPtpCamera copyWith({
+    String? name,
+    String? host,
+    int? port,
+    bool? pairing,
+    String? model,
+    String? guid,
+    String? source,
+  }) {
+    return DiscoveredPtpCamera(
+      name: name ?? this.name,
+      host: host ?? this.host,
+      port: port ?? this.port,
+      pairing: pairing ?? this.pairing,
+      model: model ?? this.model,
+      guid: guid ?? this.guid,
+      source: source ?? this.source,
+    );
+  }
+
+  factory DiscoveredPtpCamera.fromMap(Map<dynamic, dynamic> map) {
+    return DiscoveredPtpCamera(
+      name: map['name'] as String? ?? '',
+      host: map['host'] as String? ?? '',
+      port: (map['port'] as num?)?.toInt() ?? 15740,
+      pairing: map['pairing'] as bool? ?? false,
+      model: map['model'] as String? ?? '',
+      guid: map['guid'] as String? ?? '',
+      source: map['source'] as String? ?? 'bonjour',
+    );
+  }
+}
+
+/// 原生多子网 PTP/IP 扫描与网络环境快照。
+class LanScanResult {
+  final List<String> hosts;
+  final List<String> scannedSubnets;
+  final bool wifiConnected;
+  final String wifiSsid;
+  final String wifiGateway;
+  final bool hasHotspotInterface;
+  final int respondingPeerCount;
+
+  const LanScanResult({
+    this.hosts = const <String>[],
+    this.scannedSubnets = const <String>[],
+    this.wifiConnected = false,
+    this.wifiSsid = '',
+    this.wifiGateway = '',
+    this.hasHotspotInterface = false,
+    this.respondingPeerCount = 0,
+  });
+
+  factory LanScanResult.fromMap(Map<dynamic, dynamic> map) {
+    List<String> toStringList(dynamic raw) {
+      if (raw is List) {
+        return raw.map((e) => '$e'.trim()).where((s) => s.isNotEmpty).toList();
+      }
+      return const <String>[];
+    }
+
+    return LanScanResult(
+      hosts: toStringList(map['hosts']),
+      scannedSubnets: toStringList(map['scannedSubnets']),
+      wifiConnected: map['wifiConnected'] as bool? ?? false,
+      wifiSsid: map['wifiSsid'] as String? ?? '',
+      wifiGateway: map['wifiGateway'] as String? ?? '',
+      hasHotspotInterface: map['hasHotspotInterface'] as bool? ?? false,
+      respondingPeerCount:
+          (map['respondingPeerCount'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
 /// Zync 原生相机与系统能力桥接
 /// 包含：Wi-Fi 进程强绑定、网关嗅探、系统设置跳转、蓝牙 BLE 扫描与快门遥控
 class CameraNativeBridge {
@@ -62,12 +176,20 @@ class CameraNativeBridge {
   // Wi-Fi 进程绑定与网络探测
   // ========================================================
 
-  /// 绑定当前进程到相机 Wi-Fi 热点网卡（解决 Android 10+ 自动跳蜂窝数据问题）
-  static Future<WifiNetworkInfo> bindCameraWifi({String? targetHost}) async {
+  /// 绑定当前进程到相机 Wi-Fi 网卡（解决 Android 10+ 自动跳蜂窝数据问题）。
+  ///
+  /// [mode] 可传 `'hotspot'`（相机热点 AP）、`'sta_router'`（同一路由器 STA）、
+  /// `'sta_hotspot'`（手机个人热点 STA）。手机个人热点模式下系统不会误绑到无关的
+  /// `TRANSPORT_WIFI` 客户端网络，而是走本地热点路由。
+  static Future<WifiNetworkInfo> bindCameraWifi({
+    String? targetHost,
+    String? mode,
+  }) async {
     try {
       final res =
           await _channel.invokeMethod<Map<dynamic, dynamic>>('bindCameraWifi', {
         if (targetHost != null) 'targetHost': targetHost,
+        if (mode != null) 'mode': mode,
       });
       if (res != null) {
         return WifiNetworkInfo.fromMap(res);
@@ -112,6 +234,93 @@ class CameraNativeBridge {
     try {
       await _channel.invokeMethod('openWifiSettings');
     } catch (_) {}
+  }
+
+  /// 手机当前可用的局域网 IPv4（优先 Wi-Fi / 热点接口）。
+  ///
+  /// 手机自己开热点时 [getWifiInfo] 可能拿不到 AP 侧地址，这里直接问系统网卡，
+  /// 用于「自动查找」推导 /24 网段。
+  static Future<String> getLocalIpv4() async {
+    try {
+      final value = await _channel.invokeMethod<String>('getLocalIpv4');
+      return value ?? '';
+    } catch (_) {}
+    return '';
+  }
+
+  /// 扫描局域网里的 PTP/IP 相机（Bonjour `_ptp._tcp`）。
+  ///
+  /// 只读广播，不改相机状态。扫描失败返回空列表，调用方仍可手动输入 IP。
+  static Future<List<DiscoveredPtpCamera>> discoverPtpCameras({
+    int timeoutMs = 4000,
+  }) async {
+    try {
+      final list = await _channel.invokeMethod<List<dynamic>>(
+        'discoverPtpCameras',
+        {'timeoutMs': timeoutMs},
+      );
+      if (list != null) {
+        return list
+            .map((e) =>
+                DiscoveredPtpCamera.fromMap(e as Map<dynamic, dynamic>))
+            .where((c) => c.host.isNotEmpty)
+            .toList();
+      }
+    } catch (_) {}
+    return <DiscoveredPtpCamera>[];
+  }
+
+  /// 原生多子网并发扫描开放 15740 端口的相机主机，并返回网络环境快照用于未命中诊断。
+  ///
+  /// 在测试环境或未实现该原生方法时，自动回退到 `getLocalIpv4()` + Dart `scanPtpSubnets()`。
+  static Future<LanScanResult> scanLanPtpHosts({
+    int port = 15740,
+    int timeoutMs = 420,
+    List<String> preferredHosts = const <String>[],
+    String staSubMode = 'router',
+  }) async {
+    try {
+      final map = await _channel.invokeMethod<Map<dynamic, dynamic>>(
+        'scanLanPtpHosts',
+        <String, dynamic>{
+          'port': port,
+          'timeoutMs': timeoutMs,
+          'preferredHosts': preferredHosts,
+          'staSubMode': staSubMode,
+        },
+      );
+      if (map != null) {
+        return LanScanResult.fromMap(map);
+      }
+    } catch (_) {}
+
+    // 回退路径：供单元测试或非 Android 平台使用
+    final localIp = await getLocalIpv4();
+    final wifi = await getWifiInfo();
+    final localIps = <String>[
+      if (localIp.isNotEmpty) localIp,
+      if (wifi.connected && wifi.ip.isNotEmpty) wifi.ip,
+    ];
+    final hosts = await scanPtpSubnets(
+      localIps,
+      preferredHosts: preferredHosts,
+      port: port,
+      timeout: Duration(milliseconds: timeoutMs),
+    );
+    final subnets = <String>{
+      for (final ip in localIps)
+        if (ip.split('.').length == 4)
+          '${ip.split('.')[0]}.${ip.split('.')[1]}.${ip.split('.')[2]}.0/24',
+    }.toList();
+    return LanScanResult(
+      hosts: hosts,
+      scannedSubnets: subnets,
+      wifiConnected: wifi.connected,
+      wifiSsid: wifi.ssid,
+      wifiGateway: wifi.gateway,
+      hasHotspotInterface: localIp.isNotEmpty,
+      respondingPeerCount: hosts.length,
+    );
   }
 
   // ========================================================

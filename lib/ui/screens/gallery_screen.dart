@@ -9,6 +9,7 @@ import 'package:video_player/video_player.dart';
 
 import '../../core/constants/network_config.dart';
 import '../../core/settings/app_settings.dart';
+import '../../core/utils/app_log_manager.dart';
 import '../../core/utils/exif_helper.dart';
 import '../../core/utils/lru_image_cache.dart';
 import '../../core/utils/raw_preview_extractor.dart';
@@ -122,6 +123,16 @@ class GalleryScreenState extends State<GalleryScreen> {
   /// 相机会话代数：断线时自增，防止在途请求把旧 handle 的数据写回缓存。
   int _cacheEpoch = 0;
 
+  /// 列表加载代数：新一轮加载或断线会作废上一轮仍在跑的分页请求。
+  int _loadToken = 0;
+
+  /// 当前是否已有一次完整的列表加载（含后台流式补全）在跑。
+  bool _loadInProgress = false;
+  int _loadEpoch = -1;
+
+  /// 最近一次成功加载所属的相机会话代数，用于会话切换后强制刷新。
+  int _lastLoadedEpoch = -1;
+
   /// 列表滚动控制器
   final ScrollController _scrollController = ScrollController();
 
@@ -150,15 +161,32 @@ class GalleryScreenState extends State<GalleryScreen> {
 
     _connSub = widget.driver.connectionStateStream.listen((state) {
       if (!mounted) return;
+      AppLogManager.instance.add('[gallery] state=$state');
       if (state == CameraConnectionState.connected) {
         setState(() => _activeTab = 0);
         _loadCameraFiles();
       } else if (state == CameraConnectionState.disconnected) {
         _cacheEpoch++;
+        _loadToken++;
+        _loadInProgress = false;
+        _lastLoadedEpoch = -1;
+        _isLoading = false;
         _thumbCache.clear();
         _fullCache.clear();
         _thumbFutures.clear();
-        setState(() => _activeTab = 1);
+        setState(() {
+          _groups = [];
+          _selectedBaseNames.clear();
+          _activeTab = 1;
+        });
+      } else if (state == CameraConnectionState.error) {
+        // 非预期掉线不一定走 disconnected（例如底层 socket 先报错）。
+        // 这里必须同样作废在途加载，否则自动重连成功后会因“已有加载在跑”被跳过。
+        _cacheEpoch++;
+        _loadToken++;
+        _loadInProgress = false;
+        _lastLoadedEpoch = -1;
+        _isLoading = false;
       }
     });
 
@@ -195,9 +223,13 @@ class GalleryScreenState extends State<GalleryScreen> {
     if (mounted) _loadCameraFiles();
   }
 
-  /// 标签页切换时空状态自动补漏刷新
+  /// 标签页切换到相机相册时补漏刷新。
+  ///
+  /// 切换过连接（热点 ↔ STA、配对重连）后旧列表属于上一段会话，
+  /// 即使 `_groups` 不为空也必须重新读卡。
   void reloadFilesIfEmpty() {
-    if (_groups.isEmpty && widget.driver.isConnected && !_isLoading) {
+    if (!widget.driver.isConnected) return;
+    if (_groups.isEmpty || _lastLoadedEpoch != _cacheEpoch) {
       _loadCameraFiles();
     }
   }
@@ -373,9 +405,13 @@ class GalleryScreenState extends State<GalleryScreen> {
   }
 
   /// 后台低速预取缩略图：先磁盘后相机，让滚动到哪都秒显。
+  ///
+  /// 只预取最近的一段；整卡几千张全部预取会让相机持续读卡（存储卡指示灯长亮闪烁）
+  /// 并拖慢进入相册的速度，更靠前的照片滚动到可见区域时再按需拉取。
   Future<void> _prefetchThumbnails(List<CameraFileItem> items) async {
+    const maxPrefetch = 96;
     await _cancelableDelay(const Duration(milliseconds: 300));
-    for (final item in items) {
+    for (final item in items.take(maxPrefetch)) {
       if (!mounted || !widget.driver.isConnected) return;
       while (_backgroundPrefetchHold && mounted && widget.driver.isConnected) {
         await _cancelableDelay(const Duration(milliseconds: 150));
@@ -464,11 +500,51 @@ class GalleryScreenState extends State<GalleryScreen> {
 
   /// 超快渐进式文件列表加载算法
   Future<void> _loadCameraFiles() async {
-    if (_isLoading || !widget.driver.isConnected) return;
-    setState(() => _isLoading = true);
+    if (!widget.driver.isConnected) {
+      AppLogManager.instance.add('[gallery] load skipped: not connected');
+      return;
+    }
 
+    // connected 事件在 GetDeviceInfo 之前就已发出；STA 首次配对期间相机只开放
+    // 配对操作，此时读卡会占用连接并把加载状态卡住，拖垮配对后的正常刷新。
+    final driver = widget.driver;
+    if (driver is NikonDriver) {
+      await driver.sessionInfoReady.timeout(
+        const Duration(seconds: 20),
+        onTimeout: () {},
+      );
+      if (!mounted || !driver.isConnected) {
+        AppLogManager.instance.add('[gallery] load aborted: disconnected');
+        return;
+      }
+      // 只有明确知道是受限配对会话时才跳过；设备信息迟迟未就绪时宁可尝试读卡，
+      // 也不能把相册永久卡在空白状态。
+      if (driver.isRestrictedPairingSession) {
+        AppLogManager.instance.add('[gallery] load skipped: restricted pairing');
+        return;
+      }
+    }
+
+    // 同一会话内重复的触发（initState / 连接事件 / 工作台回调）只跑一次，
+    // 否则会对整张卡做多轮 GetObjectInfo，相机的存储卡灯会一直闪。
+    if (_loadInProgress && _loadEpoch == _cacheEpoch) {
+      AppLogManager.instance.add('[gallery] load skipped: already running');
+      return;
+    }
+
+    final token = ++_loadToken;
+    _loadInProgress = true;
+    _loadEpoch = _cacheEpoch;
+    if (mounted) setState(() => _isLoading = true);
+    AppLogManager.instance.add(
+        '[gallery] load start epoch=$_cacheEpoch '
+        'storage=${_selectedStorageId ?? 'all'}');
+
+    var streaming = false;
     try {
-      final handles = await widget.driver.listObjectHandles(_selectedStorageId);
+      final handles = await driver.listObjectHandles(_selectedStorageId);
+      if (!mounted || token != _loadToken) return;
+      AppLogManager.instance.add('[gallery] handles=${handles.length}');
       final reversedHandles = handles.reversed.toList();
 
       if (reversedHandles.isEmpty) {
@@ -482,6 +558,7 @@ class GalleryScreenState extends State<GalleryScreen> {
       }
 
       final cachedItems = await _readCameraListCache(_selectedStorageId);
+      if (!mounted || token != _loadToken) return;
       final cachedByHandle = {for (final i in cachedItems) i.handle: i};
       final knownItems = <CameraFileItem>[];
       final missingHandles = <int>[];
@@ -499,6 +576,7 @@ class GalleryScreenState extends State<GalleryScreen> {
         firstItems.addAll(knownItems);
       } else {
         for (final h in missingHandles.take(12)) {
+          if (!mounted || token != _loadToken) return;
           try {
             final info = await widget.driver.getObjectInfo(h);
             if (info != null && !info.isFolder) {
@@ -509,6 +587,9 @@ class GalleryScreenState extends State<GalleryScreen> {
       }
 
       _updateMediaGroups(firstItems);
+      if (_groups.isNotEmpty) _lastLoadedEpoch = _cacheEpoch;
+      AppLogManager.instance.add(
+          '[gallery] groups=${_groups.length} (first=${firstItems.length})');
 
       if (mounted) {
         setState(() {
@@ -521,7 +602,8 @@ class GalleryScreenState extends State<GalleryScreen> {
           ? missingHandles
           : missingHandles.skip(12).toList();
       if (remaining.isNotEmpty) {
-        _streamLoadRemaining(remaining, firstItems);
+        streaming = true;
+        _streamLoadRemaining(remaining, firstItems, token);
       } else {
         if (firstItems.isNotEmpty) {
           await _writeCameraListCache(_selectedStorageId, firstItems);
@@ -529,7 +611,7 @@ class GalleryScreenState extends State<GalleryScreen> {
         }
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && token == _loadToken) {
         showZToast(
           context,
           context.l10n.galleryLoadFailedToast('$e'),
@@ -537,7 +619,12 @@ class GalleryScreenState extends State<GalleryScreen> {
         );
       }
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted && token == _loadToken) {
+        setState(() => _isLoading = false);
+      }
+      if (!streaming && token == _loadToken) {
+        _loadInProgress = false;
+      }
     }
   }
 
@@ -545,31 +632,40 @@ class GalleryScreenState extends State<GalleryScreen> {
   void _streamLoadRemaining(
     List<int> handles,
     List<CameraFileItem> accumulator,
+    int token,
   ) async {
-    const chunkSize = 12;
-    for (var i = 0; i < handles.length; i += chunkSize) {
-      if (!mounted || !widget.driver.isConnected) break;
-      final chunk = handles.skip(i).take(chunkSize).toList();
-      var hasNew = false;
-      for (final h in chunk) {
-        try {
-          final info = await widget.driver.getObjectInfo(h);
-          if (info != null && !info.isFolder) {
-            accumulator.add(info);
-            hasNew = true;
-          }
-        } catch (_) {}
+    try {
+      const chunkSize = 12;
+      for (var i = 0; i < handles.length; i += chunkSize) {
+        if (!mounted || token != _loadToken || !widget.driver.isConnected) {
+          break;
+        }
+        final chunk = handles.skip(i).take(chunkSize).toList();
+        var hasNew = false;
+        for (final h in chunk) {
+          if (!mounted || token != _loadToken) return;
+          try {
+            final info = await widget.driver.getObjectInfo(h);
+            if (info != null && !info.isFolder) {
+              accumulator.add(info);
+              hasNew = true;
+            }
+          } catch (_) {}
+        }
+        if (hasNew && mounted) {
+          _updateMediaGroups(accumulator);
+          if (_groups.isNotEmpty) _lastLoadedEpoch = _cacheEpoch;
+          setState(() {});
+        }
+        await Future.delayed(const Duration(milliseconds: 30));
       }
-      if (hasNew && mounted) {
-        _updateMediaGroups(accumulator);
-        setState(() {});
-      }
-      await Future.delayed(const Duration(milliseconds: 30));
-    }
 
-    if (mounted) {
-      await _writeCameraListCache(_selectedStorageId, accumulator);
-      unawaited(_prefetchThumbnails(accumulator));
+      if (mounted) {
+        await _writeCameraListCache(_selectedStorageId, accumulator);
+        unawaited(_prefetchThumbnails(accumulator));
+      }
+    } finally {
+      if (token == _loadToken) _loadInProgress = false;
     }
   }
 

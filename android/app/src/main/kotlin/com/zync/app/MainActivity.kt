@@ -9,6 +9,8 @@ import android.net.LinkProperties
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
+import android.net.nsd.NsdManager
+import android.net.nsd.NsdServiceInfo
 import android.net.wifi.WifiManager
 import android.media.MediaScannerConnection
 import android.media.MediaMetadataRetriever
@@ -47,7 +49,16 @@ import android.location.Location
 import android.location.LocationManager
 import android.net.Uri
 import android.provider.MediaStore
+import java.net.Inet4Address
+import java.net.InetSocketAddress
+import java.net.NetworkInterface
+import java.net.Socket
+import java.util.ArrayDeque
+import java.util.Collections
 import java.util.UUID
+import java.util.concurrent.Callable
+import java.util.concurrent.atomic.AtomicInteger
+import javax.net.SocketFactory
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
@@ -156,7 +167,8 @@ class MainActivity: FlutterActivity() {
                 // Wi-Fi 强绑定与网络状态
                 "bindCameraWifi" -> {
                     val targetHost = call.argument<String>("targetHost")
-                    val res = bindProcessToCameraWifi(targetHost)
+                    val mode = call.argument<String>("mode")
+                    val res = bindProcessToCameraWifi(targetHost, mode)
                     result.success(res)
                 }
                 "unbindWifi" -> {
@@ -165,6 +177,22 @@ class MainActivity: FlutterActivity() {
                 }
                 "getWifiInfo" -> {
                     result.success(getWifiDetails())
+                }
+                "discoverPtpCameras" -> {
+                    discoverPtpCameras(call.argument<Int>("timeoutMs") ?: 4000, result)
+                }
+                "scanLanPtpHosts" -> {
+                    val port = call.argument<Int>("port") ?: 15740
+                    val timeoutMs = call.argument<Int>("timeoutMs") ?: 420
+                    val preferred = call.argument<List<*>>("preferredHosts")
+                        ?.mapNotNull { it?.toString()?.trim() }
+                        ?.filter { it.isNotEmpty() }
+                        ?: emptyList()
+                    val staSubMode = call.argument<String>("staSubMode") ?: "router"
+                    scanLanPtpHosts(port, timeoutMs, preferred, staSubMode, result)
+                }
+                "getLocalIpv4" -> {
+                    result.success(localIpv4Address())
                 }
                 "openWifiSettings" -> {
                     try {
@@ -1038,22 +1066,44 @@ class MainActivity: FlutterActivity() {
     }
 
     /**
-     * 将当前 App 进程网络强行绑定到相机 Wi-Fi 接口
-     * 针对 targetHost 智能匹配路由网段
+     * 将当前 App 进程网络强行绑定到相机 Wi-Fi 接口，或为手机个人热点释放错误绑定。
+     *
+     * - 相机热点 (`mode == "hotspot"`) 或同一路由器 STA (`mode == "sta_router"`)：
+     *   优先寻找包含 [targetHost] 子网的 `TRANSPORT_WIFI` 网络并绑定；
+     * - 手机个人热点 STA (`mode == "sta_hotspot"`) 或 [targetHost] 落在手机自身热点网口 (`ap*`/`swlan*`)：
+     *   热点接口不在 `ConnectivityManager.allNetworks` 的 `TRANSPORT_WIFI` 客户端列表里，
+     *   必须 `bindProcessToNetwork(null)` 走系统本地直连路由，绝不能误绑到另一个客户端 Wi-Fi。
      */
-    private fun bindProcessToCameraWifi(targetHost: String?): Map<String, Any> {
+    private fun bindProcessToCameraWifi(targetHost: String?, mode: String? = null): Map<String, Any> {
         val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        requestCameraWifiNetwork()
-        val wifiNetwork = findWifiNetwork(cm, targetHost)
+        val isHotspotTarget = mode == "sta_hotspot" ||
+            (!targetHost.isNullOrBlank() && isHostOnLocalHotspotInterface(targetHost) && findWifiNetwork(cm, targetHost, strictMatch = true) == null)
+
         var bound = false
-        if (wifiNetwork != null) {
-            bound = cm.bindProcessToNetwork(wifiNetwork)
-            if (bound) boundCameraNetwork = wifiNetwork
-        } else {
+        var selectedNetwork: Network? = null
+        if (isHotspotTarget) {
             cm.bindProcessToNetwork(null)
             boundCameraNetwork = null
+        } else {
+            requestCameraWifiNetwork()
+            val strict = mode == "sta_router" && !targetHost.isNullOrBlank()
+            val wifiNetwork = findWifiNetwork(cm, targetHost, strictMatch = strict)
+            if (wifiNetwork != null) {
+                bound = cm.bindProcessToNetwork(wifiNetwork)
+                if (bound) {
+                    boundCameraNetwork = wifiNetwork
+                    selectedNetwork = wifiNetwork
+                }
+            } else {
+                cm.bindProcessToNetwork(null)
+                boundCameraNetwork = null
+            }
         }
-        Log.d(TAG, "[network-bind] bindProcessToNetwork=$bound target=$targetHost network=$wifiNetwork")
+        Log.d(
+            TAG,
+            "[network-bind] mode=${mode ?: "auto"} hotspotTarget=$isHotspotTarget " +
+                "bindProcessToNetwork=$bound target=$targetHost network=$selectedNetwork"
+        )
         acquireLocks()
         val res = getWifiDetails().toMutableMap()
         res["bound"] = bound
@@ -1184,8 +1234,377 @@ class MainActivity: FlutterActivity() {
         )
     }
 
+    /**
+     * 手机当前可用的局域网 IPv4，优先 Wi-Fi / 热点接口。
+     *
+     * 手机自己开热点时 WifiManager 往往拿不到 AP 侧地址，这里直接枚举网卡，
+     * 供「自动查找」推导 /24 网段做端口扫描。
+     */
+    private fun localIpv4Address(): String {
+        try {
+            val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
+                .sortedByDescending { nif ->
+                    val name = nif.name.lowercase()
+                    when {
+                        name.startsWith("wlan") -> 4
+                        name.startsWith("ap") || name.startsWith("swlan") -> 3
+                        name.startsWith("rndis") -> 2
+                        name.startsWith("eth") -> 1
+                        else -> 0
+                    }
+                }
+            for (nif in interfaces) {
+                if (!nif.isUp || nif.isLoopback) continue
+                for (address in Collections.list(nif.inetAddresses)) {
+                    if (address !is Inet4Address || address.isLoopbackAddress) continue
+                    val ip = address.hostAddress ?: continue
+                    if (ip.startsWith("192.168.") ||
+                        ip.startsWith("10.") ||
+                        ip.startsWith("172.")
+                    ) {
+                        return ip
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "localIpv4Address error: $e")
+        }
+        return ""
+    }
 
-    private fun findWifiNetwork(cm: ConnectivityManager, targetHost: String?): Network? {
+    /**
+     * 扫描局域网里的 PTP/IP 相机。
+     *
+     * 尼康 Z 在「连接至电脑」模式下通过 Bonjour 广播 `_ptp._tcp.local`，
+     * TXT 里的 apps=PAIR 表示正等待配对。
+     *
+     * 注意 Android NsdManager 的两个已知限制：
+     * 1. `resolveService` 不能并发调用，否则后续请求会直接失败 (`FAILURE_ALREADY_ACTIVE = 3`)，必须入队串行解析；
+     * 2. NSD 回调运行在内部 Binder 线程，MethodChannel `result.success` 必须切回主线程。
+     */
+    @Suppress("DEPRECATION")
+    private fun discoverPtpCameras(timeoutMs: Int, result: MethodChannel.Result) {
+        val nsd = applicationContext.getSystemService(Context.NSD_SERVICE) as? NsdManager
+        if (nsd == null) {
+            result.success(emptyList<Map<String, Any>>())
+            return
+        }
+
+        val found = mutableListOf<Map<String, Any>>()
+        val seen = mutableSetOf<String>()
+        val resolveQueue = ArrayDeque<NsdServiceInfo>()
+        val lock = Any()
+        var resolving = false
+        var finished = false
+        val handler = Handler(Looper.getMainLooper())
+        var listener: NsdManager.DiscoveryListener? = null
+
+        fun finish() {
+            handler.post {
+                val snapshot: List<Map<String, Any>>
+                synchronized(lock) {
+                    if (finished) return@post
+                    finished = true
+                    resolveQueue.clear()
+                    snapshot = found.toList()
+                }
+                handler.removeCallbacksAndMessages(null)
+                listener?.let { runCatching { nsd.stopServiceDiscovery(it) } }
+                result.success(snapshot)
+            }
+        }
+
+        fun resolveNext() {
+            val nextService: NsdServiceInfo = synchronized(lock) {
+                if (finished || resolving || resolveQueue.isEmpty()) return
+                resolving = true
+                resolveQueue.removeFirst()
+            }
+            try {
+                nsd.resolveService(nextService, object : NsdManager.ResolveListener {
+                    override fun onResolveFailed(info: NsdServiceInfo, errorCode: Int) {
+                        Log.w(TAG, "resolve ${info.serviceName} failed: $errorCode")
+                        synchronized(lock) { resolving = false }
+                        resolveNext()
+                    }
+
+                    override fun onServiceResolved(info: NsdServiceInfo) {
+                        try {
+                            val host = info.host?.hostAddress
+                            if (!host.isNullOrBlank() && !host.contains(':')) {
+                                val port = if (info.port > 0) info.port else 15740
+                                val key = "$host:$port"
+                                val attrs = info.attributes ?: emptyMap()
+                                val apps = runCatching {
+                                    attrs["apps"]?.toString(Charsets.UTF_8)?.trim()
+                                }.getOrNull().orEmpty()
+                                val model = runCatching {
+                                    attrs["model"]?.toString(Charsets.UTF_8)?.trim()
+                                }.getOrNull().orEmpty()
+                                val guid = runCatching {
+                                    attrs["guid"]?.toString(Charsets.UTF_8)?.trim()
+                                }.getOrNull().orEmpty()
+                                synchronized(lock) {
+                                    if (!finished && seen.add(key)) {
+                                        found.add(
+                                            mapOf(
+                                                "name" to (info.serviceName ?: ""),
+                                                "host" to host,
+                                                "port" to port,
+                                                "pairing" to (apps.equals("PAIR", ignoreCase = true)),
+                                                "model" to model,
+                                                "guid" to guid,
+                                                "source" to "bonjour"
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                        } finally {
+                            synchronized(lock) { resolving = false }
+                            resolveNext()
+                        }
+                    }
+                })
+            } catch (e: Exception) {
+                Log.w(TAG, "resolveService exception: $e")
+                synchronized(lock) { resolving = false }
+                resolveNext()
+            }
+        }
+
+        listener = object : NsdManager.DiscoveryListener {
+            override fun onDiscoveryStarted(serviceType: String) {}
+
+            override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) {
+                Log.w(TAG, "_ptp._tcp discovery failed: $errorCode")
+                finish()
+            }
+
+            override fun onStopDiscoveryFailed(serviceType: String, errorCode: Int) {
+                Log.w(TAG, "_ptp._tcp stop failed: $errorCode")
+            }
+
+            override fun onDiscoveryStopped(serviceType: String) {}
+
+            override fun onServiceLost(serviceInfo: NsdServiceInfo) {}
+
+            override fun onServiceFound(serviceInfo: NsdServiceInfo) {
+                synchronized(lock) {
+                    if (finished) return
+                    resolveQueue.addLast(serviceInfo)
+                }
+                resolveNext()
+            }
+        }
+
+        try {
+            nsd.discoverServices("_ptp._tcp.", NsdManager.PROTOCOL_DNS_SD, listener)
+            handler.postDelayed({ finish() }, timeoutMs.coerceIn(1000, 15000).toLong())
+        } catch (e: Exception) {
+            Log.w(TAG, "discoverServices error: $e")
+            finish()
+        }
+    }
+
+    /**
+     * 原生多子网 PTP/IP (15740) 并发扫描：
+     * - 属于 `TRANSPORT_WIFI` 的子网使用对应 `Network.socketFactory`，防止蜂窝数据抢走无外网 Wi-Fi 路由；
+     * - 属于手机热点 (`ap*`/`swlan*`) 的子网使用本地默认 Socket；
+     * - 优先探测 [preferredHosts]，并统计同网段有 TCP 响应（含 RST 拒绝）的对端数量供 AP 隔离诊断。
+     */
+    @Suppress("DEPRECATION")
+    private fun scanLanPtpHosts(
+        port: Int,
+        timeoutMs: Int,
+        preferredHosts: List<String>,
+        staSubMode: String,
+        result: MethodChannel.Result,
+    ) {
+        Thread({
+            val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+            val wifiDetails = getWifiDetails()
+            val wifiConnected = wifiDetails["connected"] as? Boolean ?: false
+            val wifiSsid = wifiDetails["ssid"] as? String ?: ""
+            val wifiGateway = wifiDetails["gateway"] as? String ?: ""
+
+            // prefix ("192.168.1.") -> SocketFactory? (null 表示走系统本地路由，用于手机个人热点)
+            val subnetFactories = LinkedHashMap<String, SocketFactory?>()
+            val ownIps = LinkedHashSet<String>()
+            var hasHotspotInterface = false
+
+            // 1. 收集所有 TRANSPORT_WIFI 网络的子网与对应 SocketFactory
+            if (cm != null) {
+                runCatching {
+                    for (network in cm.allNetworks) {
+                        val caps = cm.getNetworkCapabilities(network) ?: continue
+                        if (!caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) continue
+                        val lp = cm.getLinkProperties(network) ?: continue
+                        val factory = runCatching { network.socketFactory }.getOrNull()
+                        for (la in lp.linkAddresses) {
+                            val addr = la.address as? Inet4Address ?: continue
+                            if (addr.isLoopbackAddress || addr.isLinkLocalAddress) continue
+                            val ip = addr.hostAddress ?: continue
+                            if (!isPrivateIpv4String(ip)) continue
+                            ownIps.add(ip)
+                            val prefix = ip.substringBeforeLast('.') + "."
+                            subnetFactories.putIfAbsent(prefix, factory)
+                        }
+                    }
+                }
+            }
+
+            // 2. 收集所有活跃网卡（特别是手机开启个人热点时的 ap0 / swlan0 / wlan1）
+            runCatching {
+                val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
+                for (nif in interfaces) {
+                    if (!nif.isUp || nif.isLoopback) continue
+                    val name = nif.name.lowercase()
+                    val isHotspotNif = name.startsWith("ap") || name.startsWith("swlan") ||
+                        (name.startsWith("wlan") && (!wifiConnected || name != "wlan0"))
+                    for (addr in Collections.list(nif.inetAddresses)) {
+                        if (addr !is Inet4Address || addr.isLoopbackAddress || addr.isLinkLocalAddress) continue
+                        val ip = addr.hostAddress ?: continue
+                        if (!isPrivateIpv4String(ip)) continue
+                        ownIps.add(ip)
+                        val prefix = ip.substringBeforeLast('.') + "."
+                        if (isHotspotNif || !subnetFactories.containsKey(prefix)) {
+                            if (name.startsWith("ap") || name.startsWith("swlan")) {
+                                hasHotspotInterface = true
+                            }
+                            subnetFactories.putIfAbsent(prefix, null)
+                        }
+                    }
+                }
+            }
+            if (!hasHotspotInterface && ownIps.size > (if (wifiConnected) 1 else 0)) {
+                hasHotspotInterface = true
+            }
+
+            // 3. 若用户指定了历史 IP 但其网段不在上述列表，也加入候选
+            for (pref in preferredHosts) {
+                if (isPrivateIpv4String(pref) && pref.count { it == '.' } == 3) {
+                    val prefix = pref.substringBeforeLast('.') + "."
+                    if (!subnetFactories.containsKey(prefix)) {
+                        val matchedNet = if (staSubMode == "hotspot" || cm == null) null
+                            else findWifiNetwork(cm, pref, strictMatch = false)
+                        subnetFactories[prefix] = matchedNet?.let { runCatching { it.socketFactory }.getOrNull() }
+                    }
+                }
+            }
+
+            // 构建探测目标列表：历史 IP 优先，随后按子网扫描 1..254
+            val orderedTargets = ArrayList<Pair<String, SocketFactory?>>()
+            val addedHosts = HashSet<String>()
+
+            for (pref in preferredHosts) {
+                val h = pref.trim()
+                if (!isPrivateIpv4String(h) || ownIps.contains(h)) continue
+                val prefix = h.substringBeforeLast('.') + "."
+                val factory = subnetFactories[prefix]
+                if (addedHosts.add(h)) {
+                    orderedTargets.add(h to factory)
+                }
+            }
+
+            for ((prefix, factory) in subnetFactories) {
+                for (i in 1..254) {
+                    val h = "$prefix$i"
+                    if (ownIps.contains(h)) continue
+                    if (addedHosts.add(h)) {
+                        orderedTargets.add(h to factory)
+                    }
+                }
+            }
+
+            val foundHosts = Collections.synchronizedList(ArrayList<String>())
+            val respondingPeers = AtomicInteger(0)
+
+            if (orderedTargets.isNotEmpty()) {
+                val poolSize = minOf(48, orderedTargets.size)
+                val pool = Executors.newFixedThreadPool(poolSize)
+                try {
+                    val tasks = orderedTargets.map { (host, factory) ->
+                        Callable {
+                            val socket = runCatching { factory?.createSocket() ?: Socket() }.getOrNull()
+                                ?: return@Callable
+                            try {
+                                socket.tcpNoDelay = true
+                                socket.connect(InetSocketAddress(host, port), timeoutMs.coerceIn(150, 3000))
+                                foundHosts.add(host)
+                                respondingPeers.incrementAndGet()
+                            } catch (e: java.net.ConnectException) {
+                                // 收到 TCP RST (Connection refused) 说明该 IP 在局域网内真实在线且非 AP 隔离
+                                respondingPeers.incrementAndGet()
+                            } catch (_: Exception) {
+                            } finally {
+                                runCatching { socket.close() }
+                            }
+                        }
+                    }
+                    pool.invokeAll(tasks)
+                } catch (_: Exception) {
+                } finally {
+                    pool.shutdownNow()
+                }
+            }
+
+            val sortedHosts = foundHosts.distinct().sortedBy { ipv4ToLong(it) ?: 0L }
+            val scannedSubnets = subnetFactories.keys.map { "${it}0/24" }
+
+            runOnUiThread {
+                result.success(
+                    mapOf(
+                        "hosts" to sortedHosts,
+                        "scannedSubnets" to scannedSubnets,
+                        "wifiConnected" to wifiConnected,
+                        "wifiSsid" to wifiSsid,
+                        "wifiGateway" to wifiGateway,
+                        "hasHotspotInterface" to hasHotspotInterface,
+                        "respondingPeerCount" to respondingPeers.get(),
+                    )
+                )
+            }
+        }, "zync-lan-scan").start()
+    }
+
+    private fun isPrivateIpv4String(ip: String): Boolean {
+        val parts = ip.trim().split('.')
+        if (parts.size != 4) return false
+        val nums = parts.map { it.toIntOrNull() ?: return false }
+        if (nums.any { it !in 0..255 }) return false
+        return nums[0] == 10 ||
+            (nums[0] == 192 && nums[1] == 168) ||
+            (nums[0] == 172 && nums[1] in 16..31)
+    }
+
+    private fun isHostOnLocalHotspotInterface(targetHost: String): Boolean {
+        val targetLong = ipv4ToLong(targetHost) ?: return false
+        return try {
+            val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
+            for (nif in interfaces) {
+                if (!nif.isUp || nif.isLoopback) continue
+                val name = nif.name.lowercase()
+                if (!name.startsWith("ap") && !name.startsWith("swlan") && !name.startsWith("rndis")) continue
+                for (ia in nif.interfaceAddresses) {
+                    val addr = ia.address as? Inet4Address ?: continue
+                    val localLong = ipv4ToLong(addr.hostAddress ?: continue) ?: continue
+                    val prefix = ia.networkPrefixLength.toInt().coerceIn(0, 32)
+                    val mask = if (prefix == 0) 0L else (0xFFFFFFFFL shl (32 - prefix)) and 0xFFFFFFFFL
+                    if ((targetLong and mask) == (localLong and mask)) return true
+                }
+            }
+            false
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun findWifiNetwork(
+        cm: ConnectivityManager,
+        targetHost: String?,
+        strictMatch: Boolean = false,
+    ): Network? {
         for (network in cm.allNetworks) {
             val caps = cm.getNetworkCapabilities(network) ?: continue
             if (!caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) continue
@@ -1193,7 +1612,11 @@ class MainActivity: FlutterActivity() {
             if (targetHost.isNullOrBlank()) return network
             if (linkProperties != null && networkContainsHost(linkProperties, targetHost)) return network
         }
-        if (targetHost.isNullOrBlank()) {
+        if (!strictMatch) {
+            for (network in cm.allNetworks) {
+                val caps = cm.getNetworkCapabilities(network) ?: continue
+                if (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) return network
+            }
             val active = cm.activeNetwork
             val caps = active?.let { cm.getNetworkCapabilities(it) }
             if (caps?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true) return active

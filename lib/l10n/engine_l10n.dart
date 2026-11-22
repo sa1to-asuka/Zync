@@ -689,6 +689,10 @@ abstract final class EngineL10n {
       en: 'Reconnect state machine: per-attempt timeout, recovery budget, backoff and storm debouncing reference',
       ja: '再接続ステートマシン（試行タイムアウト、復旧予算、バックオフ、再接続ストーム抑制）のリファレンス',
     ),
+    '尼康 Z 系列 _ptp._tcp Bonjour 广播字段与 STA 无线配对握手序列参考': (
+      en: 'Nikon Z _ptp._tcp Bonjour TXT fields and STA wireless pairing handshake sequence reference',
+      ja: 'Nikon Z _ptp._tcp Bonjour TXT フィールドと STA ワイヤレスペアリング手順のリファレンス',
+    ),
     'Z 30 模式编码、包围曝光序列与原值还原、A-B 点焦点堆叠参考': (
       en: 'Z 30 mode encoding, bracketing sequence with value restoration, and A-B focus stacking reference',
       ja: 'Z 30 のモード値、ブラケット撮影と元値復元、A-B フォーカススタッキングのリファレンス',
@@ -1876,5 +1880,759 @@ abstract final class EngineL10n {
         'ja' => 'USB 診断を見る',
         'en' => 'Open USB diagnostics',
         _ => '查看 USB 诊断',
+      };
+
+  // ==================== 2.7.0 连接方式页 ====================
+
+  static String linkGoConnect(String langCode) => switch (langCode) {
+        'ja' => '接続へ',
+        'en' => 'Go to Connect',
+        _ => '前往连接',
+      };
+
+  static String hubQuickActions(String langCode) => switch (langCode) {
+        'ja' => 'クイック操作',
+        'en' => 'Quick actions',
+        _ => '快捷功能',
+      };
+
+  static String linkPageTitle(String langCode) => switch (langCode) {
+        'ja' => 'カメラに接続',
+        'en' => 'Connect Camera',
+        _ => '连接相机',
+      };
+
+  static String linkPageSubtitle(String langCode) => switch (langCode) {
+        'ja' => '3つの方法から1つ選んでカメラをつなぎます',
+        'en' => 'Pick one of three ways to bring your camera online',
+        _ => '三种方式，任选一种把相机接上',
+      };
+
+  static String linkModeHotspot(String langCode) => switch (langCode) {
+        'ja' => 'カメラWi-Fi',
+        'en' => 'Camera Wi-Fi',
+        _ => '相机热点',
+      };
+
+  static String linkModeLan(String langCode) => switch (langCode) {
+        'ja' => 'LAN',
+        'en' => 'LAN',
+        _ => '局域网',
+      };
+
+  static String linkModeUsb(String langCode) => switch (langCode) {
+        'ja' => 'USB',
+        'en' => 'USB',
+        _ => 'USB',
+      };
+
+  static String linkRecommended(String langCode) => switch (langCode) {
+        'ja' => 'おすすめ',
+        'en' => 'Recommended',
+        _ => '推荐',
+      };
+
+  static String linkConnectedBadge(String langCode) => switch (langCode) {
+        'ja' => '接続済み',
+        'en' => 'Connected',
+        _ => '已连接',
+      };
+
+  static String linkDisconnect(String langCode) => switch (langCode) {
+        'ja' => '切断',
+        'en' => 'Disconnect',
+        _ => '断开连接',
+      };
+
+  // ---- 相机热点面板 ----
+
+  static String linkHotspotCurrentWifi(String langCode) => switch (langCode) {
+        'ja' => '現在のWi-Fi',
+        'en' => 'Current Wi-Fi',
+        _ => '当前 Wi-Fi',
+      };
+
+  static String linkHotspotDetected(String langCode) => switch (langCode) {
+        'ja' => 'カメラのアクセスポイントとして認識',
+        'en' => 'Looks like the camera hotspot',
+        _ => '识别为相机热点',
+      };
+
+  static String linkHotspotNotCamera(String langCode) => switch (langCode) {
+        'ja' => 'カメラのアクセスポイントではない可能性があります',
+        'en' => 'This network does not look like a camera hotspot',
+        _ => '当前网络不像相机热点',
+      };
+
+  static String linkHotspotConnect(String langCode) => switch (langCode) {
+        'ja' => 'カメラWi-Fiに接続',
+        'en' => 'Connect to Camera Wi-Fi',
+        _ => '连接相机热点',
+      };
+
+  static String linkHotspotOpenSettings(String langCode) => switch (langCode) {
+        'ja' => '端末のWi-Fi設定を開く',
+        'en' => 'Open system Wi-Fi settings',
+        _ => '打开系统 Wi-Fi 设置',
+      };
+
+  static String linkHotspotWarnTitle(String langCode) => switch (langCode) {
+        'ja' => 'カメラのWi-Fiではありませんか？',
+        'en' => 'Not a camera hotspot?',
+        _ => '可能不是相机热点',
+      };
+
+  static String linkHotspotWarnBody(String ssid, String langCode) =>
+      switch (langCode) {
+        'ja' => '「$ssid」に接続しています。接続できない可能性があります。続行しますか？',
+        'en' =>
+          'You are connected to "$ssid". The connection may fail. Continue anyway?',
+        _ => '当前连接的是「$ssid」，可能无法连上相机。仍要尝试吗？',
+      };
+
+  static String linkContinueAttempt(String langCode) => switch (langCode) {
+        'ja' => '続行',
+        'en' => 'Try anyway',
+        _ => '仍要尝试',
+      };
+
+  static String linkConnecting(String langCode) => switch (langCode) {
+        'ja' => '接続中…',
+        'en' => 'Connecting…',
+        _ => '正在连接…',
+      };
+
+  // ---- 局域网 / STA 面板 ----
+
+  static String linkLanIpLabel(String langCode) => switch (langCode) {
+        'ja' => 'カメラのIPアドレス',
+        'en' => 'Camera IP address',
+        _ => '相机 IP 地址',
+      };
+
+  static String linkLanPtpCamera(String langCode) => switch (langCode) {
+        'ja' => 'PTP/IP カメラ',
+        'en' => 'PTP/IP camera',
+        _ => 'PTP/IP 相机',
+      };
+
+  static String linkLanScan(String langCode) => switch (langCode) {
+        'ja' => '自動検索',
+        'en' => 'Auto-find',
+        _ => '自动查找',
+      };
+
+  static String linkLanScanning(String langCode) => switch (langCode) {
+        'ja' => '検索中…',
+        'en' => 'Searching…',
+        _ => '查找中…',
+      };
+
+  static String linkLanFound(String langCode) => switch (langCode) {
+        'ja' => 'カメラが見つかりました',
+        'en' => 'Cameras found',
+        _ => '发现相机',
+      };
+
+  static String linkLanNoFound(String langCode) => switch (langCode) {
+        'ja' => '見つかりません。IPを手入力してください',
+        'en' => 'No camera found — enter the IP manually',
+        _ => '没有发现相机，请手动输入 IP',
+      };
+
+  static String linkLanScanFailed(String langCode) => switch (langCode) {
+        'ja' =>
+          'カメラが見つかりません。同じサブネットか、APアイソレーションが無効かを確認するか、カメラ画面のIPを手入力してください',
+        'en' =>
+          'No camera found. Check that both are on the same subnet, AP isolation is off, or enter the camera IP manually.',
+        _ => '没找到相机：确认手机和相机在同一网段、路由器未开 AP 隔离，或直接输入相机屏幕上的 IP。',
+      };
+
+  static String linkLanPairingBadge(String langCode) => switch (langCode) {
+        'ja' => 'ペアリング待ち',
+        'en' => 'Awaiting pairing',
+        _ => '待配对',
+      };
+
+  static String linkLanReadyBadge(String langCode) => switch (langCode) {
+        'ja' => '準備完了',
+        'en' => 'Ready',
+        _ => '就绪',
+      };
+
+  static String linkLanConnect(String langCode) => switch (langCode) {
+        'ja' => 'LANで接続',
+        'en' => 'Connect over LAN',
+        _ => '连接局域网相机',
+      };
+
+  static String linkLanSameNetworkHint(String langCode) => switch (langCode) {
+        'ja' => '両方を同じWi-Fiに接続し、カメラ側で「コンピューターに接続」の設定を完了してください',
+        'en' =>
+          'Keep both on the same Wi-Fi and finish the "Connect to PC" setup on the camera',
+        _ => '相机和手机需连同一个 Wi-Fi，并在相机上完成「连接到计算机」配置',
+      };
+
+  static String linkInvalidIp(String langCode) => switch (langCode) {
+        'ja' => 'IPv4アドレスの形式が正しくありません',
+        'en' => 'Enter a valid IPv4 address',
+        _ => 'IP 地址格式不正确',
+      };
+
+  static String linkConnectFailed(String detail, String langCode) =>
+      switch (langCode) {
+        'ja' => '接続に失敗しました: $detail',
+        'en' => 'Connection failed: $detail',
+        _ => '连接失败：$detail',
+      };
+
+  static String linkConnectRefused(String langCode) => switch (langCode) {
+        'ja' =>
+          'カメラが接続を拒否しました。IPがカメラ画面と一致し、カメラ側で「コンピューターに接続」の設定が完了しているか確認してください',
+        'en' =>
+          'The camera refused the connection. Check the IP matches the camera screen and the "Connect to PC" setup is finished on the camera.',
+        _ => '相机拒绝连接：请核对 IP 与相机屏幕一致，并确认已在相机上完成「连接到计算机」配置。',
+      };
+
+  static String linkConnectTimeout(String langCode) => switch (langCode) {
+        'ja' => '接続がタイムアウトしました。スマホとカメラが同じWi-Fiに接続されているか確認してください',
+        'en' =>
+          'Connection timed out. Make sure the phone and camera are on the same Wi-Fi.',
+        _ => '连接超时：请确认手机和相机连在同一个 Wi-Fi。',
+      };
+
+  static String linkPortClosedTitle(String langCode) => switch (langCode) {
+        'ja' => 'カメラが接続ポートを開放していません',
+        'en' => 'The camera is not listening',
+        _ => '相机没有开放连接端口',
+      };
+
+  static String linkPortClosedBody(String host, String langCode) =>
+      switch (langCode) {
+        'ja' =>
+          '「$host:15740」が接続を拒否しました。カメラが「OK / 次へ」で待機画面に入っているか確認してください。それでも拒否される場合、このファームウェアの「コンピューターに接続」は Nikon WTU 専用で、サードパーティの PTP/IP を受け付けていない可能性があります。カメラWi-Fi（コンピューター制御を許可）または USB をお試しください。',
+        'en' =>
+          '"$host:15740" refused the connection. Check that the camera has pressed OK / Next and is on its waiting screen. If it still refuses, this firmware\'s "Connect to PC" may serve only Nikon WTU and not accept third-party PTP/IP — try camera Wi-Fi (Allow computer control) or USB.',
+        _ => '「$host:15740」拒绝连接。请确认相机已按「OK / 下一步」进入等待连接界面。若仍然拒绝，这台固件的「连接到计算机」可能只服务尼康 WTU，不接受第三方 PTP/IP；请改用相机热点（允许计算机控制）或 USB。',
+      };
+
+  static String linkStayLan(String langCode) => switch (langCode) {
+        'ja' => 'LANのまま',
+        'en' => 'Stay on LAN',
+        _ => '留在局域网',
+      };
+
+  static String linkSwitchHotspot(String langCode) => switch (langCode) {
+        'ja' => 'カメラWi-Fiに切り替え',
+        'en' => 'Switch to camera Wi-Fi',
+        _ => '改用相机热点',
+      };
+
+  // ---- USB 面板 ----
+
+  static String linkUsbTitle(String langCode) => switch (langCode) {
+        'ja' => 'USBカメラ',
+        'en' => 'USB camera',
+        _ => 'USB 相机',
+      };
+
+  static String linkUsbDetected(String langCode) => switch (langCode) {
+        'ja' => 'デバイスを検出',
+        'en' => 'Device detected',
+        _ => '检测到设备',
+      };
+
+  static String linkUsbConnect(String langCode) => switch (langCode) {
+        'ja' => 'USBカメラに接続',
+        'en' => 'Connect USB Camera',
+        _ => '连接 USB 相机',
+      };
+
+  static String linkUsbRescan(String langCode) => switch (langCode) {
+        'ja' => '再スキャン',
+        'en' => 'Scan again',
+        _ => '重新扫描',
+      };
+
+  static String linkUsbEmpty(String langCode) => switch (langCode) {
+        'ja' => 'USBカメラが見つかりません',
+        'en' => 'No USB camera detected',
+        _ => '未检测到 USB 相机',
+      };
+
+  static String linkUsbScanning(String langCode) => switch (langCode) {
+        'ja' => 'スキャン中…',
+        'en' => 'Scanning…',
+        _ => '扫描中…',
+      };
+
+  static String linkUsbOpenDiagnostics(String langCode) => switch (langCode) {
+        'ja' => 'USB診断を見る',
+        'en' => 'Open USB diagnostics',
+        _ => '查看 USB 诊断',
+      };
+
+  static String linkUsbModeSwitchHint(
+    String name,
+    String mode,
+    String langCode,
+  ) =>
+      switch (langCode) {
+        'ja' => '「$name」は$modeモードです。カメラのUSBモードをPTP/MTPに切り替えてください。',
+        'en' =>
+          '$name is in $mode mode. Switch the camera USB mode to PTP/MTP and try again.',
+        _ => '「$name」当前是$mode模式。请把相机的 USB 模式切换到 PTP/MTP 后再试。',
+      };
+
+  static String linkUsbPermissionDenied(String langCode) => switch (langCode) {
+        'ja' => 'USBの権限が拒否されました',
+        'en' => 'USB permission denied',
+        _ => 'USB 权限被拒绝',
+      };
+
+  // ---- 教程 ----
+
+  static String linkTutorialTitle(String langCode) => switch (langCode) {
+        'ja' => '接続ガイド',
+        'en' => 'Connection guide',
+        _ => '连接教程',
+      };
+
+  static String linkTutorialNote(String langCode) => switch (langCode) {
+        'ja' =>
+          'カメラのIPはテザリング／ルーターが割り当てるため変わる場合があります。次回はカメラ画面を再確認するか「自動検索」を使ってください。接続が拒否された場合、カメラは15740を開放していません。カメラWi-Fi（コンピューター制御を許可）かUSBを使ってください。',
+        'en' =>
+          'The camera IP is assigned by the hotspot/router and may change. Check the camera screen again next time, or use "Auto-find". If the connection is refused, the camera is not exposing port 15740; use camera Wi-Fi (Allow computer control) or USB instead.',
+        _ =>
+          '相机 IP 由热点或路由器分配，可能变化；下次连接请重新查看相机屏幕，或用「自动查找」。若连接被拒绝，说明相机没有开放 15740，请改用相机热点（允许计算机控制）或 USB。',
+      };
+
+  static List<(String, String)> linkHotspotSteps(String langCode) =>
+      switch (langCode) {
+        'ja' => const [
+            ('カメラ',
+                'MENU → セットアップメニュー → スマートデバイスに接続 → Wi-Fi接続 → Wi-Fi接続を確立（「コンピューター制御を許可」があれば優先）。'),
+            ('カメラ', '画面の NIKON_Z30_xxxx のネットワーク名とパスワードを控えます。'),
+            ('スマホ',
+                '端末のWi-Fiでそのネットワークに接続します。インターネットなしの警告が出たら「接続を維持」を選びます。'),
+            ('この画面', '「カメラWi-Fi」を選び、「カメラWi-Fiに接続」をタップします。'),
+          ],
+        'en' => const [
+            ('Camera',
+                'MENU → Setup menu → Connect to smart device → Wi-Fi connection → Establish Wi-Fi connection (choose "Allow computer control" if offered).'),
+            ('Camera',
+                'Note the NIKON_Z30_xxxx network name and password shown on the camera.'),
+            ('Phone',
+                'Join that network in system Wi-Fi; choose "Keep connection" if warned about no internet.'),
+            ('Here',
+                'Pick "Camera Wi-Fi" and tap "Connect to Camera Wi-Fi".'),
+          ],
+        _ => const [
+            ('相机',
+                'MENU → 设定菜单 → 连接至智能设备 → Wi-Fi连接 → 建立Wi-Fi连接（有「允许计算机控制」时优先选它）。'),
+            ('相机', '记下屏幕上的 NIKON_Z30_xxxx 网络名和密码。'),
+            ('手机', '在系统 Wi-Fi 里连接该网络，提示无互联网时选择「保持连接」。'),
+            ('本页', '选择「相机热点」，点「连接相机热点」。'),
+          ],
+      };
+
+  static List<(String, String)> linkLanSteps(String langCode) =>
+      switch (langCode) {
+        'ja' => const [
+            ('カメラ',
+                'MENU → セットアップメニュー → コンピューターに接続 → ネットワーク設定 → プロファイル作成 → Wi-Fiネットワークを検索。'),
+            ('カメラ',
+                'スマホのテザリングかルーターを選び、Wi-Fiパスワードを入力。IPは「自動取得」を選びます。'),
+            ('カメラ',
+                '画面に「アドレス」と「サブネットマスク」が表示されます。OKを押すとアドレスは消えるので、先にIPを全部控えます（例: 010.151.169.075）。'),
+            ('カメラ',
+                'カメラ本体で「OK / 次へ」を押し、ペアリング画面へ進みます。IPが消えても正常です。'),
+            ('スマホ', '同じテザリング／ルーターに接続し、同じサブネットにします。'),
+            ('この画面', '「LAN」を選び、カメラのIPを入力して「LANで接続」をタップします。'),
+            ('この画面', '接続前に、カメラでOKを押したかを確認するダイアログが出ます。押したら続行します。'),
+            ('配对',
+                '4桁のコードを確認して承認します。カメラに保存確認が出たら、もう一度OKを押してください。アプリは自動で再接続します。'),
+            ('再接続',
+                '2回目以降は、カメラの「コンピューターに接続」で「Wi-Fi接続」をONにしてから、「ネットワーク設定」でLAN（保存済みプロファイル）を選びます。'),
+          ],
+        'en' => const [
+            ('Camera',
+                'MENU → Setup menu → Connect to PC → Network settings → Create profile → Search for Wi-Fi network.'),
+            ('Camera',
+                'Pick your phone hotspot or router, enter the Wi-Fi password, and set IP to "Obtain automatically".'),
+            ('Camera',
+                'The screen shows "Address" and "Mask". Write the IP down in full first (e.g. 010.151.169.075) — it disappears as soon as you press OK.'),
+            ('Camera',
+                'Press "OK / Next" on the camera to enter the pairing screen. The IP disappearing is normal.'),
+            ('Phone',
+                'Join the same hotspot or router so both are on the same subnet.'),
+            ('Here', 'Pick "LAN", enter the camera IP and tap "Connect over LAN".'),
+            ('Here', 'Before connecting, the app asks you to confirm you pressed OK on the camera. Continue once you have.'),
+            ('Pairing',
+                'Verify the 4-digit code and approve. When the camera asks to save, press OK again — the app reconnects by itself.'),
+            ('Reconnect',
+                'Next time, open "Connect to PC" on the camera, turn "Wi-Fi connection" ON, then open "Network settings" and choose the saved LAN profile.'),
+          ],
+        _ => const [
+            ('相机',
+                'MENU → 设定菜单 → 连接到计算机 → 网络设定 → 创建配置文件 → 搜索Wi-Fi网络。'),
+            ('相机', '选择手机热点或路由器，输入 Wi-Fi 密码；IP 选择「自动获得」。'),
+            ('相机',
+                '屏幕会显示「地址」和「掩码」。按 OK 后这行地址就会消失，所以先把它完整记下来（如 010.151.169.075）。'),
+            ('相机',
+                '在相机上按「OK / 下一步」进入配对界面。IP 消失是正常的，只要前面记好了就继续。'),
+            ('手机', '连接同一个热点或路由器，保持和相机在同一网段。'),
+            ('本页', '选择「局域网」，填入相机 IP，点「连接局域网相机」。'),
+            ('本页',
+                '连接前 App 会弹窗确认：你已经在相机上按过 OK。确认后才开始建立连接。'),
+            ('配对',
+                '核对 4 位验证码并确认。相机屏幕提示保存时再按一次 OK；App 会自动重连，不用手动重试。'),
+            ('再次连接',
+                '之后重连时，先在相机「连接到计算机」里把「Wi-Fi 连接」设为 ON，再点「网络设定」选择已保存的局域网配置。'),
+          ],
+      };
+
+  static List<(String, String)> linkUsbSteps(String langCode) =>
+      switch (langCode) {
+        'ja' => const [
+            ('接続', 'データ転送対応のUSB-CケーブルまたはOTGアダプターでスマホとカメラをつなぎます。'),
+            ('カメラ', 'カメラの電源を入れ、必要ならUSBモードをPTP/MTPにします。'),
+            ('この画面', '「USB」を選び、「USBカメラに接続」をタップして権限を許可します。'),
+          ],
+        'en' => const [
+            ('Connect',
+                'Link the phone and camera with a data-capable USB-C cable or OTG adapter.'),
+            ('Camera',
+                'Power the camera on; set USB mode to PTP/MTP if the menu offers it.'),
+            ('Here',
+                'Pick "USB", tap "Connect USB Camera" and allow USB access.'),
+          ],
+        _ => const [
+            ('连接', '用支持数据传输的 USB-C 线或 OTG 转接器连接手机与相机。'),
+            ('相机', '相机开机；必要时在菜单里把 USB 模式设为 PTP/MTP。'),
+            ('本页', '选择「USB」，点「连接 USB 相机」，允许 USB 权限。'),
+          ],
+      };
+
+  static String linkTipsTitle(String langCode) => switch (langCode) {
+        'ja' => 'どれを選ぶ？',
+        'en' => 'Which one?',
+        _ => '怎么选',
+      };
+
+  static String linkTipLan(String langCode) => switch (langCode) {
+        'ja' => 'LANはスマホもネットにつながり、省電力で、タブレットやパソコンも同時に使えます。',
+        'en' =>
+          'LAN keeps your phone online, uses less battery and lets a tablet or computer join too.',
+        _ => '局域网模式下手机还能正常上网、更省电，平板或电脑也能同时连。',
+      };
+
+  static String linkTipHotspot(String langCode) => switch (langCode) {
+        'ja' => 'カメラWi-Fiは一番簡単ですが、接続中はスマホがネットに繋がりません。',
+        'en' =>
+          'Camera Wi-Fi is the simplest, but the phone loses internet while connected.',
+        _ => '相机热点最简单，但连接期间手机会暂时断网。',
+      };
+
+  static String linkTipUsb(String langCode) => switch (langCode) {
+        'ja' => 'USBは最も安定しますが、ケーブル長と端末のOTG制限を受けます。',
+        'en' =>
+          "USB is the most stable, limited by cable length and the phone's OTG support.",
+        _ => 'USB 最稳定，但受线材长度和手机 OTG 限制。',
+      };
+
+  // ---- 主页状态 ----
+
+  static String linkUsbCameraDetectedStatus(String langCode) =>
+      switch (langCode) {
+        'ja' => 'USBカメラを検出',
+        'en' => 'USB camera detected',
+        _ => '检测到 USB 相机',
+      };
+
+  static String linkCameraWifiStatus(String langCode) => switch (langCode) {
+        'ja' => 'カメラWi-Fiに接続中',
+        'en' => 'Connected to camera Wi-Fi',
+        _ => '已连接相机 Wi-Fi',
+      };
+
+  // ---- 局域网 STA 子模式、首次配对、诊断与配对身份 (GUID) ----
+
+  static String linkStaSubModeRouter(String langCode) => switch (langCode) {
+        'ja' => '同じルーター',
+        'en' => 'Same Router',
+        _ => '同一路由器',
+      };
+
+  static String linkStaSubModeHotspot(String langCode) => switch (langCode) {
+        'ja' => 'スマホのテザリング',
+        'en' => 'Phone Hotspot',
+        _ => '手机个人热点',
+      };
+
+  static String linkStaHotspotHint(String langCode) => switch (langCode) {
+        'ja' =>
+          'スマホのテザリング（個人用ホットスポット）をONにし、カメラの「コンピューターに接続」からこのホットスポットに参加してください',
+        'en' =>
+          'Turn on your phone hotspot and join it from the camera\'s "Connect to PC" menu',
+        _ => '开启手机个人热点，在相机「连接到计算机」菜单中加入该热点',
+      };
+
+  static List<(String, String)> linkStaHotspotSteps(String langCode) =>
+      switch (langCode) {
+        'ja' => const [
+            ('スマホ', 'システム設定で「テザリング（個人用ホットスポット）」をONにします（2.4GHz / 5GHz 推奨）。'),
+            ('カメラ',
+                'MENU → セットアップメニュー → コンピューターに接続 → ネットワーク設定 → プロファイル作成 → Wi-Fiネットワークを検索。'),
+            ('カメラ',
+                'スマホのホットスポットを選び、パスワードを入力。IPは「自動取得」を選びます（例: 192.168.43.23）。'),
+            ('カメラ',
+                'ペアリング画面が出たままにするか、「OK / 次へ」で待機画面に入ります。'),
+            ('この画面', '「自動検索」を押すかカメラ画面のIPを入力して「LANで接続」をタップします。'),
+          ],
+        'en' => const [
+            ('Phone',
+                'Turn on Personal Hotspot in system settings (2.4GHz or 5GHz recommended).'),
+            ('Camera',
+                'MENU → Setup menu → Connect to PC → Network settings → Create profile → Search for Wi-Fi network.'),
+            ('Camera',
+                'Pick your phone hotspot, enter the password, and set IP to "Obtain automatically" (e.g. 192.168.43.23).'),
+            ('Camera',
+                'Stay on the pairing screen or press OK / Next to enter the waiting screen.'),
+            ('Here',
+                'Tap "Auto-find" or enter the IP shown on the camera, then tap "Connect over LAN".'),
+          ],
+        _ => const [
+            ('手机', '在系统设置中开启「个人热点」（建议选用 2.4GHz 或常规 5GHz 频段）。'),
+            ('相机',
+                'MENU → 设定菜单 → 连接到计算机 → 网络设定 → 创建配置文件 → 搜索Wi-Fi网络。'),
+            ('相机',
+                '选择你的手机热点并输入密码；IP 选择「自动获得」（如 192.168.43.23）。'),
+            ('相机',
+                '若出现「正在与计算机配对」请停在该画面；或按「OK / 下一步」进入等待连接界面。'),
+            ('本页', '点击「自动查找」或直接填入相机屏幕上的 IP，再点「连接局域网相机」。'),
+          ],
+      };
+
+  static String linkStaDiagOnCameraAp(String langCode) => switch (langCode) {
+        'ja' =>
+          '現在カメラ自身のWi-Fiアクセスポイントに接続しています。ルーターのWi-Fiに切り替えるか、上の「カメラWi-Fi」タブをお使いください。',
+        'en' =>
+          'Your phone is currently on the camera\'s own Wi-Fi hotspot. Join your router Wi-Fi, or switch to the "Camera Wi-Fi" tab above.',
+        _ =>
+          '检测到手机当前仍连在相机自身热点上。请先切换到路由器 Wi-Fi，或直接改用上方的「相机热点」模式。',
+      };
+
+  static String linkStaDiagNoNetwork(String subMode, String langCode) =>
+      switch (langCode) {
+        'ja' => subMode == 'hotspot'
+            ? 'スマホのホットスポットまたはLANインターフェースが見つかりません。テザリングをONにしてカメラが接続されたか確認してください。'
+            : 'スマホがWi-Fiに接続されていません。カメラと同じルーターのWi-Fiに接続してください。',
+        'en' => subMode == 'hotspot'
+            ? 'No active phone hotspot or LAN interface found. Turn on Personal Hotspot and make sure the camera has joined it.'
+            : 'This phone is not on Wi-Fi. Join the same router Wi-Fi as the camera.',
+        _ => subMode == 'hotspot'
+            ? '未检测到活跃的手机热点网段。请先开启手机个人热点并确认相机已连入该热点。'
+            : '手机当前未连接 Wi-Fi。请先连接到与相机相同的路由器 Wi-Fi。',
+      };
+
+  static String linkStaDiagSilentNetwork(String langCode) => switch (langCode) {
+        'ja' =>
+          'このネットワーク上の端末から応答がありません。ゲストWi-Fi、APアイソレーション（プライバシーセパレーター）、または6GHz帯の分離が有効になっていないか確認してください。',
+        'en' =>
+          'Nothing on this network answered. Check that guest Wi-Fi, AP client isolation, or 6 GHz band isolation is turned off.',
+        _ =>
+          '当前网段内无任何设备响应：请检查路由器是否开启了 AP 客户端隔离、访客网络或 6GHz 频段隔离。',
+      };
+
+  static String linkStaDiagHostsNoPtp(String langCode) => switch (langCode) {
+        'ja' =>
+          '同じネットワーク上の他の機器は応答していますが、15740番ポートを開放したカメラが見つかりません。カメラ側で「コンピューターに接続」を有効にしてください。',
+        'en' =>
+          'Other devices on this network answered, but no camera is listening on port 15740. Enable "Connect to PC" on the camera.',
+        _ =>
+          '同网段内有其他设备响应，但没有相机开放 15740 端口：请确认已在相机开启「连接到计算机」并处于配对或等待画面。',
+      };
+
+  static String linkStaPairingFetching(String langCode) => switch (langCode) {
+        'ja' => 'カメラからペアリングコードを取得中…',
+        'en' => 'Requesting pairing code from camera…',
+        _ => '正在从相机获取 4 位配对验证码…',
+      };
+
+  static String linkStaPairingDialogTitle(String langCode) =>
+      switch (langCode) {
+        'ja' => 'カメラとのペアリング確認',
+        'en' => 'Confirm Camera Pairing',
+        _ => '核对相机配对验证码',
+      };
+
+  static String linkStaPairingDialogSubtitle(
+    String cameraName,
+    String langCode,
+  ) =>
+      switch (langCode) {
+        'ja' =>
+          '「$cameraName」が初回ペアリングを要求しています。カメラ画面に表示されている4桁の認証コードと一致するか確認してください。',
+        'en' =>
+          '"$cameraName" is waiting for first-time pairing. Verify that the 4-digit code below matches the code shown on the camera screen.',
+        _ =>
+          '「$cameraName」正处于首次无线配对向导。请核对下方 4 位验证码与相机屏幕显示是否一致：',
+      };
+
+  static String linkStaPairingPinFallbackLabel(String langCode) =>
+      switch (langCode) {
+        'ja' => 'カメラ応答データ (HEX)',
+        'en' => 'Camera challenge payload (HEX)',
+        _ => '相机返回挑战载荷 (HEX)',
+      };
+
+  static String linkStaPairingConfirmBtn(String langCode) => switch (langCode) {
+        'ja' => '一致を確認してペアリング',
+        'en' => 'Codes Match — Confirm Pairing',
+        _ => '验证码一致，确认配对',
+      };
+
+  static String linkStaPressOkTitle(String langCode) => switch (langCode) {
+        'ja' => '先にカメラでOKを押してください',
+        'en' => 'Press OK on the Camera First',
+        _ => '先在相机上按一下 OK',
+      };
+
+  static String linkStaPressOkBody(String host, String langCode) =>
+      switch (langCode) {
+        'ja' =>
+          'カメラ画面に表示されているアドレス「$host」を入力しました。カメラで「OK」を押すとペアリング画面に進み、このアドレス表示は消えます（正常です）。\n\nまだ押していない場合は、先にIPを控えてからカメラでOKを押し、ここに戻ってきてください。\n\nすでにペアリング済みで、カメラが待機画面のままなら、そのまま続行できます。',
+        'en' =>
+          'You entered the camera address "$host". Pressing OK on the camera moves it into the pairing screen and hides that address — that is normal.\n\nIf you have not pressed it yet, write the IP down, press OK on the camera, then come back here.\n\nIf this camera is already paired and is sitting on its waiting screen, just continue.',
+        _ =>
+          '你填的是相机屏幕上的地址「$host」。在相机上按 OK 后会进入配对界面，这行地址随之消失，属于正常现象。\n\n如果还没按：先把 IP 记好，再去相机上按 OK，然后回到这里继续。\n\n如果这台相机已经配对过、且停在等待画面，直接继续即可。',
+      };
+
+  static String linkStaPressOkContinue(String langCode) => switch (langCode) {
+        'ja' => 'カメラでOKを押しました — 接続開始',
+        'en' => 'I Pressed OK — Start Connecting',
+        _ => '已在相机按 OK，开始连接',
+      };
+
+  static String linkStaWaitingTitle(String langCode) => switch (langCode) {
+        'ja' => 'カメラの保存を待っています',
+        'en' => 'Waiting for the Camera to Save',
+        _ => '等待相机完成保存',
+      };
+
+  static String linkStaWaitingBody(String langCode) => switch (langCode) {
+        'ja' =>
+          'ペアリング確認を送信しました。カメラ画面の保存確認でもう一度「OK」を押してください。アプリは自動で再接続を試みます。',
+        'en' =>
+          'Pairing confirmation sent. If the camera shows a save prompt, press OK once more. The app is retrying the connection automatically.',
+        _ =>
+          '配对确认已发送。如果相机弹出保存确认，请在相机上再按一次 OK。App 正在自动重连，不需要手动操作。',
+      };
+
+  static String linkStaWaitingFirst(String langCode) => switch (langCode) {
+        'ja' => 'カメラがセッションを解放するのを待っています…',
+        'en' => 'Waiting for the camera to release the session…',
+        _ => '正在等待相机释放会话…',
+      };
+
+  static String linkStaWaitingAttempt(int attempt, String langCode) =>
+      switch (langCode) {
+        'ja' => '再接続を試行中… ($attempt/10)',
+        'en' => 'Reconnecting… (attempt $attempt/10)',
+        _ => '正在自动重连…（第 $attempt/10 次）',
+      };
+
+  static String linkStaWaitingTimeout(String langCode) => switch (langCode) {
+        'ja' =>
+          '再接続がタイムアウトしました。カメラでOKを押して保存したか確認し、もう一度「LANで接続」をタップしてください。',
+        'en' =>
+          'Reconnect timed out. Check that you pressed OK on the camera to save the profile, then tap "Connect over LAN" again.',
+        _ => '自动重连超时。请确认已在相机上按 OK 保存配置，然后重新点「连接局域网相机」。',
+      };
+
+  static String linkStaInitFailRejectedTitle(String langCode) =>
+      switch (langCode) {
+        'ja' => 'ペアリングIDが一致しません (InitFail 1)',
+        'en' => 'Pairing Identity Rejected (InitFail 1)',
+        _ => '相机拒绝当前配对身份 (InitFail 1)',
+      };
+
+  static String linkStaInitFailRejectedBody(String guidShort, String langCode) =>
+      switch (langCode) {
+        'ja' =>
+          'カメラの現在のプロファイルは別のクライアントGUIDに紐付いています（アプリ再インストール等）。\n\n対処法：\n1. カメラの「コンピューターに接続 → ネットワーク設定 → プロファイル作成」で新しいプロファイルを作成して再ペアリングする\n2. または下の「詳細：ペアリングID (GUID)」から以前のGUIDをインポートする（現在のID先頭: $guidShort）',
+        'en' =>
+          'The camera\'s active profile is bound to a different client GUID (for example, after reinstalling the app).\n\nHow to fix:\n1. On the camera, go to "Connect to PC → Network settings → Create profile" to pair a fresh profile; OR\n2. Import your previous 32-character GUID in "Advanced: Pairing Identity (GUID)" below (current prefix: $guidShort).',
+        _ =>
+          '相机当前启用的配置文件绑定了另一个客户端 GUID（常见于重装 App 或切换了给电脑软件配对过的配置文件）。\n\n解决方式：\n1. 在相机「连接到计算机 → 网络设定 → 创建配置文件」新建一个配置文件重新配对；或\n2. 在下方「高级：配对身份 (GUID)」中导入以前备份的 32 位 GUID（当前身份前缀：$guidShort）。',
+      };
+
+  static String linkStaInitFailBusyMessage(String langCode) =>
+      switch (langCode) {
+        'ja' =>
+          'カメラは他の端末（PCや別のスマホ）と接続中か、前回のセッション解放待ちです (InitFail 2)。数秒待ってから再試行してください。',
+        'en' =>
+          'The camera is currently held by another device or releasing its previous session (InitFail 2). Wait a few seconds and try again.',
+        _ =>
+          '相机正被另一台设备（电脑或其他手机）占用，或正在释放上一会话 (InitFail 2)，请稍候再试。',
+      };
+
+  static String linkStaGuidSectionTitle(String langCode) => switch (langCode) {
+        'ja' => '詳細：ペアリングID (GUID)',
+        'en' => 'Advanced: Pairing Identity (GUID)',
+        _ => '高级：配对身份 (GUID)',
+      };
+
+  static String linkStaGuidSectionDesc(String langCode) => switch (langCode) {
+        'ja' =>
+          'カメラの「コンピューターに接続」プロファイルはこの16バイトGUIDで端末を記憶します。コピーして控えておくと、再インストール後もインポートして再ペアリング不要で接続できます。',
+        'en' =>
+          'The camera\'s "Connect to PC" profile remembers your phone by this 16-byte GUID. Copy and back it up so you can restore it after reinstalling without re-pairing.',
+        _ =>
+          '相机的「连接到计算机」配置文件按此 16 字节 GUID 识别手机。备份后即便重装应用，也可直接导入恢复连接，无需在相机上重新建配置。',
+      };
+
+  static String linkStaGuidCopyBtn(String langCode) => switch (langCode) {
+        'ja' => 'GUIDをコピー',
+        'en' => 'Copy GUID',
+        _ => '复制 GUID',
+      };
+
+  static String linkStaGuidCopiedToast(String langCode) => switch (langCode) {
+        'ja' => '32桁のGUIDをクリップボードにコピーしました',
+        'en' => 'Copied 32-character GUID to clipboard',
+        _ => '已复制 32 位配对身份 GUID 到剪贴板',
+      };
+
+  static String linkStaGuidImportBtn(String langCode) => switch (langCode) {
+        'ja' => 'GUIDをインポート',
+        'en' => 'Import GUID',
+        _ => '导入 GUID',
+      };
+
+  static String linkStaGuidImportDialogTitle(String langCode) =>
+      switch (langCode) {
+        'ja' => 'ペアリングGUIDをインポート',
+        'en' => 'Import Pairing GUID',
+        _ => '导入配对身份 GUID',
+      };
+
+  static String linkStaGuidImportHint(String langCode) => switch (langCode) {
+        'ja' => '32桁の16進数文字列を入力（ハイフンや空白は自動除去）',
+        'en' => 'Enter 32-character hex GUID (hyphens/spaces allowed)',
+        _ => '输入 32 位十六进制 GUID（支持带连字符或空格）',
+      };
+
+  static String linkStaGuidImportInvalid(String langCode) => switch (langCode) {
+        'ja' => '無効な形式です：32桁の16進数（0-9, a-f）を入力してください',
+        'en' => 'Invalid format: enter exactly 32 hexadecimal characters (0-9, a-f)',
+        _ => '格式无效：请输入完整的 32 位十六进制字符 (0-9, a-f)',
+      };
+
+  static String linkStaGuidImportSuccess(String langCode) => switch (langCode) {
+        'ja' => 'ペアリングGUIDを更新しました',
+        'en' => 'Pairing GUID updated',
+        _ => '配对身份 GUID 已更新并生效',
       };
 }
