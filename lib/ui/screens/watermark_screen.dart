@@ -1,14 +1,19 @@
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
 
 import '../../core/settings/app_settings.dart';
 import '../../core/utils/capture_date.dart';
 import '../../core/utils/exif_helper.dart';
+import '../../engine/ai/ai_color_grader.dart';
+import '../../engine/ai/ai_provider_config.dart';
+import '../../engine/ai/ai_recipe_catalog.dart';
 import '../../engine/editor/builtin_grade_presets.dart';
 import '../../engine/editor/color_grade_preset.dart';
 import '../../engine/editor/photo_edit_controller.dart';
@@ -19,7 +24,10 @@ import '../../engine/spektrafilm/spektrafilm_models.dart';
 import '../../engine/spektrafilm/spektrafilm_native.dart';
 import '../../engine/spektrafilm/spektrafilm_renderer.dart';
 import '../../engine/transfer/export_history_manager.dart';
+import '../../engine/watermark/watermark_font_manager.dart';
+import '../../engine/watermark/watermark_overlay_layer.dart';
 import '../../engine/watermark/watermark_painter.dart';
+import '../../engine/watermark/watermark_preset_store.dart';
 import '../../engine/watermark/watermark_renderer.dart';
 import '../../engine/watermark/watermark_template.dart';
 import '../../l10n/l10n.dart';
@@ -27,13 +35,18 @@ import '../../protocol/camera_native_bridge.dart';
 import '../../protocol/nikon_ble_lss.dart';
 import '../design/design.dart';
 import '../widgets/adaptive_layout.dart';
+import '../widgets/ai_svg_icons.dart';
 import '../widgets/grade_thumbnail.dart';
 import '../widgets/lightroom_histogram.dart';
 import '../widgets/photo_edit_preview.dart';
 import '../widgets/photo_edit_tools.dart';
+import '../widgets/watermark_font_store_sheet.dart';
+import '../widgets/watermark_layer_editor.dart';
 import '../widgets/watermark_style_controls.dart';
 import '../widgets/watermark_template_card.dart';
+import 'watermark/ai_grade_sheet.dart';
 
+part 'watermark/watermark_art_text_panel.dart';
 part 'watermark/watermark_grade_panel.dart';
 part 'watermark/watermark_sheets.dart';
 part 'watermark/watermark_spektrafilm_panel.dart';
@@ -164,6 +177,9 @@ class WatermarkScreenState extends State<WatermarkScreen>
   final PageController _filterPageController = PageController();
   int _wmCurrentPage = 0;
   int _tabletWatermarkSection = 0;
+  List<WatermarkTextLayer> _textLayers = const [];
+  String? _selectedTextLayerId;
+  List<WatermarkCustomPreset> _customWatermarkPresets = const [];
 
   @override
   void initState() {
@@ -179,6 +195,11 @@ class WatermarkScreenState extends State<WatermarkScreen>
     _filmPreview = SpektrafilmPreviewController()
       ..addListener(_onFilmPreviewChanged);
     _loadUserPresets();
+    AiSettingsStore.instance.ensureInitialized();
+    WatermarkFontManager.instance.ensureInitialized();
+    WatermarkPresetStore.load().then((presets) {
+      if (mounted) setState(() => _customWatermarkPresets = presets);
+    });
 
     if (widget.initialImageBytes != null) {
       loadImageBytes(widget.initialImageBytes!,
@@ -669,6 +690,7 @@ class WatermarkScreenState extends State<WatermarkScreen>
         watermarkOpacity: _watermarkOpacity,
         customTextAlign: _customTextAlign,
         logoCorner: _logoCorner,
+        textLayers: _textLayers,
       );
 
       String? savedUri;
@@ -773,43 +795,34 @@ class WatermarkScreenState extends State<WatermarkScreen>
             ),
             if (_decodedImage != null) ...[
               const SizedBox(width: ZSpace.sm),
-              Flexible(
-                child: InkWell(
-                  onTap: _showMetadataEditSheet,
-                  borderRadius: BorderRadius.circular(ZRadius.pill),
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: zc.surface,
-                      borderRadius: BorderRadius.circular(ZRadius.pill),
-                      border: Border.all(color: zc.outline),
-                    ),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.camera_alt_outlined,
-                              size: 14, color: zc.accent),
-                          const SizedBox(width: 6),
-                          Text(
-                            '${_metadata.titleText} · ${_metadata.exposureSummary}',
-                            style: TextStyle(
-                              color: zc.textPrimary,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              fontFamily: 'monospace',
-                            ),
-                            maxLines: 1,
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(Icons.edit_outlined,
-                              size: 12, color: zc.textTertiary),
-                        ],
+              InkWell(
+                onTap: _showMetadataEditSheet,
+                borderRadius: BorderRadius.circular(ZRadius.pill),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: zc.surface,
+                    borderRadius: BorderRadius.circular(ZRadius.pill),
+                    border: Border.all(color: zc.outline),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.tune_rounded, size: 14, color: zc.accent),
+                      const SizedBox(width: 5),
+                      Text(
+                        l10n.wmDetailedParamsPill,
+                        style: TextStyle(
+                          color: zc.textPrimary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ),
@@ -955,6 +968,7 @@ class WatermarkScreenState extends State<WatermarkScreen>
                           }
                           var canvasSize =
                               Size(constraints.maxWidth, constraints.maxHeight);
+                          var logicalSize = const Size(1200, 800);
                           if (_decodedImage != null) {
                             final srcW = _decodedImage!.width.toDouble();
                             final srcH = _decodedImage!.height.toDouble();
@@ -964,6 +978,8 @@ class WatermarkScreenState extends State<WatermarkScreen>
                               _selectedTemplate,
                               _spacingScale,
                             );
+                            logicalSize =
+                                Size(layout.totalWidth, layout.totalHeight);
                             final aspect =
                                 layout.totalWidth / layout.totalHeight;
                             var w = constraints.maxWidth;
@@ -978,65 +994,85 @@ class WatermarkScreenState extends State<WatermarkScreen>
                             child: SizedBox(
                               width: canvasSize.width,
                               height: canvasSize.height,
-                              child: CustomPaint(
-                                size: canvasSize,
-                                painter: WatermarkCanvasPainter(
-                                  image: _previewDisplayImage,
-                                  metadata: _metadata,
-                                  template: _selectedTemplate,
-                                  filmStockName: _activeFilmStockName,
-                                  filterType: (_filmPreviewActive ||
-                                          _isComparingOriginal)
-                                      ? PhotoFilterType.original
-                                      : _selectedFilter,
-                                  filterIntensity: (_filmPreviewActive ||
-                                          _isComparingOriginal)
-                                      ? 0.0
-                                      : _filterIntensity,
-                                  adjustments: (_filmPreviewActive ||
-                                          _isComparingOriginal)
-                                      ? const PhotoEditAdjustments()
-                                      : _adjustments,
-                                  spacingScale: _spacingScale,
-                                  showDetails: _showDetails,
-                                  cardDark: _cardDark,
-                                  textDark: _textDark,
-                                  cardColorOverride: _cardColorOverride,
-                                  textColorOverride: _textColorOverride,
-                                  titleTextScale: AppSettings
-                                      .instance.watermarkTitleTextScale,
-                                  metaTextScale: AppSettings
-                                      .instance.watermarkMetaTextScale,
-                                  letterSpacingScale: AppSettings
-                                      .instance.watermarkLetterSpacingScale,
-                                  lineSpacingScale: AppSettings
-                                      .instance.watermarkLineSpacingScale,
-                                  fontWeight: WatermarkFontWeight.values[
-                                      AppSettings
-                                          .instance.watermarkFontWeightIndex],
-                                  borderThicknessScale: AppSettings
-                                      .instance.watermarkBorderThicknessScale,
-                                  fontFamily: _watermarkFontFamily,
-                                  customLines: _customLines,
-                                  customTextScale: AppSettings
-                                      .instance.watermarkCustomTextScale,
-                                  logoImage: _logoImage,
-                                  logoScale: _logoScales[_logoScaleIndex],
-                                  logoOpacity:
-                                      _logoOpacities[_logoOpacityIndex],
-                                  accentColor: _accentColor,
-                                  cardTone: WatermarkCardTone.auto,
-                                  cornerRadiusFactor: _cornerRadiusFactor,
-                                  showModel: _showModel,
-                                  showLens: _showLens,
-                                  showExposure: _showExposure,
-                                  showDate: _showDate,
-                                  showBrandLogo: _showBrandLogo,
-                                  showGps: _showGps,
-                                  watermarkOpacity: _watermarkOpacity,
-                                  customTextAlign: _customTextAlign,
-                                  logoCorner: _logoCorner,
-                                ),
+                              child: Stack(
+                                children: [
+                                  CustomPaint(
+                                    size: canvasSize,
+                                    painter: WatermarkCanvasPainter(
+                                      image: _previewDisplayImage,
+                                      metadata: _metadata,
+                                      template: _selectedTemplate,
+                                      filmStockName: _activeFilmStockName,
+                                      filterType: (_filmPreviewActive ||
+                                              _isComparingOriginal)
+                                          ? PhotoFilterType.original
+                                          : _selectedFilter,
+                                      filterIntensity: (_filmPreviewActive ||
+                                              _isComparingOriginal)
+                                          ? 0.0
+                                          : _filterIntensity,
+                                      adjustments: (_filmPreviewActive ||
+                                              _isComparingOriginal)
+                                          ? const PhotoEditAdjustments()
+                                          : _adjustments,
+                                      spacingScale: _spacingScale,
+                                      showDetails: _showDetails,
+                                      cardDark: _cardDark,
+                                      textDark: _textDark,
+                                      cardColorOverride: _cardColorOverride,
+                                      textColorOverride: _textColorOverride,
+                                      titleTextScale: AppSettings
+                                          .instance.watermarkTitleTextScale,
+                                      metaTextScale: AppSettings
+                                          .instance.watermarkMetaTextScale,
+                                      letterSpacingScale: AppSettings
+                                          .instance.watermarkLetterSpacingScale,
+                                      lineSpacingScale: AppSettings
+                                          .instance.watermarkLineSpacingScale,
+                                      fontWeight: WatermarkFontWeight.values[
+                                          AppSettings.instance
+                                              .watermarkFontWeightIndex],
+                                      borderThicknessScale: AppSettings
+                                          .instance
+                                          .watermarkBorderThicknessScale,
+                                      fontFamily: _watermarkFontFamily,
+                                      customLines: _customLines,
+                                      customTextScale: AppSettings
+                                          .instance.watermarkCustomTextScale,
+                                      logoImage: _logoImage,
+                                      logoScale: _logoScales[_logoScaleIndex],
+                                      logoOpacity:
+                                          _logoOpacities[_logoOpacityIndex],
+                                      accentColor: _accentColor,
+                                      cardTone: WatermarkCardTone.auto,
+                                      cornerRadiusFactor: _cornerRadiusFactor,
+                                      showModel: _showModel,
+                                      showLens: _showLens,
+                                      showExposure: _showExposure,
+                                      showDate: _showDate,
+                                      showBrandLogo: _showBrandLogo,
+                                      showGps: _showGps,
+                                      watermarkOpacity: _watermarkOpacity,
+                                      customTextAlign: _customTextAlign,
+                                      logoCorner: _logoCorner,
+                                      textLayers: _textLayers,
+                                    ),
+                                  ),
+                                  if (_textLayers.isNotEmpty)
+                                    WatermarkLayerEditorOverlay(
+                                      previewSize: canvasSize,
+                                      logicalCanvasSize: logicalSize,
+                                      metadata: _metadata,
+                                      layers: _textLayers,
+                                      selectedLayerId: _selectedTextLayerId,
+                                      globalFontFamily: _watermarkFontFamily,
+                                      onSelectLayer: (id) => setState(
+                                          () => _selectedTextLayerId = id),
+                                      onUpdateLayer: _updateArtTextLayer,
+                                      onDeleteLayer: _deleteArtTextLayer,
+                                      onEditLayerText: _editArtTextLayerDialog,
+                                    ),
+                                ],
                               ),
                             ),
                           );
@@ -1383,8 +1419,32 @@ class WatermarkScreenState extends State<WatermarkScreen>
 
         const SizedBox(height: 12),
 
-        // 2. 中间：3 段内联子胶囊切换（已移除冗余 Logo 贴图栏，品牌标识自动根据 EXIF 匹配）
-        if (_selectedTemplate == WatermarkTemplate.none)
+        // 2. 中间：4 段内联子胶囊切换（含自由拖拽艺术字面板，即使无边框也能叠加艺术字）
+        Container(
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: zc.surface,
+            borderRadius: BorderRadius.circular(ZRadius.pill),
+            border: Border.all(color: zc.outline),
+          ),
+          child: Row(
+            children: [
+              _buildTemplateSubTabButton(
+                  3, l10n.wmSubArtText, Icons.auto_fix_high_outlined),
+              _buildTemplateSubTabButton(
+                  0, l10n.wmSubPalette, Icons.palette_outlined),
+              _buildTemplateSubTabButton(
+                  1, l10n.wmSubToggles, Icons.toggle_on_outlined),
+              _buildTemplateSubTabButton(
+                  2, l10n.wmSubTypography, Icons.text_fields_outlined),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        if (_templateSubTab == 3)
+          _buildArtTextControlsPanel()
+        else if (_selectedTemplate == WatermarkTemplate.none)
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -1430,25 +1490,6 @@ class WatermarkScreenState extends State<WatermarkScreen>
             ),
           )
         else ...[
-          Container(
-            padding: const EdgeInsets.all(3),
-            decoration: BoxDecoration(
-              color: zc.surface,
-              borderRadius: BorderRadius.circular(ZRadius.pill),
-              border: Border.all(color: zc.outline),
-            ),
-            child: Row(
-              children: [
-                _buildTemplateSubTabButton(
-                    0, l10n.wmSubPalette, Icons.palette_outlined),
-                _buildTemplateSubTabButton(
-                    1, l10n.wmSubToggles, Icons.toggle_on_outlined),
-                _buildTemplateSubTabButton(
-                    2, l10n.wmSubTypography, Icons.text_fields_outlined),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
           // 3. 下半部：内联样式控件，零弹窗
           if (_templateSubTab == 0)
             WatermarkStyleControls(
@@ -1841,49 +1882,73 @@ class WatermarkScreenState extends State<WatermarkScreen>
     final zc = context.zc;
     final l10n = context.l10n;
 
-    if (_selectedTemplate == WatermarkTemplate.none) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.palette_outlined, size: 40, color: zc.accent),
-              const SizedBox(height: 12),
-              Text(
-                l10n.wmTabletPureGradeHint,
-                style: TextStyle(
-                  color: zc.textPrimary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                l10n.wmPureGradeModeSub,
-                style: TextStyle(color: zc.textSecondary, fontSize: 11),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: () => setState(() => _tabletWatermarkSection = 0),
-                icon: const Icon(Icons.style_outlined, size: 16),
-                label: Text(l10n.wmTabletPureGradeAction),
-                style: FilledButton.styleFrom(
-                  backgroundColor: zc.accent,
-                  foregroundColor: zc.onAccent,
-                ),
-              ),
-            ],
+    if (_selectedTemplate == WatermarkTemplate.none && _templateSubTab != 3) {
+      return Column(
+        children: [
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              color: zc.surface,
+              borderRadius: BorderRadius.circular(ZRadius.pill),
+              border: Border.all(color: zc.outline),
+            ),
+            child: Row(
+              children: [
+                _buildTemplateSubTabButton(
+                    3, l10n.wmSubArtText, Icons.auto_fix_high_outlined),
+                _buildTemplateSubTabButton(
+                    0, l10n.wmSubPalette, Icons.palette_outlined),
+              ],
+            ),
           ),
-        ),
+          Expanded(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.palette_outlined, size: 40, color: zc.accent),
+                    const SizedBox(height: 12),
+                    Text(
+                      l10n.wmTabletPureGradeHint,
+                      style: TextStyle(
+                        color: zc.textPrimary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      l10n.wmPureGradeModeSub,
+                      style: TextStyle(color: zc.textSecondary, fontSize: 11),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                      onPressed: () =>
+                          setState(() => _tabletWatermarkSection = 0),
+                      icon: const Icon(Icons.style_outlined, size: 16),
+                      label: Text(l10n.wmTabletPureGradeAction),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: zc.accent,
+                        foregroundColor: zc.onAccent,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       );
     }
 
     return Column(
       children: [
-        // 3 段子胶囊切换
+        // 4 段子胶囊切换
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
           padding: const EdgeInsets.all(3),
@@ -1894,6 +1959,8 @@ class WatermarkScreenState extends State<WatermarkScreen>
           ),
           child: Row(
             children: [
+              _buildTemplateSubTabButton(
+                  3, l10n.wmSubArtText, Icons.auto_fix_high_outlined),
               _buildTemplateSubTabButton(
                   0, l10n.wmSubPalette, Icons.palette_outlined),
               _buildTemplateSubTabButton(
@@ -1907,23 +1974,25 @@ class WatermarkScreenState extends State<WatermarkScreen>
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-            child: _templateSubTab == 0
-                ? WatermarkStyleControls(
-                    key: const ValueKey('wm-sub-palette'),
-                    section: WatermarkStyleSection.palette,
-                    onChanged: _syncStyleFromSettings,
-                  )
-                : _templateSubTab == 1
+            child: _templateSubTab == 3
+                ? _buildArtTextControlsPanel()
+                : _templateSubTab == 0
                     ? WatermarkStyleControls(
-                        key: const ValueKey('wm-sub-toggles'),
-                        section: WatermarkStyleSection.toggles,
+                        key: const ValueKey('wm-sub-palette'),
+                        section: WatermarkStyleSection.palette,
                         onChanged: _syncStyleFromSettings,
                       )
-                    : WatermarkStyleControls(
-                        key: const ValueKey('wm-sub-typography'),
-                        section: WatermarkStyleSection.typography,
-                        onChanged: _syncStyleFromSettings,
-                      ),
+                    : _templateSubTab == 1
+                        ? WatermarkStyleControls(
+                            key: const ValueKey('wm-sub-toggles'),
+                            section: WatermarkStyleSection.toggles,
+                            onChanged: _syncStyleFromSettings,
+                          )
+                        : WatermarkStyleControls(
+                            key: const ValueKey('wm-sub-typography'),
+                            section: WatermarkStyleSection.typography,
+                            onChanged: _syncStyleFromSettings,
+                          ),
           ),
         ),
       ],

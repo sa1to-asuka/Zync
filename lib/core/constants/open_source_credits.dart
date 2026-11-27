@@ -223,6 +223,24 @@ const List<OpenSourceCredit> openSourceProjectCredits = [
     url: 'https://github.com/andreavolpato/spektrafilm',
     license: 'GPL-3.0 / CC BY-SA 4.0',
   ),
+  OpenSourceCredit(
+    name: 'OpenAI / Anthropic API Specs',
+    description: 'Zync AI 实时取景指导与智能识图调色 BYOK 多模态视觉接口规范兼容',
+    url: 'https://platform.openai.com/docs/guides/vision',
+    license: 'Public API Spec',
+  ),
+  OpenSourceCredit(
+    name: 'Google Fonts · English Artistic Fonts',
+    description: 'Playfair Display、Cinzel、Caveat、JetBrains Mono 内置英文字体资源',
+    url: 'https://github.com/google/fonts',
+    license: 'SIL OFL-1.1',
+  ),
+  OpenSourceCredit(
+    name: 'LXGW WenKai / Zhuque Fangsong / ZCOOL / Ma Shan Zheng',
+    description: '云端按需艺术中文字体商店（霞鹜文楷、朱雀仿宋、站酷小薇、马善政、龙藏体、钟齐志莽行书）',
+    url: 'https://github.com/lxgw/LxgwWenKai',
+    license: 'SIL OFL-1.1',
+  ),
 ];
 
 const List<OpenSourceCredit> openSourceRuntimeCredits = [
@@ -310,6 +328,12 @@ const List<OpenSourceCredit> openSourceRuntimeCredits = [
     description: '视频播放支持',
     url: 'https://github.com/flutter/packages/tree/main/packages/video_player',
     license: 'BSD-3-Clause',
+  ),
+  OpenSourceCredit(
+    name: 'archive',
+    description: 'ZIP 压缩包与配方合集归档解压',
+    url: 'https://github.com/brendan-duncan/archive',
+    license: 'MIT',
   ),
 ];
 

@@ -1,10 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zync/core/settings/app_settings.dart';
 import 'package:zync/core/settings/settings_scope.dart';
+import 'package:zync/engine/ai/ai_provider_config.dart';
 import 'package:zync/l10n/l10n.dart';
 import 'package:zync/ui/design/design.dart';
 import 'package:zync/ui/onboarding/onboarding_flow.dart';
+import 'package:zync/ui/root_scaffold.dart';
 
 Widget _buildTestOnboarding() {
   return SettingsScope(
@@ -56,7 +61,8 @@ void main() {
     expect(find.text('Choose Your Language'), findsOneWidget);
   });
 
-  testWidgets('完整走完 3 步欢迎引导（语言 -> 外观 -> 工作流）并持久化完成状态', (tester) async {
+  testWidgets('完整走完 4 步欢迎引导（语言 -> 外观 -> 工作流 -> 配置 AI API Key）并持久化完成状态',
+      (tester) async {
     await tester.pumpWidget(_buildTestOnboarding());
     await tester.pumpAndSettle();
 
@@ -78,11 +84,24 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('直连尼康相机工作流'), findsOneWidget);
 
-    // 点击开始使用 -> onboardingCompleted = true
+    // Step 3 -> Step 4 (配置 AI API Key)
+    await tester.tap(find.byKey(const ValueKey<String>('onboarding_next_btn')));
+    await tester.pumpAndSettle();
+    expect(find.text('配置 AI API Key'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('onboarding_config_ai_btn')),
+      findsOneWidget,
+    );
+
+    // 点击开始使用 -> onboardingCompleted = true 且记录 3.0.1 AI 引导已展示
     expect(AppSettings.instance.onboardingCompleted, isFalse);
     await tester.tap(find.byKey(const ValueKey<String>('onboarding_next_btn')));
     await tester.pumpAndSettle();
     expect(AppSettings.instance.onboardingCompleted, isTrue);
+    expect(
+      AppSettings.instance.aiGuidePromptVersion,
+      AppSettings.currentAiGuideVersion,
+    );
   });
 
   testWidgets('点击跳过直接标记完成引导', (tester) async {
@@ -92,5 +111,51 @@ void main() {
     await tester.tap(find.byKey(const ValueKey<String>('onboarding_skip_btn')));
     await tester.pumpAndSettle();
     expect(AppSettings.instance.onboardingCompleted, isTrue);
+    expect(
+      AppSettings.instance.aiGuidePromptVersion,
+      AppSettings.currentAiGuideVersion,
+    );
+  });
+
+  testWidgets('3.0.1 首次进入主界面时未配置 API Key 会推送一次配置指南',
+      (tester) async {
+    final tmp = await tester.runAsync(
+        () => Directory.systemTemp.createTemp('zync_301_push_'));
+    const channel = MethodChannel('plugins.flutter.io/path_provider');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async => tmp!.path);
+    addTearDown(() async {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+      try {
+        if (tmp != null && tmp.existsSync()) tmp.deleteSync(recursive: true);
+      } catch (_) {}
+    });
+
+    await tester.runAsync(
+        () => AiSettingsStore.instance.ensureInitialized(overrideDirectory: tmp));
+    AppSettings.instance.setOnboardingCompleted(true);
+    AppSettings.instance.setAiGuidePromptVersion('');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('zh'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        theme: ZyncTheme.lightTheme,
+        home: const RootScaffold(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Zync 3.0.1 · 配置 AI API Key 指南'), findsOneWidget);
+    expect(
+      AppSettings.instance.aiGuidePromptVersion,
+      AppSettings.currentAiGuideVersion,
+    );
+
+    await tester.tap(find.text('稍后再说'));
+    await tester.pumpAndSettle();
+    expect(find.text('Zync 3.0.1 · 配置 AI API Key 指南'), findsNothing);
   });
 }

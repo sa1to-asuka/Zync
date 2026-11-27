@@ -19,7 +19,7 @@ void main() {
       expect(AppSettings.instance.cameraPort, equals(15740));
       expect(AppSettings.instance.themeMode, equals(AppThemeMode.system));
       expect(AppSettings.instance.confirmDelete, isTrue);
-      expect(AppSettings.instance.galleryFilter, equals('unviewed'));
+      expect(AppSettings.instance.galleryFilter, equals('all'));
     });
 
     test('相册筛选记忆切换', () {
@@ -27,8 +27,11 @@ void main() {
       expect(AppSettings.instance.galleryFilter, equals('all'));
       AppSettings.instance.setGalleryFilter('synced');
       expect(AppSettings.instance.galleryFilter, equals('synced'));
+      AppSettings.instance.setGalleryFilter('unviewed');
+      expect(AppSettings.instance.galleryFilter, equals('all'),
+          reason: '已移除新照片筛选，旧值 unviewed 自动归一化为 all');
       AppSettings.instance.setGalleryFilter('   ');
-      expect(AppSettings.instance.galleryFilter, equals('synced'),
+      expect(AppSettings.instance.galleryFilter, equals('all'),
           reason: '空白值被安全忽略');
     });
 

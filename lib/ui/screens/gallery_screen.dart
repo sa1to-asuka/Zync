@@ -10,10 +10,10 @@ import 'package:video_player/video_player.dart';
 import '../../core/constants/network_config.dart';
 import '../../core/settings/app_settings.dart';
 import '../../core/utils/app_log_manager.dart';
+import '../../core/utils/capture_date.dart';
 import '../../core/utils/exif_helper.dart';
 import '../../core/utils/lru_image_cache.dart';
 import '../../core/utils/raw_preview_extractor.dart';
-import '../../engine/transfer/camera_viewed_tracker.dart';
 import '../../engine/transfer/download_manager.dart';
 import '../../engine/transfer/export_history_manager.dart';
 import '../../engine/transfer/shoot_and_transfer.dart';
@@ -140,6 +140,7 @@ class GalleryScreenState extends State<GalleryScreen> {
   bool _backgroundPrefetchHold = false;
 
   StreamSubscription<CameraConnectionState>? _connSub;
+  StreamSubscription<int>? _objectRemovedSub;
 
   @override
   void initState() {
@@ -147,16 +148,20 @@ class GalleryScreenState extends State<GalleryScreen> {
     final savedFilter = AppSettings.instance.galleryFilter;
     _activeFilter = _GalleryFilter.values.firstWhere(
       (f) => f.name == savedFilter,
-      orElse: () => _GalleryFilter.unviewed,
+      orElse: () => _GalleryFilter.all,
     );
-    unawaited(CameraViewedTracker.instance.ensureInitialized());
-    CameraViewedTracker.instance.addListener(_onHistoryChanged);
 
     _historyManager.refresh();
     _historyManager.addListener(_onHistoryChanged);
 
     if (!widget.driver.isConnected) {
       _activeTab = 1;
+    }
+
+    final driver = widget.driver;
+    if (driver is NikonDriver) {
+      _objectRemovedSub =
+          driver.onObjectRemoved.listen(_handleRemoteObjectRemoved);
     }
 
     _connSub = widget.driver.connectionStateStream.listen((state) {
@@ -210,12 +215,46 @@ class GalleryScreenState extends State<GalleryScreen> {
       if (!entry.value.isCompleted) entry.value.complete();
     }
     _thumbRetryDelays.clear();
-    CameraViewedTracker.instance.removeListener(_onHistoryChanged);
     _historyManager.removeListener(_onHistoryChanged);
     _historyScrollController.dispose();
+    _objectRemovedSub?.cancel();
     _connSub?.cancel();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  List<CameraFileItem> _flattenGroupItems() => _groups
+      .expand(
+        (g) => <CameraFileItem>[
+          if (g.jpegItem != null) g.jpegItem!,
+          if (g.rawItem != null) g.rawItem!,
+          if (g.videoItem != null) g.videoItem!,
+        ],
+      )
+      .toList();
+
+  void _handleRemoteObjectRemoved(int removedHandle) {
+    if (!mounted) return;
+    final currentItems = _flattenGroupItems();
+    final removedItems =
+        currentItems.where((e) => e.handle == removedHandle).toList();
+    if (removedItems.isEmpty) return;
+
+    for (final item in removedItems) {
+      final key = cameraCacheKey(item.storageId, item.handle);
+      _thumbCache.remove(key);
+      _fullCache.remove(key);
+      _thumbFutures.remove(key);
+    }
+    final remaining =
+        currentItems.where((e) => e.handle != removedHandle).toList();
+    setState(() {
+      _updateMediaGroups(remaining);
+      final validBaseNames = _groups.map((g) => g.baseName).toSet();
+      _selectedBaseNames.removeWhere((name) => !validBaseNames.contains(name));
+      if (_selectedBaseNames.isEmpty) _isSelectionMode = false;
+    });
+    unawaited(_writeCameraListCache(_selectedStorageId, remaining));
   }
 
   /// 供外部 (如 RootScaffold) 主动调用的刷新接口
@@ -459,7 +498,17 @@ class GalleryScreenState extends State<GalleryScreen> {
       }
     }
 
-    _groups = orderList.map((k) => groupMap[k]!).toList();
+    _groups = orderList.map((k) => groupMap[k]!).toList()
+      ..sort((a, b) {
+        final byDate = compareCaptureDateNewestFirst(
+          a.primaryItem.captureDate,
+          a.primaryItem.handle,
+          b.primaryItem.captureDate,
+          b.primaryItem.handle,
+        );
+        if (byDate != 0) return byDate;
+        return b.baseName.compareTo(a.baseName);
+      });
   }
 
   /// 根据当前快捷筛选胶囊过滤媒体组
@@ -468,8 +517,6 @@ class GalleryScreenState extends State<GalleryScreen> {
       final isSynced = _historyManager.isExported(g.baseName);
       return switch (_activeFilter) {
         _GalleryFilter.all => true,
-        _GalleryFilter.unviewed =>
-          !isSynced && !CameraViewedTracker.instance.isViewed(g.baseName),
         _GalleryFilter.unsynced => !isSynced,
         _GalleryFilter.synced => isSynced,
         _GalleryFilter.jpg => g.isJpegOnly,
@@ -499,7 +546,7 @@ class GalleryScreenState extends State<GalleryScreen> {
   }
 
   /// 超快渐进式文件列表加载算法
-  Future<void> _loadCameraFiles() async {
+  Future<void> _loadCameraFiles({bool forceRefresh = false}) async {
     if (!widget.driver.isConnected) {
       AppLogManager.instance.add('[gallery] load skipped: not connected');
       return;
@@ -527,9 +574,19 @@ class GalleryScreenState extends State<GalleryScreen> {
 
     // 同一会话内重复的触发（initState / 连接事件 / 工作台回调）只跑一次，
     // 否则会对整张卡做多轮 GetObjectInfo，相机的存储卡灯会一直闪。
-    if (_loadInProgress && _loadEpoch == _cacheEpoch) {
+    // 用户手动点击刷新 / 下拉刷新（forceRefresh: true）时允许作废旧加载并重建最新列表。
+    if (!forceRefresh && _loadInProgress && _loadEpoch == _cacheEpoch) {
       AppLogManager.instance.add('[gallery] load skipped: already running');
       return;
+    }
+
+    if (forceRefresh) {
+      if (driver is NikonDriver) {
+        driver.clearMediaCaches();
+      }
+      _thumbFutures.clear();
+      _thumbCache.clear();
+      _fullCache.clear();
     }
 
     final token = ++_loadToken;
@@ -537,7 +594,7 @@ class GalleryScreenState extends State<GalleryScreen> {
     _loadEpoch = _cacheEpoch;
     if (mounted) setState(() => _isLoading = true);
     AppLogManager.instance.add(
-        '[gallery] load start epoch=$_cacheEpoch '
+        '[gallery] load start epoch=$_cacheEpoch force=$forceRefresh '
         'storage=${_selectedStorageId ?? 'all'}');
 
     var streaming = false;
@@ -548,16 +605,28 @@ class GalleryScreenState extends State<GalleryScreen> {
       final reversedHandles = handles.reversed.toList();
 
       if (reversedHandles.isEmpty) {
-        if (mounted) {
+        _thumbFutures.clear();
+        _thumbCache.clear();
+        _fullCache.clear();
+        unawaited(
+          _writeCameraListCache(
+            _selectedStorageId,
+            const <CameraFileItem>[],
+          ),
+        );
+        if (mounted && token == _loadToken) {
           setState(() {
             _groups = [];
             _selectedBaseNames.clear();
+            _isSelectionMode = false;
           });
         }
         return;
       }
 
-      final cachedItems = await _readCameraListCache(_selectedStorageId);
+      final cachedItems = forceRefresh
+          ? const <CameraFileItem>[]
+          : await _readCameraListCache(_selectedStorageId);
       if (!mounted || token != _loadToken) return;
       final cachedByHandle = {for (final i in cachedItems) i.handle: i};
       final knownItems = <CameraFileItem>[];
@@ -594,7 +663,10 @@ class GalleryScreenState extends State<GalleryScreen> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _selectedBaseNames.clear();
+          final validBaseNames = _groups.map((g) => g.baseName).toSet();
+          _selectedBaseNames
+              .removeWhere((name) => !validBaseNames.contains(name));
+          if (_selectedBaseNames.isEmpty) _isSelectionMode = false;
         });
       }
 
@@ -605,8 +677,8 @@ class GalleryScreenState extends State<GalleryScreen> {
         streaming = true;
         _streamLoadRemaining(remaining, firstItems, token);
       } else {
+        unawaited(_writeCameraListCache(_selectedStorageId, firstItems));
         if (firstItems.isNotEmpty) {
-          await _writeCameraListCache(_selectedStorageId, firstItems);
           unawaited(_prefetchThumbnails(firstItems));
         }
       }
@@ -1696,7 +1768,7 @@ class GalleryScreenState extends State<GalleryScreen> {
             IconButton(
               icon: const Icon(Icons.refresh),
               tooltip: l10n.galleryRefreshCardTooltip,
-              onPressed: _loadCameraFiles,
+              onPressed: () => _loadCameraFiles(forceRefresh: true),
             ),
           ] else ...[
             IconButton(
@@ -1813,63 +1885,17 @@ class GalleryScreenState extends State<GalleryScreen> {
                                       Text(
                                         _groups.isEmpty
                                             ? l10n.galleryEmptyCameraPhotos
-                                            : (_activeFilter ==
-                                                    _GalleryFilter.unviewed
-                                                ? l10n.galleryAllViewedTip
-                                                : l10n.galleryEmptyFilterPhotos(
-                                                    _filterLabel(
-                                                      context,
-                                                      _activeFilter,
-                                                    ),
-                                                  )),
+                                            : l10n.galleryEmptyFilterPhotos(
+                                                _filterLabel(
+                                                  context,
+                                                  _activeFilter,
+                                                ),
+                                              ),
                                         style: TextStyle(
                                           color: zc.textSecondary,
                                           fontSize: 13,
                                         ),
                                       ),
-                                      if (_groups.isNotEmpty &&
-                                          _activeFilter ==
-                                              _GalleryFilter.unviewed) ...[
-                                        const SizedBox(height: 14),
-                                        OutlinedButton.icon(
-                                          onPressed: () {
-                                            setState(() {
-                                              _activeFilter =
-                                                  _GalleryFilter.all;
-                                              AppSettings.instance
-                                                  .setGalleryFilter(
-                                                      _GalleryFilter.all.name);
-                                            });
-                                          },
-                                          icon: Icon(
-                                            Icons.photo_library_outlined,
-                                            size: 16,
-                                            color: zc.accent,
-                                          ),
-                                          label: Text(
-                                            l10n.galleryViewAllPhotos,
-                                            style: TextStyle(
-                                              color: zc.accent,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                          style: OutlinedButton.styleFrom(
-                                            side: BorderSide(
-                                              color: zc.outline,
-                                              width: 0.8,
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(
-                                                      ZRadius.pill),
-                                            ),
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 16,
-                                              vertical: 8,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
                                     ],
                                   ),
                                 ),
@@ -1881,33 +1907,40 @@ class GalleryScreenState extends State<GalleryScreen> {
                                       _updateDragSelect(e.position),
                                   onPointerUp: (_) => _endDragSelect(),
                                   onPointerCancel: (_) => _endDragSelect(),
-                                  child: GridView.builder(
-                                    key: const PageStorageKey<String>(
-                                      'camera_gallery_grid',
-                                    ),
-                                    controller: _scrollController,
-                                    padding: _cameraGridPadding,
-                                    gridDelegate:
-                                        SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: _gridCrossAxisCountFor(
-                                        gridConstraints.maxWidth,
+                                  child: RefreshIndicator(
+                                    color: zc.accent,
+                                    onRefresh: () =>
+                                        _loadCameraFiles(forceRefresh: true),
+                                    child: GridView.builder(
+                                      key: const PageStorageKey<String>(
+                                        'camera_gallery_grid',
                                       ),
-                                      crossAxisSpacing: _gridSpacing,
-                                      mainAxisSpacing: _gridSpacing,
-                                      childAspectRatio: _cameraCardAspect,
+                                      physics:
+                                          const AlwaysScrollableScrollPhysics(),
+                                      controller: _scrollController,
+                                      padding: _cameraGridPadding,
+                                      gridDelegate:
+                                          SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: _gridCrossAxisCountFor(
+                                          gridConstraints.maxWidth,
+                                        ),
+                                        crossAxisSpacing: _gridSpacing,
+                                        mainAxisSpacing: _gridSpacing,
+                                        childAspectRatio: _cameraCardAspect,
+                                      ),
+                                      itemCount: displayGroups.length,
+                                      itemBuilder: (context, index) {
+                                        final group = displayGroups[index];
+                                        final isSelected = _selectedBaseNames
+                                            .contains(group.baseName);
+                                        return _buildMediaGroupCard(
+                                          group,
+                                          isSelected,
+                                          index,
+                                          displayGroups,
+                                        );
+                                      },
                                     ),
-                                    itemCount: displayGroups.length,
-                                    itemBuilder: (context, index) {
-                                      final group = displayGroups[index];
-                                      final isSelected = _selectedBaseNames
-                                          .contains(group.baseName);
-                                      return _buildMediaGroupCard(
-                                        group,
-                                        isSelected,
-                                        index,
-                                        displayGroups,
-                                      );
-                                    },
                                   ),
                                 ),
                               ),

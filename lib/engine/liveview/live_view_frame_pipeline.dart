@@ -33,6 +33,7 @@ class LiveViewFramePipeline {
       ValueNotifier<LiveViewFrame?>(null);
 
   Uint8List? _pending;
+  Uint8List? _latestJpeg;
   bool _decoding = false;
   bool _disposed = false;
   int _sequence = 0;
@@ -41,12 +42,16 @@ class LiveViewFramePipeline {
 
   ValueListenable<LiveViewFrame?> get frame => _frame;
 
+  /// 最近收到的原始取景 JPEG（供 AI 取景构图与影调分析复用，不额外拷贝内存）。
+  Uint8List? get latestJpeg => _latestJpeg;
+
   int get decodedFrames => _decoded;
   int get droppedFrames => _dropped;
 
   /// 提交一帧 JPEG。传入 `null` 或已释放时是空操作。
   void offerJpeg(Uint8List? jpeg) {
     if (_disposed || jpeg == null || jpeg.isEmpty) return;
+    _latestJpeg = jpeg;
     if (_decoding) {
       _pending = jpeg;
       _dropped++;
@@ -110,6 +115,7 @@ class LiveViewFramePipeline {
   /// 清空当前帧（例如退出取景）。
   void clear() {
     _pending = null;
+    _latestJpeg = null;
     final current = _frame.value;
     _frame.value = null;
     if (current != null) {
@@ -123,6 +129,7 @@ class LiveViewFramePipeline {
     if (_disposed) return;
     _disposed = true;
     _pending = null;
+    _latestJpeg = null;
     final current = _frame.value;
     _frame.value = null;
     current?.image.dispose();

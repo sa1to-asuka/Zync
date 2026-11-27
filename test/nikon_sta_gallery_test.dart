@@ -1,8 +1,12 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zync/core/constants/ptp_opcodes.dart';
 import 'package:zync/core/utils/byte_buffer_ext.dart';
+import 'package:zync/engine/capture/capture_controller.dart';
+import 'package:zync/engine/liveview/live_view_controller.dart';
+import 'package:zync/protocol/camera_driver.dart';
 import 'package:zync/protocol/nikon_driver.dart';
 import 'package:zync/protocol/ptp_ip_client.dart';
 import 'package:zync/protocol/ptp_packet.dart';
@@ -107,14 +111,18 @@ class _FakeStaMediaTransport implements PtpTransport {
   bool _connected = false;
   final List<String> ops = [];
   final Future<Uint8List> Function(int opCode, List<int> params) onDataIn;
+  final StreamController<PtpPacket> _events =
+      StreamController<PtpPacket>.broadcast();
 
   _FakeStaMediaTransport({required this.onDataIn});
+
+  void emitEvent(PtpPacket packet) => _events.add(packet);
 
   @override
   bool get isConnected => _connected;
 
   @override
-  Stream<PtpPacket> get events => const Stream.empty();
+  Stream<PtpPacket> get events => _events.stream;
 
   @override
   set onUnexpectedDisconnect(void Function()? callback) {}
@@ -540,6 +548,431 @@ void main() {
           transport.ops.indexWhere((e) => e.startsWith('in:0x1007:'));
       expect(endLvIdx, greaterThanOrEqualTo(0));
       expect(endLvIdx, lessThan(getHandlesIdx));
+      await driver.disconnect();
+    });
+
+    test(
+        'Z50II STA 扁平枚举遇到全量 0x1008 拒绝(0x200F)时：识别目录、降级 0x9421+魔数嗅探并实现 JPG+RAW 配对同干名',
+        () async {
+      const storage = 0x00010001;
+      final flatHandles = [
+        0x11004000,
+        0x11194000,
+        0x291944a6,
+        0x091944a6,
+        0x291944a7,
+        0x091944a7,
+      ];
+      final jpgHead = Uint8List.fromList([0xFF, 0xD8, 0xFF, 0xE1, 0, 16, 0, 0]);
+      final nefHead = Uint8List.fromList([0x49, 0x49, 0x2A, 0x00, 8, 0, 0, 0]);
+      var infoCalls = 0;
+
+      final transport = _FakeStaMediaTransport(
+        onDataIn: (op, params) async {
+          if (op == PtpOpCodes.getDeviceInfo) {
+            return _buildDeviceInfo(
+              model: 'NIKON Z50II',
+              ops: [
+                PtpOpCodes.getStorageIDs,
+                PtpOpCodes.getObjectHandles,
+                PtpOpCodes.getObjectInfo,
+                PtpOpCodes.getThumb,
+                PtpOpCodes.getPartialObject,
+                PtpOpCodes.nikonGetObjectSize,
+                PtpOpCodes.nikonChangeAppMode,
+              ],
+            );
+          }
+          if (op == PtpOpCodes.getStorageIDs) {
+            return _encodeUint32Array([storage]);
+          }
+          if (op == PtpOpCodes.getObjectHandles) {
+            final parent = params[2];
+            if (parent == 0) return _encodeUint32Array(flatHandles);
+            if (parent == 0x11004000) return _encodeUint32Array([0x11194000]);
+            if (parent == 0x11194000) {
+              return _encodeUint32Array([0x291944a6, 0x091944a6]);
+            }
+            throw PtpException(op, PtpOpCodes.responseInvalidParentObject);
+          }
+          if (op == PtpOpCodes.getObjectInfo) {
+            infoCalls++;
+            throw PtpException(op, PtpOpCodes.responseAccessDenied);
+          }
+          if (op == PtpOpCodes.nikonGetObjectSize) {
+            final h = params[0];
+            final sz = ((h >> 24) & 0xFF) == 0x29 ? 24500000 : 8100000;
+            return (PtpByteBuffer()..writeUint32(sz)).toBytes();
+          }
+          if (op == PtpOpCodes.getPartialObject) {
+            final h = params[0];
+            return ((h >> 24) & 0xFF) == 0x29 ? nefHead : jpgHead;
+          }
+          return Uint8List(0);
+        },
+      );
+
+      final driver = NikonDriver();
+      await driver.connectTransport(transport, onLog: (_) {});
+      final handles = await driver.listObjectHandles();
+      expect(handles, equals(flatHandles));
+
+      final folderA = await driver.getObjectInfo(0x11004000);
+      final folderB = await driver.getObjectInfo(0x11194000);
+      expect(folderA?.isFolder, isTrue);
+      expect(folderB?.isFolder, isTrue);
+
+      final raw1 = await driver.getObjectInfo(0x291944a6);
+      final jpg1 = await driver.getObjectInfo(0x091944a6);
+      final raw2 = await driver.getObjectInfo(0x291944a7);
+      final jpg2 = await driver.getObjectInfo(0x091944a7);
+
+      expect(raw1?.isRaw, isTrue);
+      expect(raw1?.size, equals(24500000));
+      expect(jpg1?.isRaw, isFalse);
+      expect(jpg1?.size, equals(8100000));
+      // 同一对 RAW+JPG 剥离高 4 位前缀差异后主干名一致，供相册自动合组
+      expect(
+        raw1!.fileName.split('.').first,
+        equals(jpg1!.fileName.split('.').first),
+      );
+      expect(raw2?.fileName, equals('DSC_1944A7.NEF'));
+      expect(jpg2?.fileName, equals('DSC_1944A7.JPG'));
+      // 连续 3 次 0x200F 后应短接跳过后续 0x1008 调用
+      expect(infoCalls, lessThanOrEqualTo(3));
+      await driver.disconnect();
+    });
+
+    test('Z50II 遥控拍摄：0x1008 全被拒时通过 0x9421 立即确认新照片而不卡死 30s 超时', () async {
+      var captured = false;
+      final beforeHandles = [0x11004000, 0x11194000, 0x291944a6, 0x091944a6];
+      final afterHandles = [...beforeHandles, 0x291944a8, 0x091944a8];
+      final jpgHead = Uint8List.fromList([0xFF, 0xD8, 0xFF, 0xE1, 0, 16, 0, 0]);
+      final nefHead = Uint8List.fromList([0x49, 0x49, 0x2A, 0x00, 8, 0, 0, 0]);
+
+      final transport = _FakeStaMediaTransport(
+        onDataIn: (op, params) async {
+          if (op == PtpOpCodes.getDeviceInfo) {
+            return _buildDeviceInfo(
+              model: 'NIKON Z50II',
+              ops: [
+                PtpOpCodes.getStorageIDs,
+                PtpOpCodes.getObjectHandles,
+                PtpOpCodes.getObjectInfo,
+                PtpOpCodes.initiateCapture,
+                PtpOpCodes.getPartialObject,
+                PtpOpCodes.nikonGetObjectSize,
+              ],
+            );
+          }
+          if (op == PtpOpCodes.getStorageIDs) {
+            return _encodeUint32Array([0x00010001]);
+          }
+          if (op == PtpOpCodes.getObjectHandles) {
+            final parent = params[2];
+            if (parent == 0) {
+              return _encodeUint32Array(captured ? afterHandles : beforeHandles);
+            }
+            throw PtpException(op, PtpOpCodes.responseInvalidParentObject);
+          }
+          if (op == PtpOpCodes.getObjectInfo) {
+            throw PtpException(op, PtpOpCodes.responseAccessDenied);
+          }
+          if (op == PtpOpCodes.nikonGetObjectSize) {
+            final sz = ((params[0] >> 24) & 0xFF) == 0x29 ? 22000000 : 7500000;
+            return (PtpByteBuffer()..writeUint32(sz)).toBytes();
+          }
+          if (op == PtpOpCodes.getPartialObject) {
+            return ((params[0] >> 24) & 0xFF) == 0x29 ? nefHead : jpgHead;
+          }
+          return Uint8List(0);
+        },
+      );
+
+      final driver = NikonDriver();
+      await driver.connectTransport(transport, onLog: (_) {});
+      final liveView = LiveViewController(driver: driver);
+      final recorded = <CameraFileItem>[];
+      final capture = CaptureController(
+        driver: driver,
+        liveView: liveView,
+        confirmTimeout: const Duration(seconds: 2),
+        pollInterval: const Duration(milliseconds: 20),
+        onCaptured: recorded.add,
+      );
+
+      // 当 CaptureController 触发 initiateCapture (0x100E) 后立即模拟相机写卡产出新 handle
+      final origExecuteOp = transport;
+      expect(origExecuteOp.isConnected, isTrue);
+      Future<void>.delayed(const Duration(milliseconds: 35), () {
+        captured = true;
+      });
+
+      final outcome = await capture.capture();
+      expect(outcome, isA<CaptureConfirmed>());
+      final confirmed = outcome as CaptureConfirmed;
+      expect(confirmed.file.handle, equals(0x091944a8));
+      expect(confirmed.file.fileName, equals('DSC_1944A8.JPG'));
+      expect(recorded.length, equals(2));
+      await driver.disconnect();
+    });
+
+    test('空卡仅含 DCIM 根目录时目录判别返回空文件列表且不误触发 0x9435(1)', () async {
+      final transport = _FakeStaMediaTransport(
+        onDataIn: (op, params) async {
+          if (op == PtpOpCodes.getDeviceInfo) {
+            return _buildDeviceInfo(
+              model: 'NIKON Z50II',
+              ops: [
+                PtpOpCodes.getStorageIDs,
+                PtpOpCodes.getObjectHandles,
+                PtpOpCodes.getObjectInfo,
+                PtpOpCodes.nikonChangeAppMode,
+              ],
+            );
+          }
+          if (op == PtpOpCodes.getStorageIDs) {
+            return _encodeUint32Array([0x00010001]);
+          }
+          if (op == PtpOpCodes.getObjectHandles) {
+            final parent = params[2];
+            if (parent == 0) {
+              return _encodeUint32Array([0x11004000, 0x11194000]);
+            }
+            if (parent == 0x11004000 || parent == 0x11194000) {
+              return _encodeUint32Array([]);
+            }
+            throw PtpException(op, PtpOpCodes.responseInvalidParentObject);
+          }
+          if (op == PtpOpCodes.getObjectInfo) {
+            throw PtpException(op, PtpOpCodes.responseAccessDenied);
+          }
+          return Uint8List(0);
+        },
+      );
+
+      final driver = NikonDriver();
+      await driver.connectTransport(transport, onLog: (_) {});
+      final handles = await driver.listObjectHandles();
+      expect(handles, isEmpty);
+      expect(transport.ops.where((e) => e.startsWith('op:0x9435')), isEmpty);
+      await driver.disconnect();
+    });
+
+    test('Tier 5 兜底：当 0x1008 与 0x9421 均被拒绝时，通过 0x101B 魔数+二分探测精准恢复文件信息',
+        () async {
+      final syntheticFile = Uint8List(5000);
+      syntheticFile[0] = 0xFF;
+      syntheticFile[1] = 0xD8;
+      syntheticFile[2] = 0xFF;
+      syntheticFile[3] = 0xE0;
+
+      final transport = _FakeStaMediaTransport(
+        onDataIn: (op, params) async {
+          if (op == PtpOpCodes.getDeviceInfo) {
+            return _buildDeviceInfo(
+              model: 'NIKON Z50II',
+              ops: [
+                PtpOpCodes.getStorageIDs,
+                PtpOpCodes.getObjectHandles,
+                PtpOpCodes.getObjectInfo,
+                PtpOpCodes.getPartialObject,
+                PtpOpCodes.nikonGetObjectSize,
+              ],
+            );
+          }
+          if (op == PtpOpCodes.getStorageIDs) {
+            return _encodeUint32Array([0x00010001]);
+          }
+          if (op == PtpOpCodes.getObjectInfo ||
+              op == PtpOpCodes.nikonGetObjectSize) {
+            throw PtpException(op, PtpOpCodes.responseAccessDenied);
+          }
+          if (op == PtpOpCodes.getPartialObject) {
+            final offset = params[1];
+            final maxBytes = params[2];
+            if (offset >= syntheticFile.length) return Uint8List(0);
+            final end = (offset + maxBytes).clamp(0, syntheticFile.length);
+            return Uint8List.sublistView(syntheticFile, offset, end);
+          }
+          return Uint8List(0);
+        },
+      );
+
+      final driver = NikonDriver();
+      await driver.connectTransport(transport, onLog: (_) {});
+      final info = await driver.getObjectInfo(0x091944b1);
+      expect(info, isNotNull);
+      expect(info!.isFolder, isFalse);
+      expect(info.isRaw, isFalse);
+      expect(info.size, equals(5000));
+      expect(info.fileName, equals('DSC_1944B1.JPG'));
+      await driver.disconnect();
+    });
+
+    test('downloadPartialObject：0x101B 返回 0x200F 时自动回退 5 参数 0x9431，并在 0x2006 时兼容 4 参数',
+        () async {
+      final captured64Params = <List<int>>[];
+      var callCount9431 = 0;
+      var partial101bCalls = 0;
+
+      final transport = _FakeStaMediaTransport(
+        onDataIn: (op, params) async {
+          if (op == PtpOpCodes.getDeviceInfo) {
+            return _buildDeviceInfo(
+              model: 'NIKON Z50II',
+              ops: [
+                PtpOpCodes.getStorageIDs,
+                PtpOpCodes.getObjectHandles,
+                PtpOpCodes.getPartialObject,
+                PtpOpCodes.nikonGetPartialObject64,
+              ],
+            );
+          }
+          if (op == PtpOpCodes.getStorageIDs) {
+            return _encodeUint32Array([0x00010001]);
+          }
+          if (op == PtpOpCodes.getPartialObject) {
+            partial101bCalls++;
+            throw PtpException(op, PtpOpCodes.responseAccessDenied);
+          }
+          if (op == PtpOpCodes.nikonGetPartialObject64) {
+            callCount9431++;
+            captured64Params.add(List<int>.from(params));
+            if (callCount9431 == 1 && params.length == 5) {
+              throw PtpException(op, PtpOpCodes.responseParameterNotSupported);
+            }
+            return Uint8List.fromList([1, 2, 3, 4]);
+          }
+          return Uint8List(0);
+        },
+      );
+
+      final driver = NikonDriver();
+      await driver.connectTransport(transport, onLog: (_) {});
+
+      final firstChunk = await driver.downloadPartialObject(0x091944a6, 0, 1024);
+      expect(firstChunk, equals([1, 2, 3, 4]));
+      // 第 1 次发 5 参数 [handle, 0, 0, 1024, 0]；遇 0x2006 后自动重试 4 参数。
+      expect(captured64Params[0], equals([0x091944a6, 0, 0, 1024, 0]));
+      expect(captured64Params[1], equals([0x091944a6, 0, 0, 1024]));
+
+      // 锁存后后续分块直走 0x9431，不再浪费一轮被拒的 0x101B。
+      final secondChunk =
+          await driver.downloadPartialObject(0x091944a6, 1024, 512);
+      expect(secondChunk, equals([1, 2, 3, 4]));
+      expect(partial101bCalls, equals(1));
+      await driver.disconnect();
+    });
+
+    test('getThumbnail 与 downloadFullObject：0x100A/0x90C4/0x101B/0x9431 全拒时兜底 0x1009 GetObject',
+        () async {
+      // 构造最小完整基线 JPEG（包含 SOI + SOF0 + SOS + EOI，长度 > 128）
+      final validJpeg = Uint8List.fromList([
+        0xFF, 0xD8,
+        0xFF, 0xE0, 0x00, 0x10, ...List<int>.filled(14, 0),
+        0xFF, 0xC0, 0x00, 0x0B, 8, 0, 16, 0, 16, 1, 1, 0x11, 0,
+        0xFF, 0xDA, 0x00, 0x08, 1, 1, 0, 0, 0x3F, 0,
+        ...List<int>.filled(100, 0x55),
+        0xFF, 0xD9,
+      ]);
+
+      final transport = _FakeStaMediaTransport(
+        onDataIn: (op, params) async {
+          if (op == PtpOpCodes.getDeviceInfo) {
+            return _buildDeviceInfo(
+              model: 'NIKON Z50II',
+              ops: [
+                PtpOpCodes.getStorageIDs,
+                PtpOpCodes.getObjectHandles,
+                PtpOpCodes.getObjectInfo,
+                PtpOpCodes.getObject,
+                PtpOpCodes.getThumb,
+                PtpOpCodes.nikonGetLargeThumb,
+                PtpOpCodes.getPartialObject,
+                PtpOpCodes.nikonGetPartialObject64,
+              ],
+            );
+          }
+          if (op == PtpOpCodes.getStorageIDs) {
+            return _encodeUint32Array([0x00010001]);
+          }
+          if (op == PtpOpCodes.getObject) {
+            return validJpeg;
+          }
+          throw PtpException(op, PtpOpCodes.responseAccessDenied);
+        },
+      );
+
+      final driver = NikonDriver();
+      await driver.connectTransport(transport, onLog: (_) {});
+
+      final thumb = await driver.getThumbnail(0x091944b2);
+      expect(thumb, equals(validJpeg));
+
+      final full =
+          await driver.downloadFullObject(0x091944b3, validJpeg.length);
+      expect(full, equals(validJpeg));
+      await driver.disconnect();
+    });
+
+    test('相机端 0x4003 ObjectRemoved 事件与 clearMediaCaches 正确淘汰旧照片缓存',
+        () async {
+      var generation = 1;
+      final transport = _FakeStaMediaTransport(
+        onDataIn: (op, params) async {
+          if (op == PtpOpCodes.getDeviceInfo) {
+            return _buildDeviceInfo(
+              model: 'NIKON Z50II',
+              ops: [
+                PtpOpCodes.getStorageIDs,
+                PtpOpCodes.getObjectHandles,
+                PtpOpCodes.getObjectInfo,
+              ],
+            );
+          }
+          if (op == PtpOpCodes.getStorageIDs) {
+            return _encodeUint32Array([0x00010001]);
+          }
+          if (op == PtpOpCodes.getObjectInfo) {
+            return _buildObjectInfo(fileName: 'DSC_000$generation.JPG');
+          }
+          return Uint8List(0);
+        },
+      );
+
+      final driver = NikonDriver();
+      await driver.connectTransport(transport, onLog: (_) {});
+      final removed = <int>[];
+      final sub = driver.onObjectRemoved.listen(removed.add);
+
+      final first = await driver.getObjectInfo(0x091944c1);
+      expect(first?.fileName, equals('DSC_0001.JPG'));
+
+      // 模拟相机端删掉该照片后发送 0x4003 事件，并把同句柄复用到新照片
+      generation = 2;
+      final eventBuf = PtpByteBuffer()
+        ..writeUint16(PtpOpCodes.eventObjectRemoved)
+        ..writeUint32(1)
+        ..writeUint32(0x091944c1);
+      final eventPayload = eventBuf.toBytes();
+      transport.emitEvent(PtpPacket(
+        length: eventPayload.length + 8,
+        type: PtpOpCodes.ptpIpEvent,
+        payload: eventPayload,
+      ));
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      expect(removed, equals([0x091944c1]));
+
+      final reloaded = await driver.getObjectInfo(0x091944c1);
+      expect(reloaded?.fileName, equals('DSC_0002.JPG'));
+
+      generation = 3;
+      driver.clearMediaCaches();
+      final afterManualClear = await driver.getObjectInfo(0x091944c1);
+      expect(afterManualClear?.fileName, equals('DSC_0003.JPG'));
+
+      await sub.cancel();
       await driver.disconnect();
     });
   });

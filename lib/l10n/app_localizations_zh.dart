@@ -3478,4 +3478,601 @@ class AppLocalizationsZh extends AppLocalizations {
   String storageFolderPath(Object folder) {
     return 'DCIM/$folder';
   }
+
+  @override
+  String get collageFineBorderTitle => '精细边框';
+
+  @override
+  String get collageInnerGapLabel => '内间距';
+
+  @override
+  String get collageOuterMarginLabel => '外边距';
+
+  @override
+  String get collageCornerRadiusLabel => '圆角';
+
+  @override
+  String get collageBorderColorLabel => '框色';
+
+  @override
+  String get collageRotate90 => '旋转';
+
+  @override
+  String get collageFlipHorizontal => '镜像';
+
+  @override
+  String get collageSwapCell => '换位';
+
+  @override
+  String get collageSwapPickTarget => '请点击另一张图片完成互换';
+
+  @override
+  String get collageZoomLabel => '缩放';
+
+  @override
+  String get collageResetCell => '重置';
+
+  @override
+  String get wmSubArtText => '艺术字';
+
+  @override
+  String get wmArtAddText => '添加艺术字';
+
+  @override
+  String get wmArtEditText => '编辑文字';
+
+  @override
+  String get wmArtTextHint => '输入文案或点击下方插入拍摄参数';
+
+  @override
+  String get wmArtExifTokens => '点击插入拍摄参数';
+
+  @override
+  String get wmArtFontTitle => '艺术字体与云端字体库';
+
+  @override
+  String get wmArtVerticalToggle => '竖排';
+
+  @override
+  String get wmArtBgStyle => '样式框';
+
+  @override
+  String get wmArtBgNone => '无底';
+
+  @override
+  String get wmArtBgPill => '磨砂胶囊';
+
+  @override
+  String get wmArtBgTag => '实心标签';
+
+  @override
+  String get wmArtBgSealYang => '阳文朱印';
+
+  @override
+  String get wmArtBgSealYin => '阴文朱印';
+
+  @override
+  String get wmArtBgCinema => '电影底条';
+
+  @override
+  String get wmArtOpacityLabel => '透明度';
+
+  @override
+  String get wmArtStrokeLabel => '描边';
+
+  @override
+  String get wmArtShadowLabel => '阴影';
+
+  @override
+  String get wmArtSavePreset => '存为我的水印预设';
+
+  @override
+  String get wmArtMyPresets => '我的水印预设';
+
+  @override
+  String get wmArtPresetSavedToast => '已保存自定义水印预设';
+
+  @override
+  String get wmArtPresetNameHint => '输入预设名称';
+
+  @override
+  String get wmArtEmptyHint => '点击「添加艺术字」后，可在照片或边框上自由拖动、双指旋转与缩放';
+
+  @override
+  String get wmFontStoreTitle => '艺术字体与开源字体商店';
+
+  @override
+  String get wmFontTabBuiltin => '内置精选';
+
+  @override
+  String get wmFontTabCloud => '云端中文字体 (OFL)';
+
+  @override
+  String get wmFontTabLocal => '本地导入';
+
+  @override
+  String get wmFontRefreshManifest => '刷新字体列表';
+
+  @override
+  String get wmFontDownload => '下载';
+
+  @override
+  String get wmFontInstalled => '已安装';
+
+  @override
+  String get wmFontImportLocal => '导入本地 .ttf / .otf 字体';
+
+  @override
+  String wmFontImportSuccess(Object name) {
+    return '已导入并启用字体：$name';
+  }
+
+  @override
+  String wmFontDownloadFailed(Object error) {
+    return '字体下载失败: $error';
+  }
+
+  @override
+  String get wmFontOpenSourceNotice =>
+      '云端字体托管于 GitHub (sa1to-asuka/Zync · SIL OFL-1.1 开源商用协议)';
+
+  @override
+  String get settingsAiEngineTitle => 'AI 视觉引擎与密钥';
+
+  @override
+  String get settingsAiEngineSub => 'OpenAI / Anthropic 兼容 · 模型与蜂窝旁路';
+
+  @override
+  String get settingsAiValueUnconfigured => '未配置';
+
+  @override
+  String get aiActiveModelsSection => '当前启用模型';
+
+  @override
+  String get aiCoachModelLabel => '取景助手模型';
+
+  @override
+  String get aiGradeModelLabel => 'AI 调色模型';
+
+  @override
+  String get aiModelUnselected => '未选择（请先添加并导入模型）';
+
+  @override
+  String get aiProfilesSection => 'AI 接口档案（OpenAI / Anthropic 兼容）';
+
+  @override
+  String get aiAddProfileButton => '添加接口档案';
+
+  @override
+  String get aiProtocolLabel => '接口协议';
+
+  @override
+  String get aiProtocolOpenAi => 'OpenAI 兼容';
+
+  @override
+  String get aiProtocolAnthropic => 'Anthropic 兼容';
+
+  @override
+  String get aiQuickFillLabel => '常用服务商快填';
+
+  @override
+  String get aiProfileNameLabel => '配置名称';
+
+  @override
+  String get aiBaseUrlLabel => '接口 Base URL';
+
+  @override
+  String get aiApiKeyLabel => 'API Key（Android Keystore 硬件加密）';
+
+  @override
+  String get aiApiKeyLeaveEmptyHint => '留空保持原密钥不变';
+
+  @override
+  String get aiFetchModelsButton => '获取可用模型';
+
+  @override
+  String get aiFetchingModels => '正在获取模型列表…';
+
+  @override
+  String get aiOnlyVisionFilter => '仅显示识图模型 (Vision)';
+
+  @override
+  String get aiSearchModelHint => '搜索模型名称';
+
+  @override
+  String get aiManualModelHint => '手动添加模型 ID（中转站未开 /models 时使用）';
+
+  @override
+  String get aiManualAddButton => '添加';
+
+  @override
+  String aiImportSelectedButton(Object count) {
+    return '导入已选 ($count)';
+  }
+
+  @override
+  String get aiVerifyVisionButton => '实测识图';
+
+  @override
+  String aiVisionVerifiedOk(Object ms) {
+    return '识图可用 · $ms ms';
+  }
+
+  @override
+  String get aiVisionUnsupported => '不支持识图';
+
+  @override
+  String get aiVisionLikelyBadge => '支持识图';
+
+  @override
+  String get aiSaveProfileButton => '保存档案';
+
+  @override
+  String get aiSetAsCoach => '设为取景模型';
+
+  @override
+  String get aiSetAsGrade => '设为调色模型';
+
+  @override
+  String get aiCellularBypassTitle => 'AP 热点直连时借用 4G/5G 调用 AI';
+
+  @override
+  String get aiCellularBypassSub => '相机无外网热点下自动走蜂窝通道访问大模型，不断联相机';
+
+  @override
+  String get aiIncludeTelemetryTitle => '随图附带焦段与曝光参数';
+
+  @override
+  String get aiIncludeTelemetrySub => '仅发送光圈/快门/ISO/焦段用于精确判断，绝不发送 GPS 与机身序列号';
+
+  @override
+  String get aiSecurityFootnote =>
+      '所有 API Key 均通过 Android Keystore AES-256-GCM 硬件密钥加密存放，绝不明文落盘或写入日志。';
+
+  @override
+  String get aiCoachButton => 'AI 取景指导';
+
+  @override
+  String get aiCoachSheetTitle => 'AI 实时取景指导';
+
+  @override
+  String get aiCoachOfflineTag => '本地估算';
+
+  @override
+  String get aiCoachAnalyzeNow => '分析当前取景';
+
+  @override
+  String get aiCoachAnalyzing => '正在分析画面与曝光…';
+
+  @override
+  String get aiCoachNoFrame => '请先开启实时取景并等待首帧画面';
+
+  @override
+  String get aiCoachSceneIntentHint => '拍摄意图（如：日落人像、街头剪影，留空自动识别）';
+
+  @override
+  String get aiCoachSceneAuto => '自动';
+
+  @override
+  String get aiCoachScenePortrait => '人像';
+
+  @override
+  String get aiCoachSceneLandscape => '风光';
+
+  @override
+  String get aiCoachSceneStreet => '人文';
+
+  @override
+  String get aiCoachSceneNight => '夜景';
+
+  @override
+  String get aiCoachSceneFood => '静物';
+
+  @override
+  String aiCoachCompScore(int score) {
+    return '构图 $score 分';
+  }
+
+  @override
+  String aiCoachExpScore(int score) {
+    return '曝光 $score 分';
+  }
+
+  @override
+  String get aiCoachCompositionSection => '构图建议';
+
+  @override
+  String get aiCoachToneSection => '影调与色调诊断';
+
+  @override
+  String get aiCoachExposureSyncSection => '建议曝光参数';
+
+  @override
+  String get aiCoachApplyExposure => '一键同步到相机';
+
+  @override
+  String aiCoachExposureApplied(int count) {
+    return '已同步 $count 项参数到相机';
+  }
+
+  @override
+  String get aiCoachExposureNoneWritable => '当前无匹配的机内可写参数或机内为全自动模式';
+
+  @override
+  String get aiCoachNp3Section => '匹配现有机内配方 (.NP3)';
+
+  @override
+  String get aiCoachNp3WriteSlot => '写入机内';
+
+  @override
+  String get aiCoachNp3SelectSlotTitle => '选择目标自定义优化校准槽位';
+
+  @override
+  String aiCoachNp3SlotLabel(int slot) {
+    return 'C$slot';
+  }
+
+  @override
+  String aiCoachNp3WriteSuccess(String name, int slot) {
+    return '已将「$name」写入机内 C$slot 并激活';
+  }
+
+  @override
+  String aiCoachNp3WriteFailed(String err, int slot) {
+    return '写入 C$slot 失败：$err';
+  }
+
+  @override
+  String get aiCoachNp3RequiresNikon => '仅支持已连接的尼康相机写入机内自定义配方';
+
+  @override
+  String get aiCoachClearOverlay => '清除叠加';
+
+  @override
+  String get aiCoachSetupAiFirst =>
+      '当前未配置 AI API Key 或未指定模型，暂无法调用云端 AI。请前往「设置 → AI 视觉引擎与密钥」配置（支持 DeepSeek、Qwen-VL、GLM-4V、OpenAI、Claude 等），或先使用本地直方图估算。';
+
+  @override
+  String get aiGradeButton => 'AI 智能调色';
+
+  @override
+  String get aiGradeSheetTitle => 'AI 智能识图调色';
+
+  @override
+  String get aiGradeGenerating => '正在识图并生成三套风格方案…';
+
+  @override
+  String get aiGradeRefining => '正在按你的指令微调…';
+
+  @override
+  String get aiGradeStyleHint => '风格要求（如：柔和日系清透、电影青橙、胶片暖调，留空智能判断）';
+
+  @override
+  String get aiGradeGenerateBtn => '生成调色方案';
+
+  @override
+  String get aiGradeRegenerateBtn => '重新识图';
+
+  @override
+  String aiGradeIntensity(int pct) {
+    return '方案强度 $pct%';
+  }
+
+  @override
+  String get aiGradeRefineHint => '对话微调（如：肤色再透亮一点、暗部保留细节）';
+
+  @override
+  String get aiGradeRefineSend => '微调';
+
+  @override
+  String get aiGradeApplyToCanvas => '应用到画布';
+
+  @override
+  String get aiGradeSavePreset => '存为预设';
+
+  @override
+  String aiGradeAppliedToast(String name) {
+    return '已应用 AI 调色方案「$name」';
+  }
+
+  @override
+  String aiGradeSavedToast(String name) {
+    return '已保存预设「$name」到我的预设';
+  }
+
+  @override
+  String get aiGradeNoImage => '请先加载一张照片后再使用 AI 调色';
+
+  @override
+  String get aiGradeOfflineTag => '本地直方图智能方案';
+
+  @override
+  String get aiOpenSettingsBtn => '前往 AI 设置';
+
+  @override
+  String get aiRetryBtn => '重试分析';
+
+  @override
+  String get aiUseOfflineBaselineBtn => '改用本地直方图估算';
+
+  @override
+  String get aiUnconfiguredTitle => '当前未配置 API Key';
+
+  @override
+  String get aiRequestFailedTitle => 'AI 服务请求失败';
+
+  @override
+  String get aiErrNetworkHint =>
+      '网络连接失败或相机热点阻断了外网，请开启设置中的「AP 热点直连时借用 4G/5G」并确认蜂窝数据可用';
+
+  @override
+  String get aiErrAuthHint => 'API Key 无效、已过期或账户额度不足，请检查 AI 设置中的密钥与服务商配置';
+
+  @override
+  String get aiErrEndpointHint =>
+      '接口 Base URL 或模型 ID 不存在 (404)，请确认服务商地址、协议与模型名称是否正确';
+
+  @override
+  String get aiErrVisionHint => '当前接口或模型拒绝接收图片数据（不支持多模态识图），请更换支持视觉输入的模型或中转站';
+
+  @override
+  String get aiErrRateLimitHint => '请求过于频繁或触发限流，请稍等片刻后重试';
+
+  @override
+  String get aiErrParseHint => '模型回复未按规定 JSON 格式输出，可重试一次或更换更稳定的视觉模型';
+
+  @override
+  String get aiErrServerHint => 'AI 服务端返回异常，请稍后重试或检查接口状态';
+
+  @override
+  String get aiGradeEmptyPromptCardTitle => '输入风格想法，或直接让 AI 识图匹配配方';
+
+  @override
+  String get aiGradeEmptyPromptCardSub =>
+      '系统会把当前照片、直方图与 Zync 全量大师滤镜 / SpektraFilm 物理胶片 / 专业预设目录发给 AI，精选最匹配的三款方案';
+
+  @override
+  String get aiGradeInspirationLabel => '风格灵感快填';
+
+  @override
+  String get aiGradeStyleChipShinkai => '新海诚日系晴空';
+
+  @override
+  String get aiGradeStyleChipWong => '王家卫港风霓虹';
+
+  @override
+  String get aiGradeStyleChipHamada => '滨田英明空气感';
+
+  @override
+  String get aiGradeStyleChipKodak => '复古柯达暖阳';
+
+  @override
+  String get aiGradeStyleChipTealOrange => '电影青橙暗调';
+
+  @override
+  String get aiGradeStyleChipForest => '森系富士胶片';
+
+  @override
+  String get aiGradeStyleChipBw => '纪实高反差黑白';
+
+  @override
+  String get aiGradeRecipeBadgeFilter => '大师滤镜';
+
+  @override
+  String get aiGradeRecipeBadgeSpektra => '物理胶片';
+
+  @override
+  String get aiGradeRecipeBadgePreset => '专业预设';
+
+  @override
+  String get aiGradeRecipeBadgeCustom => 'AI 微调';
+
+  @override
+  String get aiGradeCompareHold => '按住对比原图';
+
+  @override
+  String get aiGradeAnalyzingHint => '正在发送照片与配方目录给 AI 思考匹配…';
+
+  @override
+  String get aiCoachReadyHintTitle => '框出杂乱场景中的隐藏大片';
+
+  @override
+  String get aiCoachReadyHintSub =>
+      'AI 将识别最值得拍的主体、推荐横竖屏裁切比例，并给出光线/姿态/抓拍时机等实战技巧';
+
+  @override
+  String get aiCoachCropPreviewTitle => 'AI 推荐构图裁切预览';
+
+  @override
+  String get aiCoachOrientationPortrait => '竖屏';
+
+  @override
+  String get aiCoachOrientationLandscape => '横屏';
+
+  @override
+  String get aiCoachOrientationSquare => '方形';
+
+  @override
+  String get aiCoachViewOriginalCrop => '查看原图框选';
+
+  @override
+  String get aiCoachViewCroppedResult => '查看裁切成片';
+
+  @override
+  String get aiCoachShowOnViewfinder => '上屏取景框引导';
+
+  @override
+  String get aiCoachFocusCropSubject => '对焦框内主体';
+
+  @override
+  String get aiCoachShootingTipsSection => '实战拍摄技巧';
+
+  @override
+  String get aiCoachOverlayPillLabel => 'AI 构图';
+
+  @override
+  String get wmDetailedParamsPill => '详细参数';
+
+  @override
+  String get aiGradeLaunchReadySub => '识图匹配三大配方库 · 生成三套方案';
+
+  @override
+  String get aiGradeLaunchSetupSub => '当前未配置 API Key，点击配置或先用本地估算';
+
+  @override
+  String get aiApiKeyNotConfiguredShort => '未配置 API Key';
+
+  @override
+  String get aiViewTutorialBtn => '配置教程';
+
+  @override
+  String get onboardingAiTitle => '配置 AI API Key';
+
+  @override
+  String get onboardingAiSubtitle =>
+      '接入你自己的视觉大模型密钥（BYOK），解锁 AI 实时取景构图与 AI 智能识图调色；密钥仅用系统硬件加密存储在本地。';
+
+  @override
+  String get aiGuideModalTitle => 'Zync 3.0.1 · 配置 AI API Key 指南';
+
+  @override
+  String get aiGuideModalSubtitle =>
+      '尚未检测到已配置的 AI API Key，按下方 4 步即可在 1 分钟内开启 AI 取景构图与 AI 识图调色。';
+
+  @override
+  String get aiGuideStep1Title => '1. 获取 API Key';
+
+  @override
+  String get aiGuideStep1Desc =>
+      '在 DeepSeek（platform.deepseek.com）、阿里云百炼（Qwen-VL）、智谱清言（GLM-4V）、OpenAI 或 Anthropic 控制台创建并复制密钥（通常以 sk- 开头）。';
+
+  @override
+  String get aiGuideStep2Title => '2. 添加接口档案并一键填入地址';
+
+  @override
+  String get aiGuideStep2Desc =>
+      '进入「设置 → AI 视觉引擎与密钥 → 添加接口档案」，点选对应服务商快捷模板，自动填好协议与 Base URL。';
+
+  @override
+  String get aiGuideStep3Title => '3. 粘贴密钥并勾选模型';
+
+  @override
+  String get aiGuideStep3Desc =>
+      '粘贴 API Key，点击「自动拉取模型列表」或手动输入模型名（如 deepseek-chat、qwen-vl-max、gpt-4o），勾选后点击保存。';
+
+  @override
+  String get aiGuideStep4Title => '4. 指派取景与调色模型';
+
+  @override
+  String get aiGuideStep4Desc =>
+      '在页面顶部将已导入的模型分别设为「实时取景指导」和「AI 智能调色」模型，即可在取景页和水印工坊一键体验。';
+
+  @override
+  String get aiGuideConfigureNowBtn => '立即配置 API Key';
+
+  @override
+  String get aiGuideConfiguredBadge => '已完成 API Key 配置';
+
+  @override
+  String get aiGuideLaterBtn => '稍后再说';
 }

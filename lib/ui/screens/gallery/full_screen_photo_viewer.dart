@@ -42,7 +42,6 @@ class FullScreenPhotoViewer extends StatefulWidget {
 class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
   late final PageController _pageController;
   late int _currentIndex;
-  final Set<String> _viewedDuringSession = <String>{};
   final Set<String> _fullTried = {};
   final Map<String, PhotoMetadata> _parsedMetas = {};
 
@@ -51,21 +50,11 @@ class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
     super.initState();
     _currentIndex = widget.initialIndex;
     _pageController = PageController(initialPage: widget.initialIndex);
-    if (widget.initialIndex >= 0 &&
-        widget.initialIndex < widget.groups.length) {
-      _viewedDuringSession.add(widget.groups[widget.initialIndex].baseName);
-    }
     _preloadMetaForCurrent();
   }
 
   @override
   void dispose() {
-    // 退出查看器后再统一标记已查看，避免打开/翻页期间相册网格在背后重建
-    // 并抢用同一条 USB PTP 连接。
-    if (_viewedDuringSession.isNotEmpty) {
-      unawaited(
-          CameraViewedTracker.instance.markAllViewed(_viewedDuringSession));
-    }
     _pageController.dispose();
     super.dispose();
   }
@@ -434,9 +423,6 @@ class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
               onPageChanged: (idx) {
                 setState(() => _currentIndex = idx);
                 _preloadMetaForCurrent();
-                if (idx >= 0 && idx < widget.groups.length) {
-                  _viewedDuringSession.add(widget.groups[idx].baseName);
-                }
               },
               itemBuilder: (context, index) {
                 final file = widget.groups[index].primaryItem;

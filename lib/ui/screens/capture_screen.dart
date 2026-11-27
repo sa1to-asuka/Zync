@@ -35,6 +35,8 @@ import '../../protocol/camera_driver.dart';
 import '../../protocol/ptp_ip_client.dart' show PtpException;
 import '../../protocol/camera_native_bridge.dart';
 import '../design/design.dart';
+import '../widgets/ai_svg_icons.dart';
+import 'capture/ai_coach_overlay.dart';
 import 'capture/capture_controls.dart';
 import 'capture/capture_interval_sheet.dart';
 import 'capture/capture_overlays.dart';
@@ -98,6 +100,8 @@ class CaptureScreenState extends State<CaptureScreen> {
   /// 当前取景会话是在哪种模式下开的。模式切换后必须重开，否则相机会拒绝录像。
   CameraCaptureMode? _liveViewStartedInMode;
 
+  final AiCoachController _aiCoachController = AiCoachController();
+
   @override
   void initState() {
     super.initState();
@@ -138,6 +142,7 @@ class CaptureScreenState extends State<CaptureScreen> {
 
   @override
   void dispose() {
+    _aiCoachController.dispose();
     widget.liveViewController.removeListener(_syncMovieRecordingFlag);
     widget.movieController.detach();
     _connectionSub?.cancel();
@@ -348,13 +353,18 @@ class CaptureScreenState extends State<CaptureScreen> {
     final ny = (localPosition.dy - rect.top) / rect.height;
     if (nx < 0 || nx > 1 || ny < 0 || ny > 1) return;
 
-    final point = AfAreaMapper.fromNormalized(nx, ny);
     setState(() => _focusPoint = localPosition);
     _focusTimer?.cancel();
     _focusTimer = Timer(const Duration(milliseconds: 800), () {
       if (mounted) setState(() => _focusPoint = null);
     });
+    await _focusAtNormalized(Offset(nx, ny));
+  }
 
+  Future<void> _focusAtNormalized(Offset normalized) async {
+    final nx = normalized.dx.clamp(0.05, 0.95);
+    final ny = normalized.dy.clamp(0.05, 0.95);
+    final point = AfAreaMapper.fromNormalized(nx, ny);
     try {
       await widget.liveViewController.focusAt(point.x, point.y);
       if (AppSettings.instance.liveViewAfDrive) await _autoFocus();
@@ -965,6 +975,47 @@ class CaptureScreenState extends State<CaptureScreen> {
                 color: zc.accent,
               ),
             ),
+          Tooltip(
+            message: l10n.aiCoachButton,
+            child: ZPressable(
+              onTap: () => showAiCoachSheet(
+                context: context,
+                controller: _aiCoachController,
+                liveViewController: widget.liveViewController,
+                exposureController: widget.exposureController,
+                driver: widget.driver,
+                onFocusAtNormalized: _focusAtNormalized,
+              ),
+              borderRadius: ZRadius.brMd,
+              child: ListenableBuilder(
+                listenable: _aiCoachController,
+                builder: (_, __) {
+                  final active = _aiCoachController.showOverlay;
+                  return Container(
+                    width: 32,
+                    height: 32,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: active ? zc.accentContainer : ZSwatch.transparent,
+                      borderRadius: ZRadius.brMd,
+                      border: active
+                          ? Border.all(
+                              color: zc.accent.withAlpha(110),
+                              width: 1,
+                            )
+                          : null,
+                    ),
+                    child: AiSvgIcon(
+                      AiSvgIconKind.sparkleAperture,
+                      size: 18,
+                      color: active ? zc.accent : zc.textPrimary,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          const SizedBox(width: ZSpace.xs),
           ZIconButton(
             icon: Icons.create_new_folder_outlined,
             tooltip: l10n.storageFolderPath(AppSettings.instance.exportFolder),
@@ -1035,6 +1086,12 @@ class CaptureScreenState extends State<CaptureScreen> {
                       ),
                     ),
                   ),
+                  IgnorePointer(
+                    child: AiCompositionOverlay(
+                      controller: _aiCoachController,
+                      quarterTurns: _orientation ~/ 90,
+                    ),
+                  ),
                   if (_focusPoint != null)
                     Positioned(
                       left: _focusPoint!.dx - 22,
@@ -1098,6 +1155,38 @@ class CaptureScreenState extends State<CaptureScreen> {
                           return _ViewfinderPlaceholder(controller: liveView);
                         },
                       ),
+                    ),
+                  ),
+                  Positioned(
+                    left: ZSpace.sm,
+                    right: ZSpace.sm,
+                    bottom: ZSpace.sm,
+                    child: ListenableBuilder(
+                      listenable: _aiCoachController,
+                      builder: (ctx, _) {
+                        final res = _aiCoachController.result;
+                        if (!_aiCoachController.showOverlay || res == null) {
+                          return const SizedBox.shrink();
+                        }
+                        return AiViewfinderTipBanner(
+                          result: res,
+                          onOpenCoach: () => showAiCoachSheet(
+                            context: context,
+                            controller: _aiCoachController,
+                            liveViewController: widget.liveViewController,
+                            exposureController: widget.exposureController,
+                            driver: widget.driver,
+                            onFocusAtNormalized: _focusAtNormalized,
+                          ),
+                          onFocusSubject: widget.driver.supportsTapToFocus &&
+                                  res.effectiveCropRect != null
+                              ? () => _focusAtNormalized(
+                                    res.effectiveCropRect!.center,
+                                  )
+                              : null,
+                          onClose: _aiCoachController.clear,
+                        );
+                      },
                     ),
                   ),
                 ],

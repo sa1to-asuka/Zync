@@ -240,6 +240,46 @@ abstract final class EngineL10n {
       en: 'Designed for travel & landscape · Highlights DMS shooting coordinates, camera brand emblem & lens EXIF',
       ja: '風景・旅スナップ専用・撮影経緯度DMS座標とカメラブランド徽章・露出パラメータを強調表示',
     ),
+    '宽银幕 · 电影黑边': (
+      en: 'Widescreen · Cinema Letterbox',
+      ja: 'ワイドスクリーン・映画黒帯',
+    ),
+    '2.39:1 宽银幕上下黑边 · 居中剧场字幕位与拍摄参数 · 叙事胶片感': (
+      en: '2.39:1 cinema letterbox matte with centered subtitle slot & camera specs',
+      ja: '2.39:1 シネマ黒帯・中央シアター字幕枠と撮影パラメータの物語的ルック',
+    ),
+    '东方画轴 · 留白印章': (
+      en: 'Oriental Scroll · Vermilion Seal',
+      ja: '和風掛軸・余白と朱印',
+    ),
+    '宣纸米白宽留白画框 · 右侧竖排诗行与朱红印章格调 · 适配书法艺术字': (
+      en: 'Warm rice-paper wide mat frame accented for vertical poetry & vermilion seals',
+      ja: '和紙調オフホワイトの広余白額縁・縦書き詩行と朱印に最適な書道スタイル',
+    ),
+    '手写拍立得 · 宽底签名': (
+      en: 'Handwritten Polaroid · Wide Signature',
+      ja: '手書きポラロイド・広下部サイン',
+    ),
+    '经典加厚白卡底部签名区 · 右侧微标参数 · 适合搭配 Caveat / 行楷签名': (
+      en: 'Classic thick lower matte signature space paired with subtle side EXIF specs',
+      ja: 'クラシック厚手下部サイン余白・右側に控えめな撮影スペック表示',
+    ),
+    '美术馆 · 策展宽裱框': (
+      en: 'Gallery · Exhibition Mat',
+      ja: '美術館・キュレーション額装',
+    ),
+    '艺术展大面积留白卡纸 · 极细内线框与策展焦段铭牌 · 高级画册感': (
+      en: 'Expansive museum mat board with fine inner keyline and exhibition plaque',
+      ja: '美術展覧会風の広いマット台紙・極細内線枠と展示キャプション',
+    ),
+    '画报双栏 · 摄影专题': (
+      en: 'Editorial Split · Feature Poster',
+      ja: 'エディトリアル二段・特集ポスター',
+    ),
+    '上标题栏与下双栏参数对照 · 强调色竖标与日期索引 · 纪实画册感': (
+      en: 'Top masthead & split two-column specs with accent rule and date index',
+      ja: '上部見出し＋下部2カラム対照スペック・アクセント縦線と日付インデックス',
+    ),
     '品牌标识': (en: 'Brand Emblem', ja: 'ブランド徽章'),
     '经纬度坐标': (en: 'GPS Coordinates', ja: '緯度・経度座標'),
     '拍摄经纬度': (en: 'Shooting GPS', ja: '撮影緯度・経度'),
@@ -651,6 +691,22 @@ abstract final class EngineL10n {
       en: 'Nikon Flexible Color NP3 (0310) binary layout & Color Blender parser reference',
       ja: 'ニコン Flexible Color NP3 (0310) バイナリ構造およびカラーブレンダー解析リファレンス',
     ),
+    'Zync AI 实时取景指导与智能识图调色 BYOK 多模态视觉接口规范兼容': (
+      en: 'OpenAI & Anthropic vision protocol compatibility for Zync BYOK AI Coach & Grading',
+      ja: 'Zync BYOK AI 撮影支援・スマート補正用マルチモーダル視覚 API 仕様準拠',
+    ),
+    'ZIP 压缩包与配方合集归档解压': (
+      en: 'ZIP archive extraction for NP3/NCP recipe packs & font bundles',
+      ja: 'NP3/NCP レシピパックおよびフォントアーカイブの ZIP 解凍処理',
+    ),
+    'Playfair Display、Cinzel、Caveat、JetBrains Mono 内置英文字体资源': (
+      en: 'Bundled Playfair Display, Cinzel, Caveat and JetBrains Mono typefaces',
+      ja: '内蔵欧文フォント資源（Playfair Display / Cinzel / Caveat / JetBrains Mono）',
+    ),
+    '云端按需艺术中文字体商店（霞鹜文楷、朱雀仿宋、站酷小薇、马善政、龙藏体、钟齐志莽行书）': (
+      en: 'On-demand cloud Chinese artistic fonts (LXGW WenKai, Zhuque Fangsong, ZCOOL XiaoWei, Ma Shan Zheng, Long Cang, Zhi Mang Xing)',
+      ja: 'クラウドオンデマンド中国語アートフォント（霞鶩文楷・朱雀仿宋・ZCOOL 小薇・馬善政・龍蔵・志莽行書）',
+    ),
     '色彩优化近似效果预览内置免费人像、街景、花朵与生活样片素材': (
       en: 'Free portrait, street, floral & lifestyle sample photos for Picture Control preview',
       ja: 'ピクチャーコントロール近似プレビュー用ポートレート・街並み・花・日常フリー素材',
@@ -750,6 +806,46 @@ abstract final class EngineL10n {
     'LGPL-2.1：仅参考协议常数与交互顺序，禁止复制 C 代码': (
       en: 'LGPL-2.1: only protocol constants and command ordering are referenced; no C code is copied',
       ja: 'LGPL-2.1：プロトコル定数とコマンド順序のみ参考にし、C コードは複製していません',
+    ),
+    'DeepSeek 官方': (
+      en: 'DeepSeek Official',
+      ja: 'DeepSeek 公式',
+    ),
+    '阿里云百炼 (Qwen-VL)': (
+      en: 'Alibaba DashScope (Qwen)',
+      ja: 'Alibaba DashScope (Qwen)',
+    ),
+    '智谱清言 (GLM-4V)': (
+      en: 'Zhipu AI (GLM)',
+      ja: 'Zhipu AI (GLM)',
+    ),
+    '硅基流动 (SiliconFlow)': (
+      en: 'SiliconFlow',
+      ja: 'SiliconFlow',
+    ),
+    '火山方舟 (豆包视觉)': (
+      en: 'Volcengine Ark',
+      ja: 'Volcengine Ark',
+    ),
+    'Google Gemini (OpenAI兼容)': (
+      en: 'Google Gemini (OpenAI Compat)',
+      ja: 'Google Gemini (OpenAI 互換)',
+    ),
+    'OpenAI 官方': (
+      en: 'OpenAI Official',
+      ja: 'OpenAI 公式',
+    ),
+    'Anthropic Claude': (
+      en: 'Anthropic Claude',
+      ja: 'Anthropic Claude',
+    ),
+    'OpenRouter': (
+      en: 'OpenRouter',
+      ja: 'OpenRouter',
+    ),
+    'Ollama 本地局域网': (
+      en: 'Ollama Local LAN',
+      ja: 'Ollama ローカル LAN',
     ),
   };
 

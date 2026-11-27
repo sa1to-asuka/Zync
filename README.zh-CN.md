@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <strong>面向尼康 Z 系列的传输、无线互联与水印工坊。</strong>
+  <strong>面向尼康 Z 系列的无线/有线联机、AI 取景与调色、物理胶片与水印工坊。</strong>
 </p>
 
 <p align="center">
@@ -14,25 +14,36 @@
   <a href="README.ja.md">日本語</a>
 </p>
 
-Zync 是一款使用 Flutter 开发的开源摄影工具，围绕尼康 Z 系列相机整理出一条紧凑的工作流：连接相机、浏览与传输照片，然后完成调色、水印和导出。应用可直接通过 Wi-Fi PTP/IP 或 USB PTP 与相机通信，不依赖厂商账号、云服务或专有 SDK。
+Zync 是一款使用 Flutter 与原生 Kotlin/C++ 开发的开源摄影工作站应用，围绕尼康 Z 系列相机（Z 30 / Z 50II / Z fc / Z f / Z 6 / Z 8 等）打造从拍摄到出片的完整闭环：通过 Wi-Fi PTP/IP（支持相机热点 AP 与局域网 STA 模式）或 USB OTG PTP 直连相机，完成实时取景遥控、AI 构图指导、相册浏览与断点续传下载、机内 `.NP3` 优化校准写入、16-Bit RAW 与物理胶片调色、AI 智能识图调色、自由排版艺术水印与拼图导出。全程无需厂商账号或专用闭源 SDK。
 
 - 项目地址：<https://github.com/sa1to-asuka/Zync>
-- 当前版本：`2.6.0`
+- 当前版本：`3.0.1`
 - 许可证：MIT
-- 主要平台：Android
+- 主要平台：Android（手机端 & 平板分栏自适应）
+- 界面语言：简体中文 / English / 日本語
 
 ## 功能概览
 
 | 模块 | 能力 |
 | --- | --- |
-| 相机连接 | Wi-Fi PTP/IP 与 USB OTG PTP |
-| 相机浏览 | 浏览 JPG、NEF、NRW，并提取 RAW 内嵌预览 |
-| 文件传输 | 分块下载、任务队列、暂停、取消、重试与自动回传 |
-| 水印工坊 | 16 款模板、EXIF 参数、自定义文字、统一的预设调节面板与物理胶片模拟（20 款底片、红光晕、银盐颗粒） |
-| 拍摄台 | 实时取景、遥控快门、曝光滑条、触控与手动对焦、间隔拍摄、峰值对焦、斑马纹与直方图 |
-| 照片处理 | 调色预设、曝光与影调调整、裁剪、旋转、对比与拼图 |
-| 自适应界面 | 手机底部导航与大屏左侧导航栏 |
-| 应用更新 | GitHub Releases 检查与安装前 SHA-256 校验 |
+| 相机连接 | Wi-Fi PTP/IP（AP 直连 + STA 局域网）、USB OTG PTP、BLE 蓝牙 GPS 0x2007 定位注入 |
+| AI 取景指导 2.0 | BYOK 视觉/推理大模型识图分析，框选杂乱画面中最值得拍的局部构图与横竖屏比例，提供光影/机位/抓拍时机建议、一键对焦与曝光/.NP3 同步 |
+| 拍摄台（实时取景） | 实时图传、触控/手动对焦、曝光三要素、包围曝光、焦点堆叠、机内 HDR、间隔拍摄、录像控制、峰值对焦、斑马纹与直方图 |
+| 相机相册 & 传输 | 支持多存储卡统一视图按拍摄时间倒序浏览 JPG/NEF/NRW、内嵌预览秒开、512 KB 断点续传、`0x9431` 4 GiB+ 视频传输、边拍边传、前景保活与拼图工坊（支持每格独立拖拽缩放） |
+| AI 智能调色 2.0 | 将压缩画面与 Zync 大师滤镜 / SpektraFilm 物理胶片 / 内置预设目录发送给 AI，精选 Top 3 中文方案及本图微调参数，支持长按对比原图与自然语言微调 |
+| 水印工坊 & 调色 | 16 款画廊模板、EXIF 自动解析与详细参数编辑、自由拖拽与旋转艺术字/SVG 标识图层、云端免费商用中文字体、紧凑流式预设与 20 款 SpektraFilm 光学胶片模拟 |
+| 色彩优化工作室 | 通过 PTP/IP 读写机内 C1–C9 自定义 `.NP3`/`.NCP` 优化校准（含 Flexible Color 0310 转码）、实时 257 点曲线预览 |
+| 视频编辑器 | 多段剪辑时间线、`.cube` 3D LUT、色轮/关键帧调色、波形/矢量/直方图监看与 H.264/HEVC 4K 导出 |
+| 系统体验 | 4 步首次启动引导（含 API Key 配置教程）、AP 热点下 4G/5G 蜂窝穿透、Android Keystore 硬件加密密钥库、GitHub Release SHA-256 校验更新 |
+
+## AI 引擎（BYOK 自带密钥）
+
+Zync 3.0.1 内置开放式 **OpenAI 兼容** 与 **Anthropic 兼容** 多模态接口客户端，支持用户填入自己的 API Key：
+
+- **快捷服务商模板**：一键填入 DeepSeek 官方、阿里云百炼（Qwen-VL）、智谱清言（GLM-4V）、硅基流动（SiliconFlow）、火山方舟（豆包视觉）、Google Gemini、OpenAI 官方、Anthropic Claude、OpenRouter 与本地局域网 Ollama。
+- **相机热点蜂窝穿透**：当手机连接相机纯内网 Wi-Fi AP 时，可通过 Android 原生 `CellularHttpBridge` 单请求借道 4G/5G 移动数据调用云端 AI，不打断相机 PTP 连接。
+- **DeepSeek 纯文本/推理桥接与截断修复**：当端点仅支持纯文本对话（如 `deepseek-chat`、`deepseek-reasoner`）时，自动在本地后台计算 3×3 空间亮度/色彩/Sobel 边缘显著性遥测并转为纯文本推理；内置未闭合 `<think>` 剥离与截断 JSON 自动闭合挽救。
+- **密钥本地硬件隔离**：所有 API Key 使用 Android Keystore（AES-256-GCM）独立加密保存，绝不写入明文 JSON 配置文件，并在日志输出时自动脱敏。
 
 ## 连接方式
 
@@ -169,40 +180,31 @@ flutter run
 
 ## 构建应用
 
-构建通用 Release APK：
+推荐在 Android 手机端使用分架构包（`arm64-v8a`，约 49 MB）以减小安装体积；也可构建双 ARM 通用包（约 75 MB）：
 
 ```bash
-flutter build apk --release
-```
+# 分架构构建 Release APK（arm64-v8a / armeabi-v7a）
+flutter build apk --release --split-per-abi
 
-产物位置：
-
-```text
-build/app/outputs/flutter-apk/app-release.apk
-```
-
-构建仅含 ARM64 架构并分离调试符号的版本：
-
-```bash
-flutter build apk --release --split-per-abi --target-platform android-arm64 --split-debug-info=build/symbols/1.0.0-arm64
+# 构建仅含真机 ARM 架构的通用 Release APK（剔除 x86_64）
+flutter build apk --release --target-platform android-arm64,android-arm
 ```
 
 产物位置：
 
 ```text
 build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+build/app/outputs/flutter-apk/app-release.apk
 ```
-
-请将调试符号与对应 APK 一同归档，以便后续解析崩溃堆栈。日常安装不要使用 Debug 包。
 
 ### Windows 构建路径
 
-Flutter Release AOT 构建可能无法处理包含非 ASCII 字符的项目路径。如果 `gen_snapshot` 报错 `Unable to read file: ...app.dill`，请复制到纯 ASCII 路径后重新构建：
+Flutter Release AOT 构建无法处理包含非 ASCII 字符的项目路径（如中文目录名）。如果出现路径异常，可用 `subst` 挂载纯 ASCII 盘符后构建：
 
 ```powershell
-robocopy . D:\zync_ascii /E /XD build .dart_tool .git
-cd D:\zync_ascii
-flutter build apk --release
+subst S: "D:\程序\Nikon-SnapLink"
+cd S:\Zync
+flutter build apk --release --split-per-abi
 ```
 
 ### Release 签名
@@ -218,32 +220,28 @@ cp android/key.properties.example android/key.properties
 
 ### 安装失败排查
 
-发布两种 APK：`Zync-release-<ver>.apk`（arm64，推荐）和
-`Zync-release-<ver>-armeabi-v7a.apk`（老旧 32 位设备）。在只支持 64 位的手机上
-装 32 位包会因为「没有匹配的 ABI」直接失败。
+发布主要包体：`Zync-release-<ver>-arm64-v8a.apk`（arm64，现代手机推荐）、`Zync-release-<ver>.apk`（双 ARM 通用包）以及 `Zync-release-<ver>-armeabi-v7a.apk`（老旧 32 位设备）。在仅支持 64 位的手机上安装 32 位包会因架构不匹配失败。
 
 如果 Android 拒绝安装：
 
-1. 先卸载旧的 Zync。没有配置正式密钥库时构建会退回调试签名，而调试密钥属于
-   打包的那台电脑——换一台电脑打的包无法覆盖安装。
+1. 先卸载旧的 Zync。没有配置正式密钥库时构建会退回调试签名，换机或换密钥打包无法覆盖安装。
 2. 为你使用的浏览器或文件管理器打开「安装未知应用」权限。
-3. 若提示签名冲突，说明已安装的副本是另一把密钥签的，只能先卸载。
-
-`android/key.properties` 缺失时构建会退回调试签名，正式分发前请先配置密钥库。
+3. 若提示签名冲突，请先卸载旧版本再安装。
 
 ### Release 资产与更新校验
 
 Zync 从 <https://github.com/sa1to-asuka/Zync/releases> 检查更新。发布时请上传 APK 和同名 SHA-256 文件：
 
 ```text
-Zync-release-1.0.0.apk
-Zync-release-1.0.0.apk.sha256
+Zync-release-3.0.1.apk
+Zync-release-3.0.1-arm64-v8a.apk
+Zync-release-3.0.1.apk.sha256
 ```
 
 校验文件内容格式：
 
 ```text
-<sha256>  Zync-release-1.0.0.apk
+<sha256>  Zync-release-3.0.1.apk
 ```
 
 应用内更新会在安装前校验文件完整性，校验失败时不会继续安装。
@@ -312,8 +310,16 @@ Wi-Fi 与 USB 传输遵循公开的 Picture Transfer Protocol 模型：
 | [ptpip](https://github.com/mmattes/ptpip) | PTP/IP 实现参考 | Apache-2.0 |
 | [libptp](https://github.com/Fimagena/libptp) | PTP/IP 与 USB PTP 实现参考 | LGPL-2.1 |
 | [NikonCopy](https://github.com/Zephyrion-Yuan/NikonCopy) | Android USB OTG PTP 文件访问参考 | 仓库当前未声明许可证 |
-| [furble](https://github.com/gkoh/furble) | 尼康 BLE 快门行为参考 | MIT |
+| [furble](https://github.com/gkoh/furble) | 尼康 BLE 快门控制与 0x2007 经纬度定位同步参考 | MIT |
 | [nikongeotag](https://github.com/rjmendez/nikongeotag) | 尼康 BLE smart-device 协议参考 | GPL-3.0 |
+| [semi-utils](https://github.com/leslievan/semi-utils) | 相机 EXIF 水印模板（标准框、圆角阴影、极简参数、品牌匹配与地理坐标）设计参考 | Apache-2.0 |
+| [Copicseal (可图匠)](https://github.com/copicseal/copicseal) | 相机参数边框、经典白边、无框与复古时间戳水印排版参考 | Apache-2.0 |
+| [PicSeal](https://github.com/pipiqiang/PicSeal) | 相机设备自动识别、品牌风格水印生成与 EXIF 保留参考 | MIT |
+| [camera-watermark](https://github.com/myWsq/camera-watermark) | 单反/微单 EXIF 合成相机水印与参数自定义交互参考 | MIT |
+| [zf-capture-one-helper](https://github.com/open-nikonz/zf-capture-one-helper) | 尼康 Z 系列 `_ptp._tcp` Bonjour 广播字段与 STA 无线配对握手序列参考 | Apache-2.0 |
+| [OpenAI / Anthropic API Specs](https://platform.openai.com/docs/guides/vision) | Zync AI 实时取景指导与智能识图调色 BYOK 多模态视觉接口规范兼容 | Public API Spec |
+| [Google Fonts · English Artistic Fonts](https://github.com/google/fonts) | Playfair Display、Cinzel、Caveat、JetBrains Mono 内置英文字体资源 | SIL OFL-1.1 |
+| [LXGW WenKai / Zhuque Fangsong / ZCOOL](https://github.com/lxgw/LxgwWenKai) | 云端按需艺术中文字体商店（霞鹜文楷、朱雀仿宋、站酷小薇、马善政、龙藏体、钟齐志莽行书） | SIL OFL-1.1 |
 
 ### 色彩优化配方与预览素材
 
@@ -342,6 +348,9 @@ Wi-Fi 与 USB 传输遵循公开的 Picture Transfer Protocol 模型：
 | [intl](https://github.com/dart-lang/i18n) | 国际化与日期格式 | BSD-3-Clause |
 | [path_provider](https://github.com/flutter/packages/tree/main/packages/path_provider) | 平台目录定位 | BSD-3-Clause |
 | [video_player](https://github.com/flutter/packages/tree/main/packages/video_player) | 视频播放支持 | BSD-3-Clause |
+| [archive](https://github.com/brendan-duncan/archive) | ZIP 压缩包与配方合集归档解压 | MIT |
+| [flutter_localizations](https://github.com/flutter/flutter/tree/master/packages/flutter_localizations) | 多语言本地化委托与资源加载 | BSD-3-Clause |
+| [animations](https://github.com/flutter/packages/tree/main/packages/animations) | Material 动效转场组件库（FadeThrough / SharedAxis） | BSD-3-Clause |
 
 应用内也可通过 **设置 → 关于 Zync → 项目与许可 → 开源致谢** 查看同一份致谢数据。当前未声明许可证的项目会如实标注，不会被描述为已开源许可。
 

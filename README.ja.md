@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <strong>Nikon Z シリーズ向けの転送・ワイヤレス連携・ウォーターマークスタジオ。</strong>
+  <strong>Nikon Z シリーズ向けの無線／USB 連携・AI 撮影／補正・物理フィルム・ウォーターマークスタジオ。</strong>
 </p>
 
 <p align="center">
@@ -14,25 +14,35 @@
   <a href="README.ja.md">日本語</a>
 </p>
 
-Zync は、Nikon Z シリーズでの撮影後ワークフローに焦点を当てた Flutter 製のオープンソースアプリです。カメラへの接続、写真の閲覧と転送、カラー調整、ウォーターマーク、書き出しまでを一つの流れで扱えます。Wi-Fi PTP/IP または USB PTP でカメラと直接通信し、メーカーアカウント、クラウドサービス、専用 SDK を必要としません。
+Zync は Nikon Z シリーズ（Z 30 / Z 50II / Z fc / Z f / Z 6 / Z 8 など）の撮影から仕上げまでを一つの流れにまとめた、Flutter ＋ Kotlin/C++ 製のオープンソースフォトスタジオです。Wi-Fi PTP/IP（カメラ AP / STA モード両対応）または USB OTG PTP でカメラと直接通信し、メーカーアカウント、クラウドサービス、専用 SDK を一切必要としません。
 
 - プロジェクト: <https://github.com/sa1to-asuka/Zync>
-- バージョン: `2.6.0`
+- バージョン: `3.0.1`
 - ライセンス: MIT
-- 主な対象プラットフォーム: Android
+- 主な対象プラットフォーム: Android（スマートフォン／タブレット 2 ペイン対応）
+- 対応言語: English / 简体中文 / 日本語
 
 ## 機能概要
 
 | 分野 | Zync でできること |
 | --- | --- |
-| カメラ接続 | Wi-Fi PTP/IP と USB OTG PTP |
-| カメラ閲覧 | JPG、NEF、NRW の閲覧と RAW 埋め込みプレビューの抽出 |
-| 転送 | 分割ダウンロード、転送キュー、一時停止、取消、再試行、自動転送 |
-| ウォーターマーク | 16 種類のテンプレート、EXIF、カスタム文字、統合プリセット調整パネル、物理フィルムシミュレーション（20 種のフィルム、ハレーション、銀塩粒子） |
-| 撮影台 | ライブビュー、リモートシャッター、露出スライダー、タップ／マニュアルフォーカス、インターバル撮影、ピーキング、ゼブラ、ヒストグラム |
-| 写真編集 | カラープリセット、露出・トーン調整、トリミング、回転、比較、コラージュ |
-| レスポンシブ UI | スマートフォンでは下部ナビゲーション、大画面では左側ナビゲーション |
-| アプリ更新 | GitHub Releases の確認とインストール前の SHA-256 検証 |
+| カメラ接続 | Wi-Fi PTP/IP（AP＋STA）、USB OTG PTP、BLE GPS `0x2007` 位置情報注入 |
+| AI 構図コーチ 2.0 | BYOK ビジョン／推論モデルが雑然とした画面から最適なトリミング範囲と縦横比を発見し、光線・構図・タイミングの助言、ワンタップ AF、露出/`.NP3` 同期を実行 |
+| 撮影台（ライブビュー） | ライブビュー、リモートシャッター、露出スライダー、タップ／マニュアルフォーカス、インターバル撮影、ブラケット撮影、カメラ内 HDR、録画制御、ピーキング、ゼブラ、ヒストグラム |
+| ギャラリー＆転送 | 撮影日時順の統合カード表示（JPG/NEF/NRW）、512 KB レジューム転送、`0x9431` 4 GiB 超動画転送、撮影同時転送、フォアグラウンド維持、コマ別ズーム＆パン対応コラージュ |
+| AI スマート補正 2.0 | 縮小プレビューと Zync 内蔵フィルター・SpektraFilm・プリセット一覧を AI に送り、最適な 3 案と微調整パラメーターを提案。長押し比較や自然言語微調整に対応 |
+| ウォーターマーク | 16 種類のテンプレート、詳細パラメータ編集、自由配置アートテキスト・SVG ロゴ、クラウド商用可中国語フォント、コンパクトプリセット帯、SpektraFilm 20 種物理フィルム |
+| ピクチャーコントロール | PTP/IP 経由で C1–C9 スロットの `.NP3`/`.NCP` を読み書き（Flexible Color 0310 変換対応）、257 点トーンカーブ確認 |
+| 動画エディター | マルチクリップタイムライン、`.cube` 3D LUT、キーフレーム、ウェーブフォーム／ベクトルスコープ／ヒストグラム、1080p/4K 書き出し |
+| 導入＆セキュリティ | API キー設定ガイド含む 4 ステップオンボーディング、Android Keystore（AES-256-GCM）暗号化保存、AP 接続時のモバイル回線バイパス、SHA-256 更新検証 |
+
+## AI エンジン（BYOK）
+
+Zync 3.0.1 は **OpenAI 互換** と **Anthropic 互換** の双方に対応し、ご自身の API キーを登録して利用できます。
+
+- **クイックプリセット**: DeepSeek 公式、Alibaba Bailian (Qwen-VL)、Zhipu (GLM-4V)、SiliconFlow、Volcengine Ark、Google Gemini、OpenAI 公式、Anthropic Claude、OpenRouter、ローカル Ollama。
+- **カメラ AP 接続時のモバイル回線バイパス**: カメラの Wi-Fi AP に接続中も Android `CellularHttpBridge` で AI リクエストのみ 4G/5G 経由で送信し、カメラ接続を維持します。
+- **テキスト専用モデル橋渡し＆JSON 自動修復**: テキスト専用モデル（`deepseek-chat` / `deepseek-reasoner` 等）が画像入力を拒否した場合、ローカルで 3×3 空間輝度・色・Sobel エッジ計測値へ自動変換して推論を続行し、途切れた JSON や `<think>` ブロックも安全に復旧します。
 
 ## 接続モード
 
@@ -169,40 +179,28 @@ flutter run
 
 ## ビルド
 
-ユニバーサル Release APK をビルドします。
+スマートフォンには容量の小さい ABI 分割版（`arm64-v8a` 約 49 MB）を推奨します。`x86_64` を除いたデュアル ARM 版（約 75 MB）もビルド可能です。
 
 ```bash
-flutter build apk --release
-```
-
-出力先:
-
-```text
-build/app/outputs/flutter-apk/app-release.apk
-```
-
-ARM64 のみのパッケージをデバッグシンボル分離付きでビルドします。
-
-```bash
-flutter build apk --release --split-per-abi --target-platform android-arm64 --split-debug-info=build/symbols/1.0.0-arm64
+flutter build apk --release --split-per-abi
+flutter build apk --release --target-platform android-arm64,android-arm
 ```
 
 出力先:
 
 ```text
 build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+build/app/outputs/flutter-apk/app-release.apk
 ```
-
-生成したシンボルは対応する APK と一緒に保管してください。後からクラッシュレポートをシンボル化するために必要です。通常のインストールには Debug ビルドを使用しないでください。
 
 ### Windows のビルドパス
 
-Flutter の Release AOT ビルドは、プロジェクトパスに非 ASCII 文字が含まれる場合に失敗することがあります。`gen_snapshot` が `Unable to read file: ...app.dill` などのエラーを出した場合は、ASCII のみのパスへコピーして再ビルドしてください。
+プロジェクトパスに非 ASCII 文字が含まれる場合、`subst` で ASCII ドライブ文字を割り当ててからビルドしてください。
 
 ```powershell
-robocopy . D:\zync_ascii /E /XD build .dart_tool .git
-cd D:\zync_ascii
-flutter build apk --release
+subst S: "D:\your-non-ascii-path\Nikon-SnapLink"
+cd S:\Zync
+flutter build apk --release --split-per-abi
 ```
 
 ### リリース署名
@@ -218,36 +216,28 @@ cp android/key.properties.example android/key.properties
 
 ### インストールできない場合
 
-APK は 2 種類公開しています。`Zync-release-<ver>.apk`（arm64・推奨）と
-`Zync-release-<ver>-armeabi-v7a.apk`（旧 32 ビット端末）です。64 ビット専用の
-端末に 32 ビット版を入れると、対応 ABI がないため失敗します。
+公開パッケージは `Zync-release-<ver>-arm64-v8a.apk`（64 ビット端末推奨）、`Zync-release-<ver>.apk`（ARM 汎用版）、`Zync-release-<ver>-armeabi-v7a.apk`（旧 32 ビット端末）です。
 
 Android がインストールを拒否する場合:
 
-1. 古い Zync を先にアンインストールしてください。正式なキーストアがない場合の
-   ビルドはデバッグ署名になり、デバッグ鍵はビルドした PC 固有のため、
-   別の PC で作った APK は上書きインストールできません。
-2. 使用するブラウザやファイルマネージャーに「不明なアプリのインストール」を
-   許可してください。
-3. 署名の競合が表示される場合は、既にインストールされている版と鍵が違います。
-   アンインストール以外に解決方法はありません。
-
-`android/key.properties` がない場合、リリースビルドはデバッグ署名に
-フォールバックします。配布前にキーストアを設定してください。
+1. 異なる署名鍵でビルドされた古い Zync が残っている場合は先にアンインストールしてください。
+2. 使用するブラウザやファイルマネージャーに「不明なアプリのインストール」を許可してください。
+3. 端末の CPU アーキテクチャに合った ABI パッケージを選択してください。
 
 ### リリース資産と更新の整合性
 
-Zync は <https://github.com/sa1to-asuka/Zync/releases> を確認します。APK と同じ名前の SHA-256 ファイルを公開してください。
+Zync は <https://github.com/sa1to-asuka/Zync/releases> を確認します。APK と SHA-256 ファイルを公開してください。
 
 ```text
-Zync-release-1.0.0.apk
-Zync-release-1.0.0.apk.sha256
+Zync-release-3.0.1.apk
+Zync-release-3.0.1-arm64-v8a.apk
+Zync-release-3.0.1.apk.sha256
 ```
 
 チェックサムファイルの形式:
 
 ```text
-<sha256>  Zync-release-1.0.0.apk
+<sha256>  Zync-release-3.0.1.apk
 ```
 
 アプリ内アップデーターはインストール前にチェックサムを検証し、一致しない場合はインストールを中止します。
@@ -316,8 +306,16 @@ Wi-Fi と USB の転送は、公開されている Picture Transfer Protocol の
 | [ptpip](https://github.com/mmattes/ptpip) | PTP/IP 実装の参考 | Apache-2.0 |
 | [libptp](https://github.com/Fimagena/libptp) | PTP/IP と USB PTP 実装の参考 | LGPL-2.1 |
 | [NikonCopy](https://github.com/Zephyrion-Yuan/NikonCopy) | Android USB OTG PTP ファイルアクセスの参考 | 現在ライセンスファイルなし |
-| [furble](https://github.com/gkoh/furble) | Nikon BLE シャッター動作の参考 | MIT |
+| [furble](https://github.com/gkoh/furble) | Nikon BLE シャッター動作と `0x2007` 位置情報同期の参考 | MIT |
 | [nikongeotag](https://github.com/rjmendez/nikongeotag) | Nikon BLE smart-device プロトコルの参考 | GPL-3.0 |
+| [semi-utils](https://github.com/leslievan/semi-utils) | カメラ EXIF ウォーターマークテンプレート設計のリファレンス | Apache-2.0 |
+| [Copicseal](https://github.com/copicseal/copicseal) | パラメータ帯・枠なし・レトロ日付スタンプレイアウトのリファレンス | Apache-2.0 |
+| [PicSeal](https://github.com/pipiqiang/PicSeal) | カメラ機種自動判定・ブランド風生成・EXIF 保持のリファレンス | MIT |
+| [camera-watermark](https://github.com/myWsq/camera-watermark) | ミラーレス/一眼 EXIF ウォーターマークおよび項目カスタマイズ UI の参考 | MIT |
+| [zf-capture-one-helper](https://github.com/open-nikonz/zf-capture-one-helper) | Nikon Z `_ptp._tcp` Bonjour フィールドと STA ペアリング手順の参考 | Apache-2.0 |
+| [OpenAI / Anthropic API Specs](https://platform.openai.com/docs/guides/vision) | Zync BYOK AI 撮影支援・スマート補正用マルチモーダル視覚 API 仕様準拠 | Public API Spec |
+| [Google Fonts · English Artistic Fonts](https://github.com/google/fonts) | Playfair Display / Cinzel / Caveat / JetBrains Mono 内蔵欧文フォント | SIL OFL-1.1 |
+| [LXGW WenKai / Zhuque Fangsong / ZCOOL](https://github.com/lxgw/LxgwWenKai) | クラウドオンデマンド中国語アートフォント群 | SIL OFL-1.1 |
 
 ### ピクチャーコントロールのレシピとプレビュー素材
 
@@ -346,6 +344,9 @@ Wi-Fi と USB の転送は、公開されている Picture Transfer Protocol の
 | [intl](https://github.com/dart-lang/i18n) | 国際化と日付書式 | BSD-3-Clause |
 | [path_provider](https://github.com/flutter/packages/tree/main/packages/path_provider) | プラットフォームディレクトリの取得 | BSD-3-Clause |
 | [video_player](https://github.com/flutter/packages/tree/main/packages/video_player) | 動画再生 | BSD-3-Clause |
+| [archive](https://github.com/brendan-duncan/archive) | NP3/NCP レシピパックおよびフォントアーカイブの ZIP 解凍処理 | MIT |
+| [flutter_localizations](https://github.com/flutter/flutter/tree/master/packages/flutter_localizations) | 多言語ローカライズ委譲とリソース読み込み | BSD-3-Clause |
+| [animations](https://github.com/flutter/packages/tree/main/packages/animations) | Material トランジション（FadeThrough / SharedAxis） | BSD-3-Clause |
 
 同じ謝辞データは、アプリ内の **設定 → Zync について → プロジェクトとライセンス → オープンソース謝辞** でも確認できます。ライセンスが宣言されていないプロジェクトは、その事実を明記し、オープンソースライセンス付きとして扱いません。
 

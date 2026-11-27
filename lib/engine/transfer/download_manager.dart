@@ -2,12 +2,14 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
+import '../../core/constants/ptp_opcodes.dart';
 import '../../core/settings/app_settings.dart';
 import '../../core/utils/app_log_manager.dart';
 import '../../core/utils/camera_error_mapper.dart';
 import '../../l10n/l10n.dart';
 import '../../protocol/camera_driver.dart';
 import '../../protocol/camera_native_bridge.dart';
+import '../../protocol/ptp_ip_client.dart';
 import 'download_queue_store.dart';
 import 'export_history_manager.dart';
 import 'keep_alive_arbiter.dart';
@@ -675,10 +677,57 @@ class DownloadManager extends ChangeNotifier {
             ? chunkSize
             : (task.totalBytes - received);
 
-        // downloadPartialObject 内部已含 3 次重试，此处负责把缺失字节补上或抛错
-        final chunk = await driver.downloadPartialObject(
-            task.fileItem.handle, received, requestBytes);
+        // downloadPartialObject 内部已含 0x101B -> 0x9431 自动回退。
+        // 若零偏移首个分块被相机拒绝或返回空，自动回退整图 0x1009 下载，避免卡死导出队列。
+        Uint8List chunk;
+        try {
+          chunk = await driver.downloadPartialObject(
+              task.fileItem.handle, received, requestBytes);
+        } on PtpException catch (e) {
+          if (received == 0 &&
+              (e.responseCode == PtpOpCodes.responseAccessDenied ||
+                  e.responseCode == PtpOpCodes.responseOperationNotSupported ||
+                  e.responseCode == PtpOpCodes.responseParameterNotSupported)) {
+            final fullBytes = await driver.downloadFullObject(
+              task.fileItem.handle,
+              task.totalBytes,
+              onProgress: (current, total) {
+                task.downloadedBytes = current;
+                task.progress =
+                    total > 0 ? (current / total).clamp(0.0, 1.0) : 0.0;
+                onProgress(current, total > 0 ? total : task.totalBytes);
+              },
+            );
+            sink.add(fullBytes);
+            received = fullBytes.length;
+            task.downloadedBytes = received;
+            task.progress = 1.0;
+            onProgress(received, task.totalBytes);
+            break;
+          }
+          rethrow;
+        }
         if (chunk.isEmpty) {
+          if (received == 0) {
+            final fullBytes = await driver.downloadFullObject(
+              task.fileItem.handle,
+              task.totalBytes,
+              onProgress: (current, total) {
+                task.downloadedBytes = current;
+                task.progress =
+                    total > 0 ? (current / total).clamp(0.0, 1.0) : 0.0;
+                onProgress(current, total > 0 ? total : task.totalBytes);
+              },
+            );
+            if (fullBytes.isNotEmpty) {
+              sink.add(fullBytes);
+              received = fullBytes.length;
+              task.downloadedBytes = received;
+              task.progress = 1.0;
+              onProgress(received, task.totalBytes);
+              break;
+            }
+          }
           throw CameraFailure(
             CameraFailureKind.emptyChunk,
             details: <String, Object?>{'offset': received},

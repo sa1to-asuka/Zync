@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import '../../core/utils/exif_helper.dart';
 import '../filter/photo_filter.dart';
 import 'camera_brand_emblem.dart';
+import 'watermark_font_manager.dart';
+import 'watermark_overlay_layer.dart';
 import 'watermark_template.dart';
 
 /// 画布总尺寸与源图片放置矩形结果
@@ -106,6 +108,17 @@ class WatermarkCanvasPainter extends CustomPainter {
   final WatermarkTextAlign customTextAlign;
   final WatermarkLogoCorner logoCorner;
 
+  /// 当图片区由外部矢量回调实时绘制（例如拼图 2.0 叠加水印外框时）使用，
+  /// 保证 60fps 交互零延迟且保留外框阴影/圆角/内嵌文字遮罩。
+  final void Function(Canvas canvas, Rect imgRect)? customPhotoDrawer;
+
+  /// 指定逻辑源图尺寸（[customPhotoDrawer] 模式下即使 [image] 为低清虚化底图或 null，
+  /// 也按此宽高比计算精确画框排版）。
+  final Size? virtualSourceSize;
+
+  /// 自由拖拽/旋转/缩放的多图层艺术字列表（预览与高清导出共用同一份排版）。
+  final List<WatermarkTextLayer> textLayers;
+
   WatermarkCanvasPainter({
     required this.image,
     required this.metadata,
@@ -146,6 +159,9 @@ class WatermarkCanvasPainter extends CustomPainter {
     this.watermarkOpacity = 1.0,
     this.customTextAlign = WatermarkTextAlign.left,
     this.logoCorner = WatermarkLogoCorner.bottomRight,
+    this.customPhotoDrawer,
+    this.virtualSourceSize,
+    this.textLayers = const [],
   });
 
   /// 计算在给定源图尺寸与模板下的目标排版画布尺寸与图片放置位置
@@ -352,6 +368,62 @@ class WatermarkCanvasPainter extends CustomPainter {
             imageRect: Rect.fromLTWH(pad, pad, srcW, srcH),
           );
         }
+      case WatermarkTemplate.cinemaLetterbox:
+        {
+          // 宽银幕 · 电影黑边（上下遮幅黑框 + 居中字幕与 EXIF）
+          final barH = math.max(srcH * 0.12 * spacing, srcW * 0.08 * spacing);
+          return LayoutMetrics(
+            totalWidth: srcW,
+            totalHeight: srcH + barH * 2,
+            imageRect: Rect.fromLTWH(0, barH, srcW, srcH),
+          );
+        }
+      case WatermarkTemplate.orientalScrollSeal:
+        {
+          // 东方画轴 · 留白印章（右侧竖排题款区 + 宣纸四边留白）
+          final pad = srcW * 0.045 * spacing;
+          final rightPanel = srcW * 0.15 * spacing;
+          return LayoutMetrics(
+            totalWidth: srcW + pad + rightPanel,
+            totalHeight: srcH + pad * 2,
+            imageRect: Rect.fromLTWH(pad, pad, srcW, srcH),
+          );
+        }
+      case WatermarkTemplate.polaroidHandwritten:
+        {
+          // 手写拍立得 · 宽底签名
+          final pad = srcW * 0.04 * spacing;
+          final bottomH = srcH * 0.22 * spacing;
+          return LayoutMetrics(
+            totalWidth: srcW + pad * 2,
+            totalHeight: srcH + pad + bottomH,
+            imageRect: Rect.fromLTWH(pad, pad, srcW, srcH),
+          );
+        }
+      case WatermarkTemplate.galleryExhibitionCard:
+        {
+          // 美术馆 · 策展宽裱框
+          final padX = srcW * 0.085 * spacing;
+          final padTop = srcH * 0.075 * spacing;
+          final bottomH = srcH * 0.17 * spacing;
+          return LayoutMetrics(
+            totalWidth: srcW + padX * 2,
+            totalHeight: srcH + padTop + bottomH,
+            imageRect: Rect.fromLTWH(padX, padTop, srcW, srcH),
+          );
+        }
+      case WatermarkTemplate.splitEditorialPoster:
+        {
+          // 画报双栏 · 摄影专题
+          final pad = srcW * 0.036 * spacing;
+          final topH = srcH * 0.095 * spacing;
+          final bottomH = srcH * 0.135 * spacing;
+          return LayoutMetrics(
+            totalWidth: srcW + pad * 2,
+            totalHeight: srcH + topH + bottomH,
+            imageRect: Rect.fromLTWH(pad, topH, srcW, srcH),
+          );
+        }
     }
   }
 
@@ -359,8 +431,8 @@ class WatermarkCanvasPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (size.width <= 0 || size.height <= 0) return;
 
-    if (image != null) {
-      _paintFullComposite(canvas, size, image!);
+    if (image != null || (customPhotoDrawer != null && virtualSourceSize != null)) {
+      _paintFullComposite(canvas, size, image);
     } else {
       _paintPlaceholderPreview(canvas, size);
     }
@@ -385,10 +457,13 @@ class WatermarkCanvasPainter extends CustomPainter {
   }
 
   /// 绘制实际图像与完整水印排版
-  void _paintFullComposite(Canvas canvas, Size size, ui.Image img) {
+  void _paintFullComposite(Canvas canvas, Size size, ui.Image? img) {
+    final vSize = virtualSourceSize;
     final rotated = quarterTurns % 2 != 0;
-    final srcW = rotated ? img.height.toDouble() : img.width.toDouble();
-    final srcH = rotated ? img.width.toDouble() : img.height.toDouble();
+    final rawW = vSize?.width ?? img!.width.toDouble();
+    final rawH = vSize?.height ?? img!.height.toDouble();
+    final srcW = rotated ? rawH : rawW;
+    final srcH = rotated ? rawW : rawH;
     final layout = computeLayout(srcW, srcH, template, spacingScale);
     // contain 适配：画布与排版比例不一致时整体缩放居中，不裁切、不加装饰底 (所见即所得)
     final scaleRatio = math.min(
@@ -409,7 +484,9 @@ class WatermarkCanvasPainter extends CustomPainter {
       Canvas canvas, Size size, ui.Image? img, Rect imgRect) {
     switch (template) {
       case WatermarkTemplate.none:
-        if (img != null) {
+        if (customPhotoDrawer != null) {
+          customPhotoDrawer!(canvas, imgRect);
+        } else if (img != null) {
           _drawImageWithFilter(canvas, img, imgRect);
         } else {
           _drawNonePlaceholder(canvas, size);
@@ -463,9 +540,25 @@ class WatermarkCanvasPainter extends CustomPainter {
       case WatermarkTemplate.geoLocationEditorial:
         _drawGeoLocationEditorial(canvas, size, img, imgRect);
         break;
+      case WatermarkTemplate.cinemaLetterbox:
+        _drawCinemaLetterbox(canvas, size, img, imgRect);
+        break;
+      case WatermarkTemplate.orientalScrollSeal:
+        _drawOrientalScrollSeal(canvas, size, img, imgRect);
+        break;
+      case WatermarkTemplate.polaroidHandwritten:
+        _drawPolaroidHandwritten(canvas, size, img, imgRect);
+        break;
+      case WatermarkTemplate.galleryExhibitionCard:
+        _drawGalleryExhibitionCard(canvas, size, img, imgRect);
+        break;
+      case WatermarkTemplate.splitEditorialPoster:
+        _drawSplitEditorialPoster(canvas, size, img, imgRect);
+        break;
     }
     // 自定义文字与 Logo 与模板正交，所有模板都叠加绘制
     _drawCustomLayer(canvas, imgRect);
+    _drawFreeTextLayers(canvas, size);
   }
 
   /// 4 款新模板与自定义图层统一走这里，实现「整体不透明度」一档生效。
@@ -748,6 +841,17 @@ class WatermarkCanvasPainter extends CustomPainter {
   void _drawPhotoOrPlaceholder(
       Canvas canvas, ui.Image? img, Rect imgRect, double scale,
       {RRect? clipRRect}) {
+    if (customPhotoDrawer != null) {
+      if (clipRRect != null) {
+        canvas.save();
+        canvas.clipRRect(clipRRect);
+        customPhotoDrawer!(canvas, imgRect);
+        canvas.restore();
+      } else {
+        customPhotoDrawer!(canvas, imgRect);
+      }
+      return;
+    }
     if (img != null) {
       if (clipRRect != null) {
         canvas.save();
@@ -2734,6 +2838,752 @@ class WatermarkCanvasPainter extends CustomPainter {
     }
   }
 
+  /// 模板 18: 宽银幕 · 电影黑边（上下遮幅黑框 + 居中剧场字幕与 EXIF）
+  void _drawCinemaLetterbox(
+      Canvas canvas, Size size, ui.Image? img, Rect imgRect) {
+    final scale = size.width / 1200.0;
+    final bgCol = _cardFill(const Color(0xFF0A0B0D));
+    final isDark = _isEffectiveCardDark(const Color(0xFF0A0B0D));
+    final fg = _textColor(isDark ? Colors.white : const Color(0xFF14161A));
+    final sub = _secondaryTextColor(
+        isDark ? Colors.white60 : const Color(0xFF565B64));
+
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Paint()..color = bgCol,
+    );
+    _drawPhotoOrPlaceholder(canvas, img, imgRect, scale);
+
+    // 上部极简剧场索引
+    final topH = imgRect.top;
+    if (topH > 12 * scale && _meta.cameraModel.isNotEmpty) {
+      final topP = TextPainter(
+        text: TextSpan(
+          text: _meta.titleText.toUpperCase(),
+          style: TextStyle(
+            color: sub,
+            fontSize: _metaSize(12, scale),
+            fontFamily: 'ZyncCinzel',
+            fontWeight: _weight(FontWeight.w600),
+            letterSpacing: _letter(4.5, scale),
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+        maxLines: 1,
+      )..layout(maxWidth: size.width * 0.85);
+      _paintText(
+        canvas,
+        topP,
+        Offset((size.width - topP.width) / 2, (topH - topP.height) / 2),
+      );
+    }
+
+    // 下部居中参数
+    final bottomTop = imgRect.bottom;
+    final bottomH = size.height - bottomTop;
+    final summary = <String>[
+      if (_meta.lensModel.isNotEmpty) _meta.lensModel,
+      if (_meta.exposureSummary.isNotEmpty) _meta.exposureSummary,
+      if (_meta.capturedDate.isNotEmpty) _meta.capturedDate,
+    ].join('  ·  ');
+    if (summary.isNotEmpty) {
+      final subP = TextPainter(
+        text: TextSpan(
+          text: summary,
+          style: TextStyle(
+            color: fg,
+            fontSize: _metaSize(14.5, scale),
+            fontFamily: 'ZyncJetBrainsMono',
+            letterSpacing: _letter(1.6, scale),
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+        maxLines: 1,
+        ellipsis: '…',
+      )..layout(maxWidth: size.width * 0.88);
+      _paintText(
+        canvas,
+        subP,
+        Offset(
+          (size.width - subP.width) / 2,
+          bottomTop + (bottomH - subP.height) / 2,
+        ),
+      );
+    }
+  }
+
+  /// 模板 19: 东方画轴 · 留白印章（米白宣纸质感 + 右侧竖排铭文与朱红印记）
+  void _drawOrientalScrollSeal(
+      Canvas canvas, Size size, ui.Image? img, Rect imgRect) {
+    final scale = size.width / 1200.0;
+    final bgCol = _cardFill(const Color(0xFFF6F2E9));
+    final isDark = _isEffectiveCardDark(const Color(0xFFF6F2E9));
+    final fg = _textColor(isDark ? Colors.white : const Color(0xFF1F1E1B));
+    final muted = _secondaryTextColor(
+        isDark ? Colors.white60 : const Color(0xFF6B655B));
+
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Paint()..color = bgCol,
+    );
+    _drawPhotoOrPlaceholder(canvas, img, imgRect, scale);
+
+    // 细框线
+    canvas.drawRect(
+      imgRect,
+      Paint()
+        ..color = fg.withAlpha(45)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = _stroke(1.2, scale),
+    );
+
+    // 右侧留白竖向参数列
+    final colX = imgRect.right + (size.width - imgRect.right) / 2;
+    final colText = <String>[
+      if (_meta.cameraModel.isNotEmpty) _meta.titleText,
+      if (_meta.focalLength.isNotEmpty) _meta.focalLength,
+      if (_meta.aperture.isNotEmpty) _meta.aperture,
+      if (_meta.shutterSpeed.isNotEmpty) _meta.shutterSpeed,
+    ].join(' ');
+    if (colText.isNotEmpty) {
+      _paintVerticalColumnText(
+        canvas,
+        text: colText,
+        centerTop: Offset(colX, imgRect.top + 16 * scale),
+        fontSize: _metaSize(13.5, scale),
+        color: muted,
+        fontFamily: fontFamily,
+        weight: _weight(FontWeight.w500),
+        maxHeight: imgRect.height * 0.65,
+      );
+    }
+
+    // 右下角传统朱红方印徽标
+    final sealSize = math.min((size.width - imgRect.right) * 0.44, 34 * scale);
+    final sealRect = Rect.fromCenter(
+      center: Offset(colX, imgRect.bottom - sealSize * 0.8),
+      width: sealSize,
+      height: sealSize,
+    );
+    const vermilion = Color(0xFFC82829);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(sealRect, Radius.circular(3 * scale)),
+      Paint()..color = vermilion,
+    );
+    final sealP = TextPainter(
+      text: TextSpan(
+        text: '印',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: sealSize * 0.56,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    sealP.paint(
+      canvas,
+      Offset(
+        sealRect.center.dx - sealP.width / 2,
+        sealRect.center.dy - sealP.height / 2,
+      ),
+    );
+  }
+
+  /// 模板 20: 手写拍立得 · 宽底签名
+  void _drawPolaroidHandwritten(
+      Canvas canvas, Size size, ui.Image? img, Rect imgRect) {
+    final scale = size.width / 1200.0;
+    final bgCol = _cardFill(const Color(0xFFFAF9F5));
+    final isDark = _isEffectiveCardDark(const Color(0xFFFAF9F5));
+    final fg = _textColor(isDark ? Colors.white : const Color(0xFF1E2024));
+    final sub = _secondaryTextColor(
+        isDark ? Colors.white70 : const Color(0xFF666B73));
+
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Paint()..color = bgCol,
+    );
+    _drawPhotoOrPlaceholder(canvas, img, imgRect, scale);
+
+    final bottomTop = imgRect.bottom;
+    final bottomH = size.height - bottomTop;
+    final cy = bottomTop + bottomH * 0.46;
+
+    // 左侧手写签名区
+    final sigText = _meta.cameraModel.isNotEmpty
+        ? 'Shot on ${_meta.titleText}'
+        : 'Captured Moment';
+    final sigP = TextPainter(
+      text: TextSpan(
+        text: sigText,
+        style: TextStyle(
+          color: fg,
+          fontSize: _titleSize(30, scale),
+          fontFamily: fontFamily ?? 'ZyncCaveat',
+          fontWeight: _weight(FontWeight.w600),
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+      ellipsis: '…',
+    )..layout(maxWidth: imgRect.width * 0.56);
+    sigP.paint(canvas, Offset(imgRect.left + 8 * scale, cy - sigP.height * 0.68));
+
+    final detailText = <String>[
+      if (_meta.exposureSummary.isNotEmpty) _meta.exposureSummary,
+      if (_meta.capturedDate.isNotEmpty) _meta.capturedDate,
+    ].join('  ·  ');
+    if (detailText.isNotEmpty) {
+      final dtP = TextPainter(
+        text: TextSpan(
+          text: detailText,
+          style: TextStyle(
+            color: sub,
+            fontSize: _metaSize(14, scale),
+            fontFamily: 'ZyncJetBrainsMono',
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+        maxLines: 1,
+        ellipsis: '…',
+      )..layout(maxWidth: imgRect.width * 0.58);
+      dtP.paint(canvas, Offset(imgRect.left + 8 * scale, cy + sigP.height * 0.35));
+    }
+
+    if (showBrandLogo) {
+      final logoH = bottomH * 0.36;
+      final logoSize = CameraBrandEmblem.measure(metadata, height: logoH);
+      CameraBrandEmblem.paint(
+        canvas,
+        Rect.fromLTWH(imgRect.right - logoSize.width - 8 * scale,
+            cy - logoH / 2, logoSize.width, logoH),
+        metadata,
+        textColor: fg,
+        accentColor: accentColor,
+      );
+    }
+  }
+
+  /// 模板 21: 美术馆 · 策展宽裱框
+  void _drawGalleryExhibitionCard(
+      Canvas canvas, Size size, ui.Image? img, Rect imgRect) {
+    final scale = size.width / 1200.0;
+    final bgCol = _cardFill(const Color(0xFFFFFFFF));
+    final isDark = _isEffectiveCardDark(const Color(0xFFFFFFFF));
+    final fg = _textColor(isDark ? Colors.white : const Color(0xFF141619));
+    final sub = _secondaryTextColor(
+        isDark ? Colors.white60 : const Color(0xFF70757D));
+
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Paint()..color = bgCol,
+    );
+    _drawPhotoOrPlaceholder(canvas, img, imgRect, scale);
+
+    canvas.drawRect(
+      imgRect.inflate(3 * scale),
+      Paint()
+        ..color = sub.withAlpha(80)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = _stroke(1.2, scale),
+    );
+
+    final bottomTop = imgRect.bottom;
+    final bottomH = size.height - bottomTop;
+    final title = _meta.titleText.isNotEmpty ? _meta.titleText : 'ARCHIVE';
+    final titleP = TextPainter(
+      text: TextSpan(
+        text: title,
+        style: TextStyle(
+          color: fg,
+          fontSize: _titleSize(19, scale),
+          fontFamily: fontFamily ?? 'ZyncPlayfair',
+          fontWeight: _weight(FontWeight.w600),
+          letterSpacing: _letter(2.2, scale),
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    )..layout(maxWidth: imgRect.width * 0.85);
+    titleP.paint(
+      canvas,
+      Offset(
+        (size.width - titleP.width) / 2,
+        bottomTop + bottomH * 0.30,
+      ),
+    );
+
+    final metaLine = <String>[
+      if (_meta.lensModel.isNotEmpty) _meta.lensModel,
+      if (_meta.exposureSummary.isNotEmpty) _meta.exposureSummary,
+    ].join('  /  ');
+    if (metaLine.isNotEmpty) {
+      final mP = TextPainter(
+        text: TextSpan(
+          text: metaLine,
+          style: TextStyle(
+            color: sub,
+            fontSize: _metaSize(12.5, scale),
+            letterSpacing: _letter(1.4, scale),
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+        maxLines: 1,
+        ellipsis: '…',
+      )..layout(maxWidth: imgRect.width * 0.9);
+      mP.paint(
+        canvas,
+        Offset(
+          (size.width - mP.width) / 2,
+          bottomTop + bottomH * 0.56,
+        ),
+      );
+    }
+  }
+
+  /// 模板 22: 画报双栏 · 摄影专题
+  void _drawSplitEditorialPoster(
+      Canvas canvas, Size size, ui.Image? img, Rect imgRect) {
+    final scale = size.width / 1200.0;
+    final bgCol = _cardFill(const Color(0xFF121417));
+    final isDark = _isEffectiveCardDark(const Color(0xFF121417));
+    final fg = _textColor(isDark ? Colors.white : const Color(0xFF15171A));
+    final sub = _secondaryTextColor(
+        isDark ? Colors.white60 : const Color(0xFF60656E));
+
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Paint()..color = bgCol,
+    );
+    _drawPhotoOrPlaceholder(canvas, img, imgRect, scale);
+
+    // 顶部专题栏 + 强调色短条
+    final topCy = imgRect.top / 2;
+    canvas.drawRect(
+      Rect.fromLTWH(imgRect.left, topCy - 8 * scale, 4 * scale, 16 * scale),
+      Paint()..color = accentColor,
+    );
+    final issueP = TextPainter(
+      text: TextSpan(
+        text: _meta.titleText.isNotEmpty ? _meta.titleText : 'PHOTOGRAPHY',
+        style: TextStyle(
+          color: fg,
+          fontSize: _titleSize(17, scale),
+          fontFamily: fontFamily ?? 'ZyncCinzel',
+          fontWeight: _weight(FontWeight.w700),
+          letterSpacing: _letter(2.4, scale),
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    )..layout(maxWidth: imgRect.width * 0.65);
+    issueP.paint(
+        canvas, Offset(imgRect.left + 12 * scale, topCy - issueP.height / 2));
+
+    if (_meta.capturedDate.isNotEmpty) {
+      final dateP = TextPainter(
+        text: TextSpan(
+          text: _meta.capturedDate,
+          style: TextStyle(
+            color: sub,
+            fontSize: _metaSize(12.5, scale),
+            fontFamily: 'ZyncJetBrainsMono',
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+        maxLines: 1,
+      )..layout();
+      dateP.paint(
+        canvas,
+        Offset(imgRect.right - dateP.width, topCy - dateP.height / 2),
+      );
+    }
+
+    // 底部双栏 EXIF
+    final bottomTop = imgRect.bottom;
+    final bottomH = size.height - bottomTop;
+    final bottomCy = bottomTop + bottomH / 2;
+    final leftStr = _meta.lensModel.isNotEmpty ? _meta.lensModel : 'NIKKOR Z';
+    final leftP = TextPainter(
+      text: TextSpan(
+        text: leftStr,
+        style: TextStyle(
+          color: sub,
+          fontSize: _metaSize(14, scale),
+          letterSpacing: _letter(0.5, scale),
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+      ellipsis: '…',
+    )..layout(maxWidth: imgRect.width * 0.52);
+    leftP.paint(canvas, Offset(imgRect.left, bottomCy - leftP.height / 2));
+
+    if (_meta.exposureSummary.isNotEmpty) {
+      final rightP = TextPainter(
+        text: TextSpan(
+          text: _meta.exposureSummary,
+          style: TextStyle(
+            color: fg,
+            fontSize: _metaSize(15, scale),
+            fontFamily: 'ZyncJetBrainsMono',
+            fontWeight: _weight(FontWeight.w600),
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+        maxLines: 1,
+      )..layout(maxWidth: imgRect.width * 0.45);
+      rightP.paint(
+        canvas,
+        Offset(imgRect.right - rightP.width, bottomCy - rightP.height / 2),
+      );
+    }
+  }
+
+  /// 绘制自由摆放的艺术字多图层（支持 EXIF 令牌替换、旋转、缩放、竖排、描边与印章背景）。
+  void _drawFreeTextLayers(Canvas canvas, Size totalSize) {
+    if (textLayers.isEmpty) return;
+    final scale = totalSize.width / 1200.0;
+    for (final layer in textLayers) {
+      final resolved = resolveWatermarkExifTokens(layer.text, metadata);
+      if (resolved.trim().isEmpty) continue;
+
+      final family = layer.fontId == 'default'
+          ? fontFamily
+          : WatermarkFontManager.instance.resolveFontFamily(layer.fontId);
+      final weight = switch (layer.weightIndex) {
+        1 => FontWeight.w400,
+        2 => FontWeight.w600,
+        3 => FontWeight.w700,
+        4 => FontWeight.w900,
+        _ => FontWeight.w600,
+      };
+      final fontSize = 36.0 * scale * layer.scale;
+      final cx = layer.nx * totalSize.width;
+      final cy = layer.ny * totalSize.height;
+
+      final textColor = Color(layer.colorValue)
+          .withValues(alpha: layer.opacity.clamp(0.1, 1.0));
+      final boxSize = measureTextLayer(
+        layer,
+        metadata,
+        totalSize,
+        overrideGlobalFamily: fontFamily,
+      );
+
+      canvas.save();
+      canvas.translate(cx, cy);
+      if (layer.rotation.abs() > 1e-4) {
+        canvas.rotate(layer.rotation);
+      }
+
+      final boxRect = Rect.fromCenter(
+        center: Offset.zero,
+        width: boxSize.width,
+        height: boxSize.height,
+      );
+
+      // 背景胶囊/印章底
+      _drawLayerBackground(canvas, boxRect, layer, scale);
+
+      if (layer.vertical) {
+        _paintVerticalLayerText(
+          canvas,
+          text: resolved,
+          boxRect: boxRect,
+          fontSize: fontSize,
+          color: textColor,
+          fontFamily: family,
+          weight: weight,
+          italic: layer.italic,
+          letterSpacing: layer.letterSpacing * scale,
+          strokeColorValue: layer.strokeColorValue,
+          strokeWidth: layer.strokeWidth * scale,
+          shadowBlur: layer.shadowBlur * scale,
+        );
+      } else {
+        final shadows = layer.shadowBlur > 0.2
+            ? [
+                Shadow(
+                  color: Colors.black.withValues(alpha: 0.55 * layer.opacity),
+                  blurRadius: layer.shadowBlur * scale,
+                  offset: Offset(0, math.max(1, fontSize * 0.06)),
+                ),
+              ]
+            : null;
+        final baseStyle = TextStyle(
+          color: textColor,
+          fontSize: fontSize,
+          fontFamily: family,
+          fontWeight: weight,
+          fontStyle: layer.italic ? FontStyle.italic : FontStyle.normal,
+          letterSpacing: layer.letterSpacing * scale,
+          height: layer.lineHeight,
+        );
+        if (layer.strokeColorValue != null && layer.strokeWidth > 0.1) {
+          final strokeTp = TextPainter(
+            text: TextSpan(
+              text: resolved,
+              style: baseStyle.copyWith(
+                color: null,
+                foreground: Paint()
+                  ..style = PaintingStyle.stroke
+                  ..strokeWidth = layer.strokeWidth * scale
+                  ..strokeJoin = StrokeJoin.round
+                  ..color = Color(layer.strokeColorValue!)
+                      .withValues(alpha: layer.opacity),
+              ),
+            ),
+            textDirection: TextDirection.ltr,
+            textAlign: TextAlign.center,
+          )..layout(maxWidth: totalSize.width * 0.88);
+          strokeTp.paint(
+            canvas,
+            Offset(-strokeTp.width / 2, -strokeTp.height / 2),
+          );
+        }
+        final fillTp = TextPainter(
+          text: TextSpan(
+            text: resolved,
+            style: baseStyle.copyWith(shadows: shadows),
+          ),
+          textDirection: TextDirection.ltr,
+          textAlign: TextAlign.center,
+        )..layout(maxWidth: totalSize.width * 0.88);
+        fillTp.paint(
+          canvas,
+          Offset(-fillTp.width / 2, -fillTp.height / 2),
+        );
+      }
+
+      canvas.restore();
+    }
+  }
+
+  static void _drawLayerBackground(
+    Canvas canvas,
+    Rect rect,
+    WatermarkTextLayer layer,
+    double scale,
+  ) {
+    final op = layer.opacity.clamp(0.1, 1.0);
+    switch (layer.bgStyle) {
+      case OverlayBgStyle.none:
+        return;
+      case OverlayBgStyle.glassPill:
+        final col = Color(layer.bgColorValue ?? 0x99121418).withValues(alpha: 0.72 * op);
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(rect, Radius.circular(rect.height / 2)),
+          Paint()..color = col,
+        );
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(rect, Radius.circular(rect.height / 2)),
+          Paint()
+            ..color = Colors.white.withValues(alpha: 0.28 * op)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.4 * scale,
+        );
+        break;
+      case OverlayBgStyle.solidTag:
+        final col = Color(layer.bgColorValue ?? 0xFF14161A).withValues(alpha: op);
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(rect, Radius.circular(6 * scale)),
+          Paint()..color = col,
+        );
+        break;
+      case OverlayBgStyle.vermilionSealYang:
+        const sealRed = Color(0xFFC82829);
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(rect, Radius.circular(4 * scale)),
+          Paint()
+            ..color = sealRed.withValues(alpha: op)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2.6 * scale,
+        );
+        break;
+      case OverlayBgStyle.vermilionSealYin:
+        final col = Color(layer.bgColorValue ?? 0xFFC82829).withValues(alpha: op);
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(rect, Radius.circular(4 * scale)),
+          Paint()..color = col,
+        );
+        break;
+      case OverlayBgStyle.cinemaBar:
+        final col = Color(layer.bgColorValue ?? 0xCC000000).withValues(alpha: op);
+        canvas.drawRect(rect, Paint()..color = col);
+        break;
+    }
+  }
+
+  /// 测量单个自由艺术字图层在画布坐标系下的外包矩形尺寸（供预览点击命中与背景框共用）。
+  static Size measureTextLayer(
+    WatermarkTextLayer layer,
+    PhotoMetadata meta,
+    Size totalSize, {
+    String? overrideGlobalFamily,
+  }) {
+    final resolved = resolveWatermarkExifTokens(layer.text, meta);
+    if (resolved.trim().isEmpty) return Size.zero;
+    final scale = totalSize.width / 1200.0;
+    final fontSize = 36.0 * scale * layer.scale;
+    final padX = layer.bgStyle == OverlayBgStyle.none ? 14.0 * scale : 24.0 * scale;
+    final padY = layer.bgStyle == OverlayBgStyle.none ? 10.0 * scale : 16.0 * scale;
+
+    if (layer.vertical) {
+      final lines = resolved.split('\n');
+      var maxChars = 1;
+      for (final l in lines) {
+        if (l.runes.length > maxChars) maxChars = l.runes.length;
+      }
+      final colW = fontSize * 1.35;
+      final charH = fontSize * 1.12 + math.max(0, layer.letterSpacing * scale);
+      return Size(
+        lines.length * colW + padX * 2,
+        maxChars * charH + padY * 2,
+      );
+    }
+
+    final family = layer.fontId == 'default'
+        ? overrideGlobalFamily
+        : WatermarkFontManager.instance.resolveFontFamily(layer.fontId);
+    final weight = switch (layer.weightIndex) {
+      1 => FontWeight.w400,
+      2 => FontWeight.w600,
+      3 => FontWeight.w700,
+      4 => FontWeight.w900,
+      _ => FontWeight.w600,
+    };
+    final tp = TextPainter(
+      text: TextSpan(
+        text: resolved,
+        style: TextStyle(
+          fontSize: fontSize,
+          fontFamily: family,
+          fontWeight: weight,
+          fontStyle: layer.italic ? FontStyle.italic : FontStyle.normal,
+          letterSpacing: layer.letterSpacing * scale,
+          height: layer.lineHeight,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+      textAlign: TextAlign.center,
+    )..layout(maxWidth: totalSize.width * 0.88);
+    return Size(tp.width + padX * 2, tp.height + padY * 2);
+  }
+
+  void _paintVerticalColumnText(
+    Canvas canvas, {
+    required String text,
+    required Offset centerTop,
+    required double fontSize,
+    required Color color,
+    String? fontFamily,
+    FontWeight weight = FontWeight.w500,
+    double maxHeight = 800,
+  }) {
+    final step = fontSize * 1.18;
+    var y = centerTop.dy;
+    for (final r in text.runes) {
+      if (y + step > centerTop.dy + maxHeight) break;
+      final ch = String.fromCharCode(r);
+      final tp = TextPainter(
+        text: TextSpan(
+          text: ch,
+          style: TextStyle(
+            color: color,
+            fontSize: fontSize,
+            fontFamily: fontFamily,
+            fontWeight: weight,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tp.paint(canvas, Offset(centerTop.dx - tp.width / 2, y));
+      y += step;
+    }
+  }
+
+  void _paintVerticalLayerText(
+    Canvas canvas, {
+    required String text,
+    required Rect boxRect,
+    required double fontSize,
+    required Color color,
+    String? fontFamily,
+    required FontWeight weight,
+    required bool italic,
+    required double letterSpacing,
+    int? strokeColorValue,
+    required double strokeWidth,
+    required double shadowBlur,
+  }) {
+    final cols = text.split('\n');
+    final colW = fontSize * 1.35;
+    final charStep = fontSize * 1.12 + math.max(0, letterSpacing);
+    // 右起排布列
+    final totalColsW = cols.length * colW;
+    final startRightX = totalColsW / 2 - colW / 2;
+
+    for (var c = 0; c < cols.length; c++) {
+      final runes = cols[c].runes.toList();
+      final totalH = runes.length * charStep;
+      var y = -totalH / 2;
+      final xCenter = startRightX - c * colW;
+      for (final r in runes) {
+        final ch = String.fromCharCode(r);
+        final style = TextStyle(
+          color: color,
+          fontSize: fontSize,
+          fontFamily: fontFamily,
+          fontWeight: weight,
+          fontStyle: italic ? FontStyle.italic : FontStyle.normal,
+          shadows: shadowBlur > 0.2
+              ? [
+                  Shadow(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    blurRadius: shadowBlur,
+                  ),
+                ]
+              : null,
+        );
+        if (strokeColorValue != null && strokeWidth > 0.1) {
+          final sTp = TextPainter(
+            text: TextSpan(
+              text: ch,
+              style: style.copyWith(
+                color: null,
+                shadows: null,
+                foreground: Paint()
+                  ..style = PaintingStyle.stroke
+                  ..strokeWidth = strokeWidth
+                  ..strokeJoin = StrokeJoin.round
+                  ..color = Color(strokeColorValue),
+              ),
+            ),
+            textDirection: TextDirection.ltr,
+          )..layout();
+          sTp.paint(canvas, Offset(xCenter - sTp.width / 2, y));
+        }
+        final tp = TextPainter(
+          text: TextSpan(text: ch, style: style),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        tp.paint(canvas, Offset(xCenter - tp.width / 2, y));
+        y += charStep;
+      }
+    }
+  }
+
+  static bool _sameTextLayers(
+      List<WatermarkTextLayer> a, List<WatermarkTextLayer> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
   @override
   bool shouldRepaint(covariant WatermarkCanvasPainter old) {
     return old.image != image ||
@@ -2775,7 +3625,10 @@ class WatermarkCanvasPainter extends CustomPainter {
         old.showGps != showGps ||
         old.watermarkOpacity != watermarkOpacity ||
         old.customTextAlign != customTextAlign ||
-        old.logoCorner != logoCorner;
+        old.logoCorner != logoCorner ||
+        old.customPhotoDrawer != null ||
+        old.virtualSourceSize != virtualSourceSize ||
+        !_sameTextLayers(old.textLayers, textLayers);
   }
 
   /// 统一文字绘制出口：用户选择字体/字重时覆盖，auto/null 保持模板原生样式。

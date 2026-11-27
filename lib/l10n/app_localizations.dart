@@ -6507,6 +6507,1122 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'DCIM/{folder}'**
   String storageFolderPath(Object folder);
+
+  /// No description provided for @collageFineBorderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Fine Border'**
+  String get collageFineBorderTitle;
+
+  /// No description provided for @collageInnerGapLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Inner Gap'**
+  String get collageInnerGapLabel;
+
+  /// No description provided for @collageOuterMarginLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Outer Margin'**
+  String get collageOuterMarginLabel;
+
+  /// No description provided for @collageCornerRadiusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Corner'**
+  String get collageCornerRadiusLabel;
+
+  /// No description provided for @collageBorderColorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get collageBorderColorLabel;
+
+  /// No description provided for @collageRotate90.
+  ///
+  /// In en, this message translates to:
+  /// **'Rotate'**
+  String get collageRotate90;
+
+  /// No description provided for @collageFlipHorizontal.
+  ///
+  /// In en, this message translates to:
+  /// **'Flip'**
+  String get collageFlipHorizontal;
+
+  /// No description provided for @collageSwapCell.
+  ///
+  /// In en, this message translates to:
+  /// **'Swap'**
+  String get collageSwapCell;
+
+  /// No description provided for @collageSwapPickTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap another cell to swap'**
+  String get collageSwapPickTarget;
+
+  /// No description provided for @collageZoomLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom'**
+  String get collageZoomLabel;
+
+  /// No description provided for @collageResetCell.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get collageResetCell;
+
+  /// No description provided for @wmSubArtText.
+  ///
+  /// In en, this message translates to:
+  /// **'Art Text'**
+  String get wmSubArtText;
+
+  /// No description provided for @wmArtAddText.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Art Text'**
+  String get wmArtAddText;
+
+  /// No description provided for @wmArtEditText.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Text'**
+  String get wmArtEditText;
+
+  /// No description provided for @wmArtTextHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type text or tap EXIF tokens below'**
+  String get wmArtTextHint;
+
+  /// No description provided for @wmArtExifTokens.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert EXIF tokens'**
+  String get wmArtExifTokens;
+
+  /// No description provided for @wmArtFontTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Fonts & Cloud Store'**
+  String get wmArtFontTitle;
+
+  /// No description provided for @wmArtVerticalToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Vertical'**
+  String get wmArtVerticalToggle;
+
+  /// No description provided for @wmArtBgStyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Badge'**
+  String get wmArtBgStyle;
+
+  /// No description provided for @wmArtBgNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get wmArtBgNone;
+
+  /// No description provided for @wmArtBgPill.
+  ///
+  /// In en, this message translates to:
+  /// **'Glass Pill'**
+  String get wmArtBgPill;
+
+  /// No description provided for @wmArtBgTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Solid Tag'**
+  String get wmArtBgTag;
+
+  /// No description provided for @wmArtBgSealYang.
+  ///
+  /// In en, this message translates to:
+  /// **'Seal Red'**
+  String get wmArtBgSealYang;
+
+  /// No description provided for @wmArtBgSealYin.
+  ///
+  /// In en, this message translates to:
+  /// **'Seal Fill'**
+  String get wmArtBgSealYin;
+
+  /// No description provided for @wmArtBgCinema.
+  ///
+  /// In en, this message translates to:
+  /// **'Cinema Bar'**
+  String get wmArtBgCinema;
+
+  /// No description provided for @wmArtOpacityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Opacity'**
+  String get wmArtOpacityLabel;
+
+  /// No description provided for @wmArtStrokeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Stroke'**
+  String get wmArtStrokeLabel;
+
+  /// No description provided for @wmArtShadowLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Shadow'**
+  String get wmArtShadowLabel;
+
+  /// No description provided for @wmArtSavePreset.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Custom Preset'**
+  String get wmArtSavePreset;
+
+  /// No description provided for @wmArtMyPresets.
+  ///
+  /// In en, this message translates to:
+  /// **'My Watermark Presets'**
+  String get wmArtMyPresets;
+
+  /// No description provided for @wmArtPresetSavedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom watermark preset saved'**
+  String get wmArtPresetSavedToast;
+
+  /// No description provided for @wmArtPresetNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Preset name'**
+  String get wmArtPresetNameHint;
+
+  /// No description provided for @wmArtEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap Add Art Text, then drag, pinch to zoom, or twist to rotate anywhere on the canvas'**
+  String get wmArtEmptyHint;
+
+  /// No description provided for @wmFontStoreTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Artistic Font Studio & Store'**
+  String get wmFontStoreTitle;
+
+  /// No description provided for @wmFontTabBuiltin.
+  ///
+  /// In en, this message translates to:
+  /// **'Built-in'**
+  String get wmFontTabBuiltin;
+
+  /// No description provided for @wmFontTabCloud.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud Fonts (OFL)'**
+  String get wmFontTabCloud;
+
+  /// No description provided for @wmFontTabLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported'**
+  String get wmFontTabLocal;
+
+  /// No description provided for @wmFontRefreshManifest.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh catalog'**
+  String get wmFontRefreshManifest;
+
+  /// No description provided for @wmFontDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get wmFontDownload;
+
+  /// No description provided for @wmFontInstalled.
+  ///
+  /// In en, this message translates to:
+  /// **'Installed'**
+  String get wmFontInstalled;
+
+  /// No description provided for @wmFontImportLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Import local .ttf / .otf font'**
+  String get wmFontImportLocal;
+
+  /// No description provided for @wmFontImportSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Font imported & active: {name}'**
+  String wmFontImportSuccess(Object name);
+
+  /// No description provided for @wmFontDownloadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Font download failed: {error}'**
+  String wmFontDownloadFailed(Object error);
+
+  /// No description provided for @wmFontOpenSourceNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud fonts hosted on GitHub (sa1to-asuka/Zync · SIL OFL-1.1 License)'**
+  String get wmFontOpenSourceNotice;
+
+  /// No description provided for @settingsAiEngineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Engine & API Keys'**
+  String get settingsAiEngineTitle;
+
+  /// No description provided for @settingsAiEngineSub.
+  ///
+  /// In en, this message translates to:
+  /// **'OpenAI & Anthropic compatible · Models & cellular bypass'**
+  String get settingsAiEngineSub;
+
+  /// No description provided for @settingsAiValueUnconfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get settingsAiValueUnconfigured;
+
+  /// No description provided for @aiActiveModelsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Models'**
+  String get aiActiveModelsSection;
+
+  /// No description provided for @aiCoachModelLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Live View Coach Model'**
+  String get aiCoachModelLabel;
+
+  /// No description provided for @aiGradeModelLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Color Grading Model'**
+  String get aiGradeModelLabel;
+
+  /// No description provided for @aiModelUnselected.
+  ///
+  /// In en, this message translates to:
+  /// **'Not selected (add and import a model first)'**
+  String get aiModelUnselected;
+
+  /// No description provided for @aiProfilesSection.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Provider Profiles'**
+  String get aiProfilesSection;
+
+  /// No description provided for @aiAddProfileButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Provider Profile'**
+  String get aiAddProfileButton;
+
+  /// No description provided for @aiProtocolLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'API Protocol'**
+  String get aiProtocolLabel;
+
+  /// No description provided for @aiProtocolOpenAi.
+  ///
+  /// In en, this message translates to:
+  /// **'OpenAI Compat'**
+  String get aiProtocolOpenAi;
+
+  /// No description provided for @aiProtocolAnthropic.
+  ///
+  /// In en, this message translates to:
+  /// **'Anthropic Compat'**
+  String get aiProtocolAnthropic;
+
+  /// No description provided for @aiQuickFillLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Endpoint Presets'**
+  String get aiQuickFillLabel;
+
+  /// No description provided for @aiProfileNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile Name'**
+  String get aiProfileNameLabel;
+
+  /// No description provided for @aiBaseUrlLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Base URL'**
+  String get aiBaseUrlLabel;
+
+  /// No description provided for @aiApiKeyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'API Key (Hardware Encrypted)'**
+  String get aiApiKeyLabel;
+
+  /// No description provided for @aiApiKeyLeaveEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave empty to keep existing key'**
+  String get aiApiKeyLeaveEmptyHint;
+
+  /// No description provided for @aiFetchModelsButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetch Available Models'**
+  String get aiFetchModelsButton;
+
+  /// No description provided for @aiFetchingModels.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetching models…'**
+  String get aiFetchingModels;
+
+  /// No description provided for @aiOnlyVisionFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Vision models only'**
+  String get aiOnlyVisionFilter;
+
+  /// No description provided for @aiSearchModelHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search model ID'**
+  String get aiSearchModelHint;
+
+  /// No description provided for @aiManualModelHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual model ID'**
+  String get aiManualModelHint;
+
+  /// No description provided for @aiManualAddButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get aiManualAddButton;
+
+  /// No description provided for @aiImportSelectedButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Selected ({count})'**
+  String aiImportSelectedButton(Object count);
+
+  /// No description provided for @aiVerifyVisionButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify Vision'**
+  String get aiVerifyVisionButton;
+
+  /// No description provided for @aiVisionVerifiedOk.
+  ///
+  /// In en, this message translates to:
+  /// **'Vision OK · {ms} ms'**
+  String aiVisionVerifiedOk(Object ms);
+
+  /// No description provided for @aiVisionUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'No vision support'**
+  String get aiVisionUnsupported;
+
+  /// No description provided for @aiVisionLikelyBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Vision'**
+  String get aiVisionLikelyBadge;
+
+  /// No description provided for @aiSaveProfileButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Profile'**
+  String get aiSaveProfileButton;
+
+  /// No description provided for @aiSetAsCoach.
+  ///
+  /// In en, this message translates to:
+  /// **'Use for Coach'**
+  String get aiSetAsCoach;
+
+  /// No description provided for @aiSetAsGrade.
+  ///
+  /// In en, this message translates to:
+  /// **'Use for Grading'**
+  String get aiSetAsGrade;
+
+  /// No description provided for @aiCellularBypassTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Use cellular data for AI in camera AP mode'**
+  String get aiCellularBypassTitle;
+
+  /// No description provided for @aiCellularBypassSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Routes AI HTTPS over cellular without breaking camera Wi-Fi'**
+  String get aiCellularBypassSub;
+
+  /// No description provided for @aiIncludeTelemetryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Send focal length & exposure telemetry'**
+  String get aiIncludeTelemetryTitle;
+
+  /// No description provided for @aiIncludeTelemetrySub.
+  ///
+  /// In en, this message translates to:
+  /// **'Sends aperture, shutter, ISO and focal length (never GPS)'**
+  String get aiIncludeTelemetrySub;
+
+  /// No description provided for @aiSecurityFootnote.
+  ///
+  /// In en, this message translates to:
+  /// **'API keys are encrypted via Android Keystore AES-256-GCM and never written to plain configs or logs.'**
+  String get aiSecurityFootnote;
+
+  /// No description provided for @aiCoachButton.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Coach'**
+  String get aiCoachButton;
+
+  /// No description provided for @aiCoachSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Live View Coach'**
+  String get aiCoachSheetTitle;
+
+  /// No description provided for @aiCoachOfflineTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Local Estimate'**
+  String get aiCoachOfflineTag;
+
+  /// No description provided for @aiCoachAnalyzeNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze Frame'**
+  String get aiCoachAnalyzeNow;
+
+  /// No description provided for @aiCoachAnalyzing.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyzing frame & exposure...'**
+  String get aiCoachAnalyzing;
+
+  /// No description provided for @aiCoachNoFrame.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Live View and wait for a frame first'**
+  String get aiCoachNoFrame;
+
+  /// No description provided for @aiCoachSceneIntentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Scene intent (e.g. sunset portrait, street silhouette, optional)'**
+  String get aiCoachSceneIntentHint;
+
+  /// No description provided for @aiCoachSceneAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get aiCoachSceneAuto;
+
+  /// No description provided for @aiCoachScenePortrait.
+  ///
+  /// In en, this message translates to:
+  /// **'Portrait'**
+  String get aiCoachScenePortrait;
+
+  /// No description provided for @aiCoachSceneLandscape.
+  ///
+  /// In en, this message translates to:
+  /// **'Landscape'**
+  String get aiCoachSceneLandscape;
+
+  /// No description provided for @aiCoachSceneStreet.
+  ///
+  /// In en, this message translates to:
+  /// **'Street'**
+  String get aiCoachSceneStreet;
+
+  /// No description provided for @aiCoachSceneNight.
+  ///
+  /// In en, this message translates to:
+  /// **'Night'**
+  String get aiCoachSceneNight;
+
+  /// No description provided for @aiCoachSceneFood.
+  ///
+  /// In en, this message translates to:
+  /// **'Still Life'**
+  String get aiCoachSceneFood;
+
+  /// No description provided for @aiCoachCompScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Comp {score}'**
+  String aiCoachCompScore(int score);
+
+  /// No description provided for @aiCoachExpScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Exp {score}'**
+  String aiCoachExpScore(int score);
+
+  /// No description provided for @aiCoachCompositionSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Composition'**
+  String get aiCoachCompositionSection;
+
+  /// No description provided for @aiCoachToneSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Tone & Color'**
+  String get aiCoachToneSection;
+
+  /// No description provided for @aiCoachExposureSyncSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Exposure Sync'**
+  String get aiCoachExposureSyncSection;
+
+  /// No description provided for @aiCoachApplyExposure.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply to Camera'**
+  String get aiCoachApplyExposure;
+
+  /// No description provided for @aiCoachExposureApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Applied {count} parameter(s) to camera'**
+  String aiCoachExposureApplied(int count);
+
+  /// No description provided for @aiCoachExposureNoneWritable.
+  ///
+  /// In en, this message translates to:
+  /// **'No writable camera parameters matched in current mode'**
+  String get aiCoachExposureNoneWritable;
+
+  /// No description provided for @aiCoachNp3Section.
+  ///
+  /// In en, this message translates to:
+  /// **'Matched Picture Control (.NP3)'**
+  String get aiCoachNp3Section;
+
+  /// No description provided for @aiCoachNp3WriteSlot.
+  ///
+  /// In en, this message translates to:
+  /// **'Write to C1–C9'**
+  String get aiCoachNp3WriteSlot;
+
+  /// No description provided for @aiCoachNp3SelectSlotTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Target Custom Slot'**
+  String get aiCoachNp3SelectSlotTitle;
+
+  /// No description provided for @aiCoachNp3SlotLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'C{slot}'**
+  String aiCoachNp3SlotLabel(int slot);
+
+  /// No description provided for @aiCoachNp3WriteSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrote \'{name}\' to C{slot} and activated'**
+  String aiCoachNp3WriteSuccess(String name, int slot);
+
+  /// No description provided for @aiCoachNp3WriteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to write C{slot}: {err}'**
+  String aiCoachNp3WriteFailed(String err, int slot);
+
+  /// No description provided for @aiCoachNp3RequiresNikon.
+  ///
+  /// In en, this message translates to:
+  /// **'Writing to custom slots requires a connected Nikon camera'**
+  String get aiCoachNp3RequiresNikon;
+
+  /// No description provided for @aiCoachClearOverlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Overlay'**
+  String get aiCoachClearOverlay;
+
+  /// No description provided for @aiCoachSetupAiFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'No AI API Key or active model is configured yet. Open AI Settings to add your key (DeepSeek, Qwen-VL, OpenAI, Claude, etc.), or try local histogram estimation first.'**
+  String get aiCoachSetupAiFirst;
+
+  /// No description provided for @aiGradeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Grade'**
+  String get aiGradeButton;
+
+  /// No description provided for @aiGradeSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Smart Color Grading'**
+  String get aiGradeSheetTitle;
+
+  /// No description provided for @aiGradeGenerating.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyzing photo & generating 3 looks...'**
+  String get aiGradeGenerating;
+
+  /// No description provided for @aiGradeRefining.
+  ///
+  /// In en, this message translates to:
+  /// **'Refining look with AI...'**
+  String get aiGradeRefining;
+
+  /// No description provided for @aiGradeStyleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Desired look (e.g. soft pastel, warm film, teal & orange, optional)'**
+  String get aiGradeStyleHint;
+
+  /// No description provided for @aiGradeGenerateBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate Looks'**
+  String get aiGradeGenerateBtn;
+
+  /// No description provided for @aiGradeRegenerateBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-analyze'**
+  String get aiGradeRegenerateBtn;
+
+  /// No description provided for @aiGradeIntensity.
+  ///
+  /// In en, this message translates to:
+  /// **'Intensity {pct}%'**
+  String aiGradeIntensity(int pct);
+
+  /// No description provided for @aiGradeRefineHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Refine in words (e.g. brighter skin tones, softer contrast)'**
+  String get aiGradeRefineHint;
+
+  /// No description provided for @aiGradeRefineSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Refine'**
+  String get aiGradeRefineSend;
+
+  /// No description provided for @aiGradeApplyToCanvas.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply Look'**
+  String get aiGradeApplyToCanvas;
+
+  /// No description provided for @aiGradeSavePreset.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Preset'**
+  String get aiGradeSavePreset;
+
+  /// No description provided for @aiGradeAppliedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Applied AI grade \'{name}\''**
+  String aiGradeAppliedToast(String name);
+
+  /// No description provided for @aiGradeSavedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved preset \'{name}\''**
+  String aiGradeSavedToast(String name);
+
+  /// No description provided for @aiGradeNoImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Load a photo first before using AI Color Grading'**
+  String get aiGradeNoImage;
+
+  /// No description provided for @aiGradeOfflineTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Local Histogram Look'**
+  String get aiGradeOfflineTag;
+
+  /// No description provided for @aiOpenSettingsBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Settings'**
+  String get aiOpenSettingsBtn;
+
+  /// No description provided for @aiRetryBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get aiRetryBtn;
+
+  /// No description provided for @aiUseOfflineBaselineBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Local Histogram Fallback'**
+  String get aiUseOfflineBaselineBtn;
+
+  /// No description provided for @aiUnconfiguredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'API Key Not Configured'**
+  String get aiUnconfiguredTitle;
+
+  /// No description provided for @aiRequestFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Request Failed'**
+  String get aiRequestFailedTitle;
+
+  /// No description provided for @aiErrNetworkHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Network unreachable or blocked by camera Wi-Fi AP. Enable Cellular Bypass in AI Settings and verify mobile data.'**
+  String get aiErrNetworkHint;
+
+  /// No description provided for @aiErrAuthHint.
+  ///
+  /// In en, this message translates to:
+  /// **'API key is invalid, expired, or out of quota. Check your credentials in AI Settings.'**
+  String get aiErrAuthHint;
+
+  /// No description provided for @aiErrEndpointHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Endpoint URL or model ID was not found (404). Verify Base URL and protocol in AI Settings.'**
+  String get aiErrEndpointHint;
+
+  /// No description provided for @aiErrVisionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'This endpoint or model rejected image input (no vision support). Switch to a vision-capable multimodal model.'**
+  String get aiErrVisionHint;
+
+  /// No description provided for @aiErrRateLimitHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate limited or quota exceeded. Please try again in a moment.'**
+  String get aiErrRateLimitHint;
+
+  /// No description provided for @aiErrParseHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Model response did not match the expected JSON format. Retry or pick another vision model.'**
+  String get aiErrParseHint;
+
+  /// No description provided for @aiErrServerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'AI server returned an error. Please try again shortly.'**
+  String get aiErrServerHint;
+
+  /// No description provided for @aiGradeEmptyPromptCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe a style or let AI match built-in recipes'**
+  String get aiGradeEmptyPromptCardTitle;
+
+  /// No description provided for @aiGradeEmptyPromptCardSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Sends your photo, histogram, and Zync\'s filters, SpektraFilm optical stocks & presets to AI to select the top 3 matches.'**
+  String get aiGradeEmptyPromptCardSub;
+
+  /// No description provided for @aiGradeInspirationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Style Inspiration'**
+  String get aiGradeInspirationLabel;
+
+  /// No description provided for @aiGradeStyleChipShinkai.
+  ///
+  /// In en, this message translates to:
+  /// **'Shinkai Anime Sky'**
+  String get aiGradeStyleChipShinkai;
+
+  /// No description provided for @aiGradeStyleChipWong.
+  ///
+  /// In en, this message translates to:
+  /// **'Wong Kar-wai Neon'**
+  String get aiGradeStyleChipWong;
+
+  /// No description provided for @aiGradeStyleChipHamada.
+  ///
+  /// In en, this message translates to:
+  /// **'Airy Pastel Film'**
+  String get aiGradeStyleChipHamada;
+
+  /// No description provided for @aiGradeStyleChipKodak.
+  ///
+  /// In en, this message translates to:
+  /// **'Warm Kodak Portra'**
+  String get aiGradeStyleChipKodak;
+
+  /// No description provided for @aiGradeStyleChipTealOrange.
+  ///
+  /// In en, this message translates to:
+  /// **'Cinematic Teal & Orange'**
+  String get aiGradeStyleChipTealOrange;
+
+  /// No description provided for @aiGradeStyleChipForest.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuji Forest Green'**
+  String get aiGradeStyleChipForest;
+
+  /// No description provided for @aiGradeStyleChipBw.
+  ///
+  /// In en, this message translates to:
+  /// **'High-Contrast B&W'**
+  String get aiGradeStyleChipBw;
+
+  /// No description provided for @aiGradeRecipeBadgeFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get aiGradeRecipeBadgeFilter;
+
+  /// No description provided for @aiGradeRecipeBadgeSpektra.
+  ///
+  /// In en, this message translates to:
+  /// **'Optical Film'**
+  String get aiGradeRecipeBadgeSpektra;
+
+  /// No description provided for @aiGradeRecipeBadgePreset.
+  ///
+  /// In en, this message translates to:
+  /// **'Preset'**
+  String get aiGradeRecipeBadgePreset;
+
+  /// No description provided for @aiGradeRecipeBadgeCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Custom'**
+  String get aiGradeRecipeBadgeCustom;
+
+  /// No description provided for @aiGradeCompareHold.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold to Compare'**
+  String get aiGradeCompareHold;
+
+  /// No description provided for @aiGradeAnalyzingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending photo & recipe catalog to AI...'**
+  String get aiGradeAnalyzingHint;
+
+  /// No description provided for @aiCoachReadyHintTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discover the Best Shot in Busy Scenes'**
+  String get aiCoachReadyHintTitle;
+
+  /// No description provided for @aiCoachReadyHintSub.
+  ///
+  /// In en, this message translates to:
+  /// **'AI locates the strongest subject, suggests portrait or landscape crop aspect, and provides actionable on-set tips.'**
+  String get aiCoachReadyHintSub;
+
+  /// No description provided for @aiCoachCropPreviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Recommended Framing'**
+  String get aiCoachCropPreviewTitle;
+
+  /// No description provided for @aiCoachOrientationPortrait.
+  ///
+  /// In en, this message translates to:
+  /// **'Portrait'**
+  String get aiCoachOrientationPortrait;
+
+  /// No description provided for @aiCoachOrientationLandscape.
+  ///
+  /// In en, this message translates to:
+  /// **'Landscape'**
+  String get aiCoachOrientationLandscape;
+
+  /// No description provided for @aiCoachOrientationSquare.
+  ///
+  /// In en, this message translates to:
+  /// **'Square'**
+  String get aiCoachOrientationSquare;
+
+  /// No description provided for @aiCoachViewOriginalCrop.
+  ///
+  /// In en, this message translates to:
+  /// **'Show on Frame'**
+  String get aiCoachViewOriginalCrop;
+
+  /// No description provided for @aiCoachViewCroppedResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview Crop'**
+  String get aiCoachViewCroppedResult;
+
+  /// No description provided for @aiCoachShowOnViewfinder.
+  ///
+  /// In en, this message translates to:
+  /// **'Overlay on Live View'**
+  String get aiCoachShowOnViewfinder;
+
+  /// No description provided for @aiCoachFocusCropSubject.
+  ///
+  /// In en, this message translates to:
+  /// **'AF on Subject'**
+  String get aiCoachFocusCropSubject;
+
+  /// No description provided for @aiCoachShootingTipsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Actionable Shooting Tips'**
+  String get aiCoachShootingTipsSection;
+
+  /// No description provided for @aiCoachOverlayPillLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Frame'**
+  String get aiCoachOverlayPillLabel;
+
+  /// No description provided for @wmDetailedParamsPill.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get wmDetailedParamsPill;
+
+  /// No description provided for @aiGradeLaunchReadySub.
+  ///
+  /// In en, this message translates to:
+  /// **'Matches Zync recipes · 3 curated looks'**
+  String get aiGradeLaunchReadySub;
+
+  /// No description provided for @aiGradeLaunchSetupSub.
+  ///
+  /// In en, this message translates to:
+  /// **'No API Key configured — tap to set up or try local'**
+  String get aiGradeLaunchSetupSub;
+
+  /// No description provided for @aiApiKeyNotConfiguredShort.
+  ///
+  /// In en, this message translates to:
+  /// **'No API Key'**
+  String get aiApiKeyNotConfiguredShort;
+
+  /// No description provided for @aiViewTutorialBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Setup Guide'**
+  String get aiViewTutorialBtn;
+
+  /// No description provided for @onboardingAiTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Up AI API Key'**
+  String get onboardingAiTitle;
+
+  /// No description provided for @onboardingAiSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Bring your own API key (BYOK) to unlock AI Live-View Composition Coach and AI Smart Color Grading. Keys stay encrypted locally in Android Keystore.'**
+  String get onboardingAiSubtitle;
+
+  /// No description provided for @aiGuideModalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Zync 3.0.1 · AI API Key Setup Guide'**
+  String get aiGuideModalTitle;
+
+  /// No description provided for @aiGuideModalSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No AI API Key detected yet. Follow 4 quick steps below to enable AI Composition Coach and AI Smart Color Grading.'**
+  String get aiGuideModalSubtitle;
+
+  /// No description provided for @aiGuideStep1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'1. Get an API Key'**
+  String get aiGuideStep1Title;
+
+  /// No description provided for @aiGuideStep1Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Create and copy an API key (usually starting with sk-) from DeepSeek, Alibaba Bailian (Qwen-VL), Zhipu (GLM-4V), OpenAI, or Anthropic.'**
+  String get aiGuideStep1Desc;
+
+  /// No description provided for @aiGuideStep2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'2. Add Profile & Quick-Fill URL'**
+  String get aiGuideStep2Title;
+
+  /// No description provided for @aiGuideStep2Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Settings → AI Vision Engine → Add Provider Profile and tap a quick preset to auto-fill the protocol and Base URL.'**
+  String get aiGuideStep2Desc;
+
+  /// No description provided for @aiGuideStep3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'3. Paste Key & Select Models'**
+  String get aiGuideStep3Title;
+
+  /// No description provided for @aiGuideStep3Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste your API Key, tap Fetch Models (or enter a model ID like deepseek-chat, qwen-vl-max, gpt-4o), check it, and save.'**
+  String get aiGuideStep3Desc;
+
+  /// No description provided for @aiGuideStep4Title.
+  ///
+  /// In en, this message translates to:
+  /// **'4. Assign Coach & Grading Models'**
+  String get aiGuideStep4Title;
+
+  /// No description provided for @aiGuideStep4Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'At the top of AI Settings, assign your imported model to Live-View Coach and AI Color Grading to start using them immediately.'**
+  String get aiGuideStep4Desc;
+
+  /// No description provided for @aiGuideConfigureNowBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure API Key'**
+  String get aiGuideConfigureNowBtn;
+
+  /// No description provided for @aiGuideConfiguredBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'API Key Configured'**
+  String get aiGuideConfiguredBadge;
+
+  /// No description provided for @aiGuideLaterBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get aiGuideLaterBtn;
 }
 
 class _AppLocalizationsDelegate

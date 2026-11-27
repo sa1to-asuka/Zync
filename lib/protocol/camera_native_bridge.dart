@@ -844,6 +844,63 @@ class CameraNativeBridge {
       'params': params,
     });
   }
+
+  // ========================================================
+  // Android Keystore 安全密钥库 & AP 蜂窝网络旁路 HTTP
+  // ========================================================
+
+  static Future<bool> secureWriteSecret(String key, String value) async {
+    try {
+      final ok = await _channel.invokeMethod<bool>('secureWriteSecret', {
+        'key': key,
+        'value': value,
+      });
+      return ok ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<String?> secureReadSecret(String key) async {
+    try {
+      return await _channel
+          .invokeMethod<String>('secureReadSecret', {'key': key});
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<void> secureDeleteSecret(String key) async {
+    try {
+      await _channel.invokeMethod('secureDeleteSecret', {'key': key});
+    } catch (_) {}
+  }
+
+  /// 在相机 AP 热点无外网直连时，借道 4G/5G 移动网络发起 HTTPS 请求，不断联相机。
+  static Future<Map<String, dynamic>?> httpRequestOverCellular({
+    required String method,
+    required String url,
+    required Map<String, String> headers,
+    String? body,
+    int timeoutMs = 45000,
+  }) async {
+    try {
+      final res = await _channel.invokeMethod<Map<dynamic, dynamic>>(
+        'httpRequestOverCellular',
+        {
+          'method': method,
+          'url': url,
+          'headers': headers,
+          if (body != null) 'body': body,
+          'timeoutMs': timeoutMs,
+        },
+      );
+      if (res == null) return null;
+      return res.map((k, v) => MapEntry('$k', v));
+    } catch (_) {
+      return null;
+    }
+  }
 }
 
 /// USB 设备元数据模型

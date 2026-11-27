@@ -3502,4 +3502,603 @@ class AppLocalizationsJa extends AppLocalizations {
   String storageFolderPath(Object folder) {
     return 'DCIM/$folder';
   }
+
+  @override
+  String get collageFineBorderTitle => '詳細枠線';
+
+  @override
+  String get collageInnerGapLabel => '内側余白';
+
+  @override
+  String get collageOuterMarginLabel => '外側余白';
+
+  @override
+  String get collageCornerRadiusLabel => '角丸';
+
+  @override
+  String get collageBorderColorLabel => '枠色';
+
+  @override
+  String get collageRotate90 => '回転';
+
+  @override
+  String get collageFlipHorizontal => '反転';
+
+  @override
+  String get collageSwapCell => '入替';
+
+  @override
+  String get collageSwapPickTarget => '入れ替える別の写真をタップ';
+
+  @override
+  String get collageZoomLabel => '拡大';
+
+  @override
+  String get collageResetCell => '戻す';
+
+  @override
+  String get wmSubArtText => 'アート文字';
+
+  @override
+  String get wmArtAddText => '文字を追加';
+
+  @override
+  String get wmArtEditText => '文字を編集';
+
+  @override
+  String get wmArtTextHint => '文字を入力、または下から EXIF タグを挿入';
+
+  @override
+  String get wmArtExifTokens => 'EXIF タグを挿入';
+
+  @override
+  String get wmArtFontTitle => 'フォント・ストア';
+
+  @override
+  String get wmArtVerticalToggle => '縦書き';
+
+  @override
+  String get wmArtBgStyle => '枠スタイル';
+
+  @override
+  String get wmArtBgNone => 'なし';
+
+  @override
+  String get wmArtBgPill => 'ガラスピル';
+
+  @override
+  String get wmArtBgTag => 'タグ';
+
+  @override
+  String get wmArtBgSealYang => '朱印枠';
+
+  @override
+  String get wmArtBgSealYin => '朱印塗り';
+
+  @override
+  String get wmArtBgCinema => 'シネマ帯';
+
+  @override
+  String get wmArtOpacityLabel => '不透明度';
+
+  @override
+  String get wmArtStrokeLabel => '縁取り';
+
+  @override
+  String get wmArtShadowLabel => '影';
+
+  @override
+  String get wmArtSavePreset => 'カスタム保存';
+
+  @override
+  String get wmArtMyPresets => '保存済みスタイル';
+
+  @override
+  String get wmArtPresetSavedToast => '透かしスタイルを保存しました';
+
+  @override
+  String get wmArtPresetNameHint => 'スタイル名';
+
+  @override
+  String get wmArtEmptyHint => '「文字を追加」後、ドラッグ・ピンチ拡大・回転で自由配置できます';
+
+  @override
+  String get wmFontStoreTitle => 'アートフォント・ストア';
+
+  @override
+  String get wmFontTabBuiltin => '内蔵';
+
+  @override
+  String get wmFontTabCloud => 'クラウド (OFL)';
+
+  @override
+  String get wmFontTabLocal => 'ローカル';
+
+  @override
+  String get wmFontRefreshManifest => '一覧を更新';
+
+  @override
+  String get wmFontDownload => '取得';
+
+  @override
+  String get wmFontInstalled => '導入済';
+
+  @override
+  String get wmFontImportLocal => 'ローカル .ttf / .otf を読み込む';
+
+  @override
+  String wmFontImportSuccess(Object name) {
+    return 'フォントを読み込みました: $name';
+  }
+
+  @override
+  String wmFontDownloadFailed(Object error) {
+    return 'ダウンロード失敗: $error';
+  }
+
+  @override
+  String get wmFontOpenSourceNotice =>
+      'クラウドフォントは GitHub (sa1to-asuka/Zync · SIL OFL-1.1) で配布されています';
+
+  @override
+  String get settingsAiEngineTitle => 'AI エンジン・API キー設定';
+
+  @override
+  String get settingsAiEngineSub => 'OpenAI・Anthropic 互換 · モデルとモバイル通信設定';
+
+  @override
+  String get settingsAiValueUnconfigured => '未設定';
+
+  @override
+  String get aiActiveModelsSection => '使用中のモデル';
+
+  @override
+  String get aiCoachModelLabel => 'ライブビュー支援モデル';
+
+  @override
+  String get aiGradeModelLabel => 'AI カラー調整モデル';
+
+  @override
+  String get aiModelUnselected => '未選択（先にモデルをインポートしてください）';
+
+  @override
+  String get aiProfilesSection => 'AI プロバイダー設定';
+
+  @override
+  String get aiAddProfileButton => 'プロバイダーを追加';
+
+  @override
+  String get aiProtocolLabel => 'API プロトコル';
+
+  @override
+  String get aiProtocolOpenAi => 'OpenAI 互換';
+
+  @override
+  String get aiProtocolAnthropic => 'Anthropic 互換';
+
+  @override
+  String get aiQuickFillLabel => 'プリセット';
+
+  @override
+  String get aiProfileNameLabel => '設定名';
+
+  @override
+  String get aiBaseUrlLabel => 'Base URL';
+
+  @override
+  String get aiApiKeyLabel => 'API Key（暗号化保存）';
+
+  @override
+  String get aiApiKeyLeaveEmptyHint => '空欄で既存キーを維持';
+
+  @override
+  String get aiFetchModelsButton => '利用可能なモデルを取得';
+
+  @override
+  String get aiFetchingModels => 'モデル一覧を取得中…';
+
+  @override
+  String get aiOnlyVisionFilter => '画像認識モデルのみ表示';
+
+  @override
+  String get aiSearchModelHint => 'モデル ID を検索';
+
+  @override
+  String get aiManualModelHint => '手動でモデル ID を追加';
+
+  @override
+  String get aiManualAddButton => '追加';
+
+  @override
+  String aiImportSelectedButton(Object count) {
+    return '選択した $count 件を取り込む';
+  }
+
+  @override
+  String get aiVerifyVisionButton => '画像認識テスト';
+
+  @override
+  String aiVisionVerifiedOk(Object ms) {
+    return '認識可 · $ms ms';
+  }
+
+  @override
+  String get aiVisionUnsupported => '画像認識非対応';
+
+  @override
+  String get aiVisionLikelyBadge => '画像認識';
+
+  @override
+  String get aiSaveProfileButton => '保存';
+
+  @override
+  String get aiSetAsCoach => '撮影支援に使う';
+
+  @override
+  String get aiSetAsGrade => '色調整に使う';
+
+  @override
+  String get aiCellularBypassTitle => 'AP 直結時にモバイル回線で AI 通信';
+
+  @override
+  String get aiCellularBypassSub => 'カメラ Wi-Fi を維持したまま携帯回線で AI を呼び出します';
+
+  @override
+  String get aiIncludeTelemetryTitle => '焦点距離・露出情報を AI に送信';
+
+  @override
+  String get aiIncludeTelemetrySub => '絞り・シャッター・ISO のみ送信（GPS は送信しません）';
+
+  @override
+  String get aiSecurityFootnote =>
+      'すべての API Key は Android Keystore AES-256-GCM で暗号化され、ログに出力されません。';
+
+  @override
+  String get aiCoachButton => 'AI 撮影支援';
+
+  @override
+  String get aiCoachSheetTitle => 'AI ライブビュー支援';
+
+  @override
+  String get aiCoachOfflineTag => 'ローカル推定';
+
+  @override
+  String get aiCoachAnalyzeNow => '現在の構図を分析';
+
+  @override
+  String get aiCoachAnalyzing => '構図と露出を分析中...';
+
+  @override
+  String get aiCoachNoFrame => 'ライブビューを開始してからお試しください';
+
+  @override
+  String get aiCoachSceneIntentHint => '撮影意図（例：夕景ポートレート、任意）';
+
+  @override
+  String get aiCoachSceneAuto => '自動';
+
+  @override
+  String get aiCoachScenePortrait => '人物';
+
+  @override
+  String get aiCoachSceneLandscape => '風景';
+
+  @override
+  String get aiCoachSceneStreet => 'スナップ';
+
+  @override
+  String get aiCoachSceneNight => '夜景';
+
+  @override
+  String get aiCoachSceneFood => '静物';
+
+  @override
+  String aiCoachCompScore(int score) {
+    return '構図 $score点';
+  }
+
+  @override
+  String aiCoachExpScore(int score) {
+    return '露出 $score点';
+  }
+
+  @override
+  String get aiCoachCompositionSection => '構図アドバイス';
+
+  @override
+  String get aiCoachToneSection => '階調・色調診断';
+
+  @override
+  String get aiCoachExposureSyncSection => '推奨露出設定';
+
+  @override
+  String get aiCoachApplyExposure => 'カメラへ同期';
+
+  @override
+  String aiCoachExposureApplied(int count) {
+    return '$count 個のパラメータをカメラへ同期しました';
+  }
+
+  @override
+  String get aiCoachExposureNoneWritable => '現在のモードでは書き込み可能な設定が一致しません';
+
+  @override
+  String get aiCoachNp3Section => '一致するピクチャーコントロール (.NP3)';
+
+  @override
+  String get aiCoachNp3WriteSlot => 'カメラへ書込';
+
+  @override
+  String get aiCoachNp3SelectSlotTitle => '書込先カスタムスロットを選択';
+
+  @override
+  String aiCoachNp3SlotLabel(int slot) {
+    return 'C$slot';
+  }
+
+  @override
+  String aiCoachNp3WriteSuccess(String name, int slot) {
+    return '「$name」を C$slot へ書込み有効化しました';
+  }
+
+  @override
+  String aiCoachNp3WriteFailed(String err, int slot) {
+    return 'C$slot への書込失敗：$err';
+  }
+
+  @override
+  String get aiCoachNp3RequiresNikon => 'スロット書込は接続中のニコン機のみ対応しています';
+
+  @override
+  String get aiCoachClearOverlay => 'オーバーレイ消去';
+
+  @override
+  String get aiCoachSetupAiFirst =>
+      'AI API キーまたは使用モデルが未設定です。AI 設定でキーを登録する（DeepSeek・Qwen-VL・OpenAI・Claude 等対応）か、まずローカル推定をお試しください。';
+
+  @override
+  String get aiGradeButton => 'AI カラー補正';
+
+  @override
+  String get aiGradeSheetTitle => 'AI スマート補正';
+
+  @override
+  String get aiGradeGenerating => '画像を解析し3案を生成中...';
+
+  @override
+  String get aiGradeRefining => '指示に合わせて微調整中...';
+
+  @override
+  String get aiGradeStyleHint => '希望の仕上がり（例：透明感、映画調、フィルム風、任意）';
+
+  @override
+  String get aiGradeGenerateBtn => '補正案を生成';
+
+  @override
+  String get aiGradeRegenerateBtn => '再解析';
+
+  @override
+  String aiGradeIntensity(int pct) {
+    return '適用強度 $pct%';
+  }
+
+  @override
+  String get aiGradeRefineHint => '会話で微調整（例：肌を明るく、シャドウを少し持ち上げて）';
+
+  @override
+  String get aiGradeRefineSend => '調整';
+
+  @override
+  String get aiGradeApplyToCanvas => 'キャンバスに適用';
+
+  @override
+  String get aiGradeSavePreset => 'プリセット保存';
+
+  @override
+  String aiGradeAppliedToast(String name) {
+    return 'AI 補正「$name」を適用しました';
+  }
+
+  @override
+  String aiGradeSavedToast(String name) {
+    return '「$name」をマイプリセットに保存しました';
+  }
+
+  @override
+  String get aiGradeNoImage => '先に写真を読み込んでください';
+
+  @override
+  String get aiGradeOfflineTag => 'ローカル自動解析';
+
+  @override
+  String get aiOpenSettingsBtn => 'AI 設定を開く';
+
+  @override
+  String get aiRetryBtn => '再試行';
+
+  @override
+  String get aiUseOfflineBaselineBtn => 'ローカルヒストグラム推定を使う';
+
+  @override
+  String get aiUnconfiguredTitle => 'AI キーが未設定です';
+
+  @override
+  String get aiRequestFailedTitle => 'AI リクエストに失敗しました';
+
+  @override
+  String get aiErrNetworkHint =>
+      '通信に失敗しました。カメラ AP 接続時は AI 設定で「モバイル回線で通信」を有効にしてください。';
+
+  @override
+  String get aiErrAuthHint => 'API キーが無効・期限切れ、または残高不足です。AI 設定をご確認ください。';
+
+  @override
+  String get aiErrEndpointHint =>
+      'エンドポイント URL またはモデル ID が見つかりません (404)。URL とプロトコルをご確認ください。';
+
+  @override
+  String get aiErrVisionHint =>
+      'このモデルまたは API は画像入力に対応していません。画像認識対応モデルを選択してください。';
+
+  @override
+  String get aiErrRateLimitHint => 'アクセス集中または回数制限に達しました。少し待ってから再試行してください。';
+
+  @override
+  String get aiErrParseHint =>
+      'モデル応答を規定の JSON として解析できませんでした。再試行するか別モデルをお試しください。';
+
+  @override
+  String get aiErrServerHint => 'AI サーバーエラーが発生しました。しばらくして再試行してください。';
+
+  @override
+  String get aiGradeEmptyPromptCardTitle => '希望のテイストを入力、または AI にお任せ';
+
+  @override
+  String get aiGradeEmptyPromptCardSub =>
+      '写真・ヒストグラムと Zync 内蔵フィルター・物理フィルム・プリセット一覧を AI に送り、最適な3案を提案します。';
+
+  @override
+  String get aiGradeInspirationLabel => 'スタイル例';
+
+  @override
+  String get aiGradeStyleChipShinkai => '新海誠アニメ青空';
+
+  @override
+  String get aiGradeStyleChipWong => 'ウォン・カーウァイ香港';
+
+  @override
+  String get aiGradeStyleChipHamada => '透明感パステル';
+
+  @override
+  String get aiGradeStyleChipKodak => '暖色コダック調';
+
+  @override
+  String get aiGradeStyleChipTealOrange => 'シネマティック青橙';
+
+  @override
+  String get aiGradeStyleChipForest => '富士フォレスト緑';
+
+  @override
+  String get aiGradeStyleChipBw => '高コントラスト白黒';
+
+  @override
+  String get aiGradeRecipeBadgeFilter => 'フィルター';
+
+  @override
+  String get aiGradeRecipeBadgeSpektra => '光学フィルム';
+
+  @override
+  String get aiGradeRecipeBadgePreset => 'プリセット';
+
+  @override
+  String get aiGradeRecipeBadgeCustom => 'AI 調整';
+
+  @override
+  String get aiGradeCompareHold => '長押しで元画像比較';
+
+  @override
+  String get aiGradeAnalyzingHint => '写真とレシピ一覧を AI に送信して解析中…';
+
+  @override
+  String get aiCoachReadyHintTitle => '雑然とした風景からベスト構図を発見';
+
+  @override
+  String get aiCoachReadyHintSub =>
+      'AI が主役・縦横比率・最適なトリミング範囲を見つけ出し、光線やタイミングの実践ヒントを提案します。';
+
+  @override
+  String get aiCoachCropPreviewTitle => 'AI 推奨トリミングプレビュー';
+
+  @override
+  String get aiCoachOrientationPortrait => '縦構図';
+
+  @override
+  String get aiCoachOrientationLandscape => '横構図';
+
+  @override
+  String get aiCoachOrientationSquare => 'スクエア';
+
+  @override
+  String get aiCoachViewOriginalCrop => '全体枠で確認';
+
+  @override
+  String get aiCoachViewCroppedResult => '切り抜き表示';
+
+  @override
+  String get aiCoachShowOnViewfinder => 'ライブビューに表示';
+
+  @override
+  String get aiCoachFocusCropSubject => '主役にピント';
+
+  @override
+  String get aiCoachShootingTipsSection => '実践撮影アドバイス';
+
+  @override
+  String get aiCoachOverlayPillLabel => 'AI 構図';
+
+  @override
+  String get wmDetailedParamsPill => '詳細パラメータ';
+
+  @override
+  String get aiGradeLaunchReadySub => 'レシピ庫から最適な3案を自動提案';
+
+  @override
+  String get aiGradeLaunchSetupSub => 'API キー未設定 — 設定またはローカル推定を利用';
+
+  @override
+  String get aiApiKeyNotConfiguredShort => 'APIキー未設定';
+
+  @override
+  String get aiViewTutorialBtn => '設定ガイド';
+
+  @override
+  String get onboardingAiTitle => 'AI API キー設定';
+
+  @override
+  String get onboardingAiSubtitle =>
+      'ご自身の API キー（BYOK）を登録すると、AI リアルタイム構図ガイドと AI スマート補正を利用できます。キーは端末内に暗号化保存されます。';
+
+  @override
+  String get aiGuideModalTitle => 'Zync 3.0.1 · AI API キー設定ガイド';
+
+  @override
+  String get aiGuideModalSubtitle =>
+      'AI API キーがまだ設定されていません。以下の4ステップで1分以内に AI 構図ガイドと AI スマート補正を有効化できます。';
+
+  @override
+  String get aiGuideStep1Title => '1. API キーを取得';
+
+  @override
+  String get aiGuideStep1Desc =>
+      'DeepSeek、Alibaba Bailian (Qwen-VL)、Zhipu (GLM-4V)、OpenAI、Anthropic などのコンソールでキー（通常 sk- で開始）を作成・コピーします。';
+
+  @override
+  String get aiGuideStep2Title => '2. プロファイル追加と URL 自動入力';
+
+  @override
+  String get aiGuideStep2Desc =>
+      '「設定 → AI ビジョンエンジン → プロファイル追加」でサービスプリセットをタップし、プロトコルと Base URL を自動入力します。';
+
+  @override
+  String get aiGuideStep3Title => '3. キーを貼り付けてモデルを選択';
+
+  @override
+  String get aiGuideStep3Desc =>
+      'API キーを貼り付けて「モデル一覧を取得」（またはモデルIDを手入力）し、チェックを入れて保存します。';
+
+  @override
+  String get aiGuideStep4Title => '4. 撮影支援・補正モデルを割り当て';
+
+  @override
+  String get aiGuideStep4Desc =>
+      'AI 設定の上部でインポートしたモデルを「ライブビュー支援」と「AI スマート補正」に割り当てればすぐに使えます。';
+
+  @override
+  String get aiGuideConfigureNowBtn => '今すぐ API キーを設定';
+
+  @override
+  String get aiGuideConfiguredBadge => 'API キー設定済み';
+
+  @override
+  String get aiGuideLaterBtn => 'あとで';
 }

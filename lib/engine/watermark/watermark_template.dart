@@ -172,6 +172,41 @@ enum WatermarkTemplate {
     '满幅照片 · 内嵌极细线框 · 右下角极小参数 · 克制留白的高级感',
     false,
     false,
+  ),
+  cinemaLetterbox(
+    'cinema_letterbox',
+    '宽银幕 · 电影黑边',
+    '2.39:1 宽银幕上下黑边 · 居中剧场字幕位与拍摄参数 · 叙事胶片感',
+    true,
+    false,
+  ),
+  orientalScrollSeal(
+    'oriental_scroll_seal',
+    '东方画轴 · 留白印章',
+    '宣纸米白宽留白画框 · 右侧竖排诗行与朱红印章格调 · 适配书法艺术字',
+    false,
+    true,
+  ),
+  polaroidHandwritten(
+    'polaroid_handwritten',
+    '手写拍立得 · 宽底签名',
+    '经典加厚白卡底部签名区 · 右侧微标参数 · 适合搭配 Caveat / 行楷签名',
+    false,
+    true,
+  ),
+  galleryExhibitionCard(
+    'gallery_exhibition',
+    '美术馆 · 策展宽裱框',
+    '艺术展大面积留白卡纸 · 极细内线框与策展焦段铭牌 · 高级画册感',
+    false,
+    true,
+  ),
+  splitEditorialPoster(
+    'split_editorial_poster',
+    '画报双栏 · 摄影专题',
+    '上标题栏与下双栏参数对照 · 强调色竖标与日期索引 · 纪实画册感',
+    true,
+    false,
   );
 
   final String id;

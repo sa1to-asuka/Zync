@@ -120,6 +120,7 @@ class PtpOpCodes {
   // 2e. 相机事件码 (EventCode)
   // ==========================================
   static const int eventObjectAdded = 0x4002; // 新对象落盘
+  static const int eventObjectRemoved = 0x4003; // 相机端删除对象
   static const int eventNikonMovieRecInterrupted = 0xC105; // 录像异常中断
   static const int eventNikonMovieRecComplete = 0xC108; // 录像封盘完成
   static const int eventNikonMovieRecStarted = 0xC10A; // 录像已开始

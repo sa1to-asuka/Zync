@@ -12,8 +12,8 @@ import 'package:zync/ui/widgets/lightroom_histogram.dart';
 
 void main() {
   group('Watermark 模板与元数据模型单元测试', () {
-    test('17 款高质感摄影画廊模板枚举完整性与默认无水印查找', () {
-      expect(WatermarkTemplate.values.length, equals(17));
+    test('22 款高质感摄影画廊模板枚举完整性与默认无水印查找', () {
+      expect(WatermarkTemplate.values.length, equals(22));
       expect(WatermarkTemplate.fromId('none'), equals(WatermarkTemplate.none));
       expect(WatermarkTemplate.fromId('unknown_id'),
           equals(WatermarkTemplate.none));

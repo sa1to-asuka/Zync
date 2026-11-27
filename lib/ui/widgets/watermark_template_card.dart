@@ -575,6 +575,89 @@ class WatermarkTemplateCard extends StatelessWidget {
             ],
           ),
         );
+      case WatermarkTemplate.cinemaLetterbox:
+        return Container(
+          margin: const EdgeInsets.all(2),
+          color: ZSwatch.pureBlack,
+          child: Column(
+            children: [
+              const SizedBox(height: 5),
+              Expanded(child: Container(color: ZSwatch.wireframePhotoAlt)),
+              SizedBox(
+                height: 8,
+                child: Center(
+                  child: Container(width: 14, height: 2, color: ZSwatch.pureWhite),
+                ),
+              ),
+            ],
+          ),
+        );
+      case WatermarkTemplate.orientalScrollSeal:
+        return Container(
+          margin: const EdgeInsets.all(2),
+          padding: const EdgeInsets.fromLTRB(3, 3, 2, 3),
+          color: ZSwatch.paperMagazine,
+          child: Row(
+            children: [
+              Expanded(child: Container(color: ZSwatch.wireframePhotoAlt)),
+              const SizedBox(width: 2),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(width: 2, height: 14, color: ZSwatch.black87),
+                  Container(
+                    width: 4,
+                    height: 4,
+                    color: ZSwatch.fromArgb32(0xFFC82829),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      case WatermarkTemplate.polaroidHandwritten:
+        return Container(
+          margin: const EdgeInsets.all(2),
+          padding: const EdgeInsets.fromLTRB(2.5, 2.5, 2.5, 8),
+          decoration: BoxDecoration(
+            color: ZSwatch.pureWhite,
+            borderRadius: BorderRadius.circular(1.5),
+          ),
+          child: Container(color: ZSwatch.wireframePhotoAlt),
+        );
+      case WatermarkTemplate.galleryExhibitionCard:
+        return Container(
+          margin: const EdgeInsets.all(2),
+          padding: const EdgeInsets.fromLTRB(5, 4, 5, 7),
+          color: ZSwatch.pureWhite,
+          child: Container(
+            decoration: BoxDecoration(
+              color: ZSwatch.wireframePhotoAlt,
+              border: Border.all(color: ZSwatch.black54, width: 0.5),
+            ),
+          ),
+        );
+      case WatermarkTemplate.splitEditorialPoster:
+        return Container(
+          margin: const EdgeInsets.all(2),
+          color: ZSwatch.pureBlack,
+          padding: const EdgeInsets.all(2),
+          child: Column(
+            children: [
+              Container(height: 4, color: ZSwatch.nikonGold),
+              const SizedBox(height: 1.5),
+              Expanded(child: Container(color: ZSwatch.wireframePhoto)),
+              const SizedBox(height: 2),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(width: 10, height: 2, color: ZSwatch.pureWhite),
+                  Container(width: 8, height: 2, color: accent),
+                ],
+              ),
+            ],
+          ),
+        );
     }
   }
 }

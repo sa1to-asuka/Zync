@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../core/settings/app_settings.dart';
 import '../../core/utils/exif_helper.dart';
+import '../../engine/ai/ai_provider_config.dart';
 import '../../engine/capture/capture_controller.dart';
 import '../../engine/capture/interval_shooting_controller.dart';
 import '../../engine/capture/exposure_settings_controller.dart';
@@ -35,6 +36,7 @@ import 'screens/settings_screen.dart';
 import 'screens/transfer_center_screen.dart';
 import 'screens/watermark_screen.dart';
 import 'widgets/adaptive_layout.dart';
+import 'widgets/ai_api_key_guide.dart';
 
 /// 单个导航页签定义（底部悬浮胶囊栏、平板 Rail 与大屏可展开侧栏共用）。
 class _NavTab {
@@ -198,13 +200,28 @@ class _RootScaffoldState extends State<RootScaffold>
       ),
     );
 
-    // 应用启动静默检测是否有远程新版本，以及是否从系统收到外部打开的 .NP3/.NCP/.ZIP 文件
+    // 应用启动静默检测是否有远程新版本、外部文件导入以及 3.0.1 API Key 引导推送
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         AppUpdateManager.checkOnStartup(context);
         _checkIncomingExternalFiles();
+        _maybeShow301AiGuide();
       }
     });
+  }
+
+  Future<void> _maybeShow301AiGuide() async {
+    if (!AppSettings.instance.onboardingCompleted) return;
+    if (AppSettings.instance.aiGuidePromptVersion ==
+        AppSettings.currentAiGuideVersion) {
+      return;
+    }
+    await AiSettingsStore.instance.ensureInitialized();
+    AppSettings.instance.setAiGuidePromptVersion(
+      AppSettings.currentAiGuideVersion,
+    );
+    if (!mounted || AiSettingsStore.instance.hasConfiguredApiKey) return;
+    await showAiApiKeyTutorialModal(context, markPromptSeen: true);
   }
 
   /// 队列持久化：把上次没传完的任务接回来，冷启动后自动续传。

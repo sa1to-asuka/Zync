@@ -278,6 +278,38 @@ abstract final class ZyncTheme {
         thickness: isDark ? 0.7 : 0.8,
         space: 1,
       ),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.selected)
+                ? palette.accentContainer
+                : palette.surface,
+          ),
+          foregroundColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.selected)
+                ? palette.accent
+                : palette.textSecondary,
+          ),
+          side: WidgetStateProperty.resolveWith(
+            (states) => BorderSide(
+              color: states.contains(WidgetState.selected)
+                  ? palette.accent
+                  : palette.outline,
+              width: states.contains(WidgetState.selected) ? 1.2 : 0.8,
+            ),
+          ),
+          shape: const WidgetStatePropertyAll(
+            RoundedRectangleBorder(borderRadius: ZRadius.brMd),
+          ),
+          textStyle: WidgetStateProperty.resolveWith(
+            (states) => typo.caption.copyWith(
+              fontWeight: states.contains(WidgetState.selected)
+                  ? FontWeight.w700
+                  : FontWeight.w500,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

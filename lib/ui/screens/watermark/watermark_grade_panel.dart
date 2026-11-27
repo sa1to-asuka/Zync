@@ -238,7 +238,7 @@ extension _WatermarkScreenGradePanel on WatermarkScreenState {
                 ],
               ),
             ),
-            SizedBox(height: 172, child: _buildPresetBrowser(wide: true)),
+            SizedBox(height: 144, child: _buildPresetBrowser(wide: true)),
           ],
           Expanded(
             child: ListView(
@@ -252,10 +252,12 @@ extension _WatermarkScreenGradePanel on WatermarkScreenState {
                 if (!wide) ...[
                   _buildCategoryChips(),
                   const SizedBox(height: ZSpace.sm),
-                  SizedBox(height: 104, child: _buildPresetStrip()),
+                  SizedBox(height: 70, child: _buildPresetStrip()),
                 ],
                 if (showIntensity) _buildFilterIntensityBar(),
                 if (_isFilmActive) _buildFilmBypassHint(),
+                const SizedBox(height: ZSpace.sm),
+                _buildAiGradeLaunchCard(),
                 const SizedBox(height: ZSpace.sm),
                 ..._buildGradeGroups(),
                 const SizedBox(height: ZSpace.md),
@@ -352,7 +354,7 @@ extension _WatermarkScreenGradePanel on WatermarkScreenState {
         separatorBuilder: (_, __) => const SizedBox(height: ZSpace.xs),
         itemBuilder: (context, index) {
           final card = _presetCards()[index];
-          return SizedBox(height: 64, child: card);
+          return SizedBox(height: 56, child: card);
         },
       ),
     );
@@ -370,7 +372,7 @@ extension _WatermarkScreenGradePanel on WatermarkScreenState {
         final end = math.min(start + perPage, cards.length);
         return GridView.count(
           crossAxisCount: 2,
-          childAspectRatio: 2.4,
+          childAspectRatio: 2.25,
           padding: const EdgeInsets.symmetric(
             horizontal: ZSpace.md,
             vertical: ZSpace.xs,
@@ -391,9 +393,9 @@ extension _WatermarkScreenGradePanel on WatermarkScreenState {
     return ListView.separated(
       scrollDirection: Axis.horizontal,
       itemCount: cards.length,
-      separatorBuilder: (_, __) => const SizedBox(width: ZSpace.sm),
+      separatorBuilder: (_, __) => const SizedBox(width: ZSpace.xs + 2),
       itemBuilder: (context, index) => SizedBox(
-        width: 132,
+        width: 98,
         child: cards[index],
       ),
     );
@@ -426,22 +428,32 @@ extension _WatermarkScreenGradePanel on WatermarkScreenState {
       onTap: () => _updateState(() => _currentPresetId = 'custom'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.tune, size: 16, color: selected ? zc.accent : zc.textTertiary),
+          Row(
+            children: [
+              Icon(Icons.tune, size: 12, color: selected ? zc.accent : zc.textTertiary),
+              const Spacer(),
+              if (selected) Icon(Icons.check_circle, size: 11, color: zc.accent),
+            ],
+          ),
+          const SizedBox(height: 1.5),
           Text(
             context.l10n.commonCustom,
             style: TextStyle(
               color: selected ? zc.accent : zc.textPrimary,
-              fontSize: 12,
+              fontSize: 11,
+              height: 1.12,
               fontWeight: FontWeight.bold,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
+          const SizedBox(height: 1),
           Text(
             context.l10n.wmPresetCustomActive,
-            style: TextStyle(color: zc.textTertiary, fontSize: 9),
+            style: TextStyle(color: zc.textTertiary, fontSize: 8.5, height: 1.08),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -457,20 +469,22 @@ extension _WatermarkScreenGradePanel on WatermarkScreenState {
       onTap: _showSavePresetDialog,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.bookmark_add_outlined, size: 16, color: zc.accent),
+          Icon(Icons.bookmark_add_outlined, size: 13, color: zc.accent),
+          const SizedBox(height: 2),
           Text(
             context.l10n.wmPresetSaveNew,
             style: TextStyle(
               color: zc.accent,
-              fontSize: 11.5,
+              fontSize: 11,
+              height: 1.12,
               fontWeight: FontWeight.bold,
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox.shrink(),
         ],
       ),
     );
@@ -486,36 +500,40 @@ extension _WatermarkScreenGradePanel on WatermarkScreenState {
       onLongPress: isUser ? () => _showPresetActions(preset) : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
               Icon(
                 isUser ? Icons.person_outline : Icons.auto_awesome,
-                size: 14,
+                size: 12,
                 color: selected ? zc.accent : zc.textTertiary,
               ),
               const Spacer(),
               if (selected)
-                Icon(Icons.check_circle, size: 13, color: zc.accent),
+                Icon(Icons.check_circle, size: 11, color: zc.accent),
             ],
           ),
+          const SizedBox(height: 1.5),
           Text(
             preset.name,
             style: TextStyle(
               color: selected ? zc.accent : zc.textPrimary,
-              fontSize: 12,
+              fontSize: 11,
+              height: 1.12,
               fontWeight: FontWeight.w600,
             ),
-            maxLines: 2,
+            maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
+          const SizedBox(height: 1),
           Text(
             preset.summary,
             style: TextStyle(
               color: selected ? zc.accent.withAlpha(210) : zc.textTertiary,
               fontSize: 8.5,
-              height: 1.1,
+              height: 1.08,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -540,38 +558,42 @@ extension _WatermarkScreenGradePanel on WatermarkScreenState {
       },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
               for (final c in filter.previewColors.take(3))
                 Container(
-                  width: 7,
-                  height: 7,
-                  margin: const EdgeInsets.only(right: 3),
+                  width: 6,
+                  height: 6,
+                  margin: const EdgeInsets.only(right: 2.5),
                   decoration: BoxDecoration(color: c, shape: BoxShape.circle),
                 ),
               const Spacer(),
               if (selected)
-                Icon(Icons.check_circle, size: 13, color: zc.accent),
+                Icon(Icons.check_circle, size: 11, color: zc.accent),
             ],
           ),
+          const SizedBox(height: 1.5),
           Text(
             filter.trLabel,
             style: TextStyle(
               color: selected ? zc.accent : zc.textPrimary,
-              fontSize: 12,
+              fontSize: 11,
+              height: 1.12,
               fontWeight: FontWeight.w600,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
+          const SizedBox(height: 1),
           Text(
             filter.recipeSummary,
             style: TextStyle(
               color: selected ? zc.accent.withAlpha(210) : zc.textTertiary,
               fontSize: 8.5,
-              height: 1.1,
+              height: 1.08,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -595,8 +617,8 @@ extension _WatermarkScreenGradePanel on WatermarkScreenState {
       borderRadius: ZRadius.brSm,
       child: Container(
         padding: const EdgeInsets.symmetric(
-          horizontal: ZSpace.sm,
-          vertical: ZSpace.xs,
+          horizontal: 8,
+          vertical: 4,
         ),
         decoration: BoxDecoration(
           color: selected ? zc.accent.withAlpha(35) : zc.surface,
@@ -1149,6 +1171,267 @@ extension _WatermarkScreenGradePanel on WatermarkScreenState {
         ],
       ),
     );
+  }
+
+  Widget _buildAiGradeLaunchCard() {
+    final zc = context.zc;
+    final l10n = context.l10n;
+    return ListenableBuilder(
+      listenable: AiSettingsStore.instance,
+      builder: (context, _) {
+        final target = AiSettingsStore.instance.resolveGradeTarget();
+        final isConfigured =
+            !AiSettingsStore.instance.isTargetMissingApiKey(target);
+        final subText = isConfigured
+            ? '${target!.profile.name} · ${target.modelId}'
+            : l10n.aiGradeLaunchSetupSub;
+        return Material(
+          color: zc.accentContainer,
+          borderRadius: ZRadius.brMd,
+          child: InkWell(
+            onTap: _openAiGradeSheet,
+            borderRadius: ZRadius.brMd,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: ZSpace.md,
+                vertical: ZSpace.sm,
+              ),
+              decoration: BoxDecoration(
+                borderRadius: ZRadius.brMd,
+                border: Border.all(
+                  color: isConfigured
+                      ? zc.accent.withAlpha(110)
+                      : zc.warning.withAlpha(130),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 28,
+                    height: 28,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: zc.accent.withAlpha(24),
+                      borderRadius: ZRadius.brSm,
+                    ),
+                    child: AiSvgIcon(
+                      AiSvgIconKind.sparkleAperture,
+                      color: zc.accent,
+                      size: 15,
+                    ),
+                  ),
+                  const SizedBox(width: ZSpace.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          l10n.aiGradeButton,
+                          style: TextStyle(
+                            color: zc.textPrimary,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          subText,
+                          style: TextStyle(
+                            color: zc.textSecondary,
+                            fontSize: 10.5,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (!isConfigured) ...[
+                    const SizedBox(width: ZSpace.xs),
+                    ZTag(
+                      text: l10n.aiApiKeyNotConfiguredShort,
+                      compact: true,
+                      color: zc.warning,
+                      isOutline: true,
+                    ),
+                  ],
+                  const SizedBox(width: ZSpace.xxs),
+                  Icon(Icons.chevron_right_rounded, color: zc.accent, size: 18),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _applyAiGradePayload(AiGradeApplyPayload payload) {
+    final v = payload.variant;
+    final catalog = AiRecipeCatalog.buildAll(spektraStocks: _spektraStocks);
+    final entry = v.recipeId != null ? catalog.resolve(v.recipeId) : null;
+
+    if (entry?.kind == AiGradeRecipeKind.spektraFilm &&
+        entry?.spektraStockId != null &&
+        !_spektraCatalogUnavailable &&
+        _spektraStocks.any((s) => s.id == entry!.spektraStockId)) {
+      final stockId = entry!.spektraStockId!;
+      final stock = _spektraStocks.where((s) => s.id == stockId);
+      var paperId = _spektrafilm.paperId;
+      if (paperId != kSpektraDirectScanPaperId &&
+          !_spektraPapers.any((p) => p.id == paperId)) {
+        paperId = kSpektraDirectScanPaperId;
+      }
+      if (stock.isNotEmpty && stock.first.targetPrint.isNotEmpty) {
+        final target = stock.first.targetPrint;
+        if (_spektraPapers.any((p) => p.id == target)) {
+          paperId = target;
+        }
+      }
+      _setSpektrafilm(
+        _spektrafilm
+            .withStock(stockId, paperId: paperId)
+            .copyWith(intensity: payload.effectiveRecipeIntensity),
+      );
+      _updateState(() {
+        _adjustments = payload.scaledAdjustments;
+        _selectedFilter = PhotoFilterType.original;
+        _filterIntensity = 0.0;
+        _currentPresetId = 'ai_${entry.id}';
+      });
+      return;
+    }
+
+    _disableSpektrafilm(notify: false);
+
+    if (entry?.kind == AiGradeRecipeKind.filter && entry?.filterType != null) {
+      _updateState(() {
+        _selectedFilter = entry!.filterType!;
+        _filterIntensity = payload.effectiveRecipeIntensity;
+        _adjustments = payload.scaledAdjustments;
+        _currentPresetId = 'ai_${entry.id}';
+      });
+      return;
+    }
+
+    if (entry?.kind == AiGradeRecipeKind.builtinPreset &&
+        entry?.builtinPreset != null) {
+      final presetBase = entry!.builtinPreset!.grade.base;
+      _updateState(() {
+        _proGrade = entry.builtinPreset!.grade;
+        _selectedFilter = PhotoFilterType.original;
+        _filterIntensity = 0.0;
+        _adjustments = AiColorGrader.combineAdjustments(
+          presetBase,
+          payload.scaledAdjustments,
+        );
+        _currentPresetId = 'ai_${entry.id}';
+      });
+      return;
+    }
+
+    _updateState(() {
+      _adjustments = payload.scaledAdjustments;
+      _selectedFilter = PhotoFilterType.original;
+      _filterIntensity = 1.0;
+      _currentPresetId = 'custom';
+    });
+  }
+
+  Future<Uint8List> _encodeFastAiPreviewJpeg(
+    ui.Image source, {
+    int maxEdge = 640,
+    int quality = 74,
+  }) async {
+    final sw = source.width;
+    final sh = source.height;
+    final longest = math.max(sw, sh);
+    final double scale = longest > maxEdge ? maxEdge / longest : 1.0;
+    final targetW = math.max(1, (sw * scale).round());
+    final targetH = math.max(1, (sh * scale).round());
+
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    canvas.drawImageRect(
+      source,
+      Rect.fromLTWH(0, 0, sw.toDouble(), sh.toDouble()),
+      Rect.fromLTWH(0, 0, targetW.toDouble(), targetH.toDouble()),
+      Paint()..filterQuality = FilterQuality.low,
+    );
+    final picture = recorder.endRecording();
+    final resized = await picture.toImage(targetW, targetH);
+    picture.dispose();
+    final byteData =
+        await resized.toByteData(format: ui.ImageByteFormat.rawRgba);
+    resized.dispose();
+    if (byteData == null) return Uint8List(0);
+    final rgbaCopy = Uint8List.fromList(byteData.buffer.asUint8List());
+    return Isolate.run(() {
+      final im = img.Image.fromBytes(
+        width: targetW,
+        height: targetH,
+        bytes: rgbaCopy.buffer,
+        numChannels: 4,
+        order: img.ChannelOrder.rgba,
+      );
+      return Uint8List.fromList(img.encodeJpg(im, quality: quality));
+    });
+  }
+
+  Future<void> _openAiGradeSheet() async {
+    final l10n = context.l10n;
+    final image = _decodedImage;
+    if (image == null) {
+      showZToast(context, l10n.aiGradeNoImage, tone: ZStatusTone.warning);
+      return;
+    }
+
+    if (_spektraStocks.isEmpty && !_spektraCatalogUnavailable) {
+      await _loadSpektraCatalog().timeout(
+        const Duration(seconds: 2),
+        onTimeout: () {},
+      );
+    }
+    if (!mounted) return;
+
+    final bytes = await _encodeFastAiPreviewJpeg(image);
+    if (!mounted || bytes.isEmpty) return;
+
+    final r = _sourceSampledR ?? _sampledR ?? const <int>[];
+    final g = _sourceSampledG ?? _sampledG ?? const <int>[];
+    final b = _sourceSampledB ?? _sampledB ?? const <int>[];
+    final stats = ImageColorStats.fromRgbSamples(r, g, b);
+
+    final appliedName = await showAiGradeModal(
+      context: context,
+      imageBytes: bytes,
+      stats: stats,
+      metadata: _metadata,
+      spektraStocks: _spektraStocks,
+      preResizedJpeg: true,
+      onPreviewPayload: _applyAiGradePayload,
+      onToggleCompareOriginal: (comparing) {
+        _updateState(() => _isComparingOriginal = comparing);
+      },
+      onSavePreset: (payload, name) async {
+        _applyAiGradePayload(payload);
+        await _savePreset(name, null, false);
+      },
+    );
+
+    if (mounted) {
+      _updateState(() => _isComparingOriginal = false);
+      if (appliedName != null && appliedName.isNotEmpty) {
+        showZToast(
+          context,
+          l10n.aiGradeAppliedToast(appliedName),
+          tone: ZStatusTone.success,
+        );
+      }
+    }
   }
 
   // ==================== 底部操作条 ====================

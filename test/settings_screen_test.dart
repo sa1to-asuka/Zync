@@ -1,10 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zync/core/constants/colors.dart';
 import 'package:zync/core/settings/app_settings.dart';
 import 'package:zync/core/settings/settings_scope.dart';
-import 'package:zync/ui/design/theme.dart';
+import 'package:zync/engine/ai/ai_provider_config.dart';
+import 'package:zync/l10n/l10n.dart';
 import 'package:zync/ui/design/design.dart';
+import 'package:zync/ui/screens/settings/ai_settings_section.dart';
 import 'package:zync/ui/screens/settings_screen.dart';
 
 void main() {
@@ -33,6 +37,8 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: SettingsScreen()));
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.text('关于 Zync'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('关于 Zync'));
     await tester.pumpAndSettle();
 
@@ -44,7 +50,11 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: SettingsScreen()));
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.text('关于 Zync'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('关于 Zync'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('开源致谢'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('开源致谢'));
     await tester.pumpAndSettle();
@@ -123,5 +133,123 @@ void main() {
     );
     final groupDecoration = groupContainer.decoration! as BoxDecoration;
     expect(groupDecoration.color, ZyncPalette.light.card);
+  });
+
+  group('AI 设置页风格一致、自适应与无识图限制', () {
+    testWidgets('使用 ZTile + Switch 且放行 DeepSeek 模型，无不支持识图限制', (tester) async {
+      final tmp = await tester.runAsync(
+          () => Directory.systemTemp.createTemp('zync_ai_settings_test_'));
+      addTearDown(() async {
+        try {
+          if (tmp != null && tmp.existsSync()) tmp.deleteSync(recursive: true);
+        } catch (_) {}
+      });
+
+      await tester.runAsync(() async {
+        final store = AiSettingsStore.instance;
+        await store.ensureInitialized(overrideDirectory: tmp);
+        await store.upsertProfile(
+          const AiProviderProfile(
+            id: 'p_deepseek',
+            name: 'DeepSeek 官方',
+            protocol: AiApiProtocol.openAiCompatible,
+            baseUrl: 'https://api.deepseek.com/v1',
+            importedModels: [
+              AiImportedModel(
+                id: 'deepseek-chat',
+                displayName: 'deepseek-chat',
+                visionHint: false,
+                visionVerified: false,
+              ),
+            ],
+          ),
+          apiKey: 'sk-deepseek-test',
+        );
+        await store.setActiveCoach('p_deepseek', 'deepseek-chat');
+        await store.setActiveGrade('p_deepseek', 'deepseek-chat');
+      });
+
+      for (final cfg in const [
+        (locale: Locale('zh'), size: Size(390, 844)),
+        (locale: Locale('en'), size: Size(1024, 768)),
+        (locale: Locale('ja'), size: Size(1024, 768)),
+      ]) {
+        tester.view.physicalSize = cfg.size;
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            locale: cfg.locale,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            theme: ZyncTheme.lightTheme,
+            home: const Scaffold(
+              body: SingleChildScrollView(child: AiSettingsDetailContent()),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(tester.takeException(), isNull);
+        expect(find.byType(SwitchListTile), findsNothing);
+        expect(find.byType(ZTile), findsWidgets);
+        expect(find.byType(Switch), findsNWidgets(2));
+        expect(find.text('不支持识图'), findsNothing);
+        expect(find.text('deepseek-chat'), findsOneWidget);
+      }
+    });
+
+    testWidgets('协议选择卡片选中态视觉对比清晰（浅色/深色主题）', (tester) async {
+      final tmp = await tester.runAsync(
+          () => Directory.systemTemp.createTemp('zync_ai_proto_test_'));
+      addTearDown(() async {
+        try {
+          if (tmp != null && tmp.existsSync()) tmp.deleteSync(recursive: true);
+        } catch (_) {}
+      });
+      await tester.runAsync(
+          () => AiSettingsStore.instance.ensureInitialized(overrideDirectory: tmp));
+
+      for (final theme in [ZyncTheme.lightTheme, ZyncTheme.darkTheme]) {
+        final palette = theme.extension<ZyncPalette>()!;
+        tester.view.physicalSize = const Size(400, 840);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            locale: const Locale('zh'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            theme: theme,
+            home: const Scaffold(
+              body: SingleChildScrollView(child: AiSettingsDetailContent()),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.ensureVisible(find.text('添加接口档案'));
+        await tester.tap(find.text('添加接口档案'));
+        await tester.pumpAndSettle();
+
+        // 默认选中 OpenAI 兼容：应显示高亮容器底色与勾选图标
+        final openAiText = tester.widget<Text>(find.text('OpenAI 兼容').first);
+        expect(openAiText.style!.color, palette.accent);
+        expect(find.byIcon(Icons.check_circle_rounded), findsOneWidget);
+
+        // 切换到 Anthropic 兼容：选中高亮与勾选图标跟随切换
+        await tester.tap(find.text('Anthropic 兼容').first);
+        await tester.pumpAndSettle();
+        final anthropicText =
+            tester.widget<Text>(find.text('Anthropic 兼容').first);
+        expect(anthropicText.style!.color, palette.accent);
+        expect(find.byIcon(Icons.check_circle_rounded), findsOneWidget);
+
+        await tester.tap(find.byIcon(Icons.close_rounded));
+        await tester.pumpAndSettle();
+      }
+    });
   });
 }

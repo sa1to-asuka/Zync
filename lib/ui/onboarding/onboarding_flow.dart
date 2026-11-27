@@ -2,8 +2,11 @@ import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import '../../core/settings/app_settings.dart';
 import '../../core/settings/settings_scope.dart';
+import '../../engine/ai/ai_provider_config.dart';
 import '../../l10n/l10n.dart';
 import '../design/design.dart';
+import '../screens/settings_screen.dart';
+import '../widgets/ai_api_key_guide.dart';
 
 /// 首次启动 3 步欢迎引导（Q6）：
 /// ① 选择语言（点击即时切换全界面语言）
@@ -22,9 +25,15 @@ class OnboardingFlow extends StatefulWidget {
 }
 
 class _OnboardingFlowState extends State<OnboardingFlow> {
-  static const int _totalSteps = 3;
+  static const int _totalSteps = 4;
   int _step = 0;
   bool _reverse = false;
+
+  @override
+  void initState() {
+    super.initState();
+    AiSettingsStore.instance.ensureInitialized();
+  }
 
   void _goToStep(int target) {
     if (target < 0 || target >= _totalSteps || target == _step) return;
@@ -35,6 +44,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   }
 
   void _complete(AppSettings settings) {
+    settings.setAiGuidePromptVersion(AppSettings.currentAiGuideVersion);
     settings.setOnboardingCompleted(true);
     if (widget.onCompleted != null) {
       widget.onCompleted!();
@@ -68,7 +78,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         child: switch (_step) {
           0 => _LanguageStep(settings: settings),
           1 => _AppearanceStep(settings: settings),
-          _ => const _WorkflowStep(),
+          2 => const _WorkflowStep(),
+          _ => const _AiApiKeyStep(),
         },
       ),
     );
@@ -242,10 +253,15 @@ class _StepHeaderPanel extends StatelessWidget {
           l10n.onboardingThemeTitle,
           l10n.onboardingThemeSubtitle,
         ),
-      _ => (
+      2 => (
           Icons.settings_input_antenna_rounded,
           l10n.onboardingConnTitle,
           l10n.onboardingConnSubtitle,
+        ),
+      _ => (
+          Icons.vpn_key_outlined,
+          l10n.onboardingAiTitle,
+          l10n.onboardingAiSubtitle,
         ),
     };
 
@@ -485,6 +501,69 @@ class _WorkflowStep extends StatelessWidget {
           ),
           const SizedBox(height: ZSpace.sm),
         ],
+      ],
+    );
+  }
+}
+
+class _AiApiKeyStep extends StatelessWidget {
+  const _AiApiKeyStep();
+
+  @override
+  Widget build(BuildContext context) {
+    final zc = context.zc;
+    final l10n = context.l10n;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const AiApiKeyGuideContent(showHeader: false),
+        const SizedBox(height: ZSpace.md),
+        ListenableBuilder(
+          listenable: AiSettingsStore.instance,
+          builder: (ctx, _) {
+            final configured = AiSettingsStore.instance.hasConfiguredApiKey;
+            if (configured) {
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: ZSpace.md,
+                  vertical: ZSpace.sm,
+                ),
+                decoration: BoxDecoration(
+                  color: zc.accentContainer,
+                  borderRadius: ZRadius.brMd,
+                  border: Border.all(color: zc.accent),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.check_circle_rounded,
+                      size: 18,
+                      color: zc.accent,
+                    ),
+                    const SizedBox(width: ZSpace.xs),
+                    Text(
+                      l10n.aiGuideConfiguredBadge,
+                      style: ctx.zt.label.copyWith(color: zc.accent),
+                    ),
+                  ],
+                ),
+              );
+            }
+            return ZButton(
+              key: const ValueKey<String>('onboarding_config_ai_btn'),
+              label: l10n.aiGuideConfigureNowBtn,
+              icon: Icons.vpn_key_outlined,
+              variant: ZButtonVariant.tonal,
+              isBlock: true,
+              onTap: () => Navigator.of(ctx).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const AiSettingsPage(),
+                ),
+              ),
+            );
+          },
+        ),
       ],
     );
   }

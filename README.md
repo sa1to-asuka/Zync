@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <strong>Nikon Z-series transfer, wireless tethering, and watermark studio.</strong>
+  <strong>Nikon Z-series wireless/USB tethering, AI framing &amp; grading, spectral film, and watermark studio.</strong>
 </p>
 
 <p align="center">
@@ -14,25 +14,36 @@
   <a href="README.ja.md">日本語</a>
 </p>
 
-Zync is an open-source Flutter application built around a focused workflow for Nikon Z-series cameras: connect to the camera, browse and transfer photos, then finish and export them with a watermark or color treatment. It is designed to work directly with the camera over Wi-Fi PTP/IP or USB PTP without requiring a vendor account, cloud service, or proprietary SDK.
+Zync is an open-source Flutter and Kotlin/C++ photography studio built for Nikon Z-series mirrorless cameras (Z 30, Z 50II, Z fc, Z f, Z 6, Z 8, etc.): connect directly over Wi-Fi PTP/IP (both camera AP and LAN STA modes) or USB OTG PTP without any vendor account, cloud service, or proprietary SDK. It spans live view remote capture, AI Composition Coach, camera gallery browsing with resumable chunked transfers, in-camera `.NP3` Picture Control slots, 16-bit RAW & SpektraFilm optical processing, AI Smart Color Grading, free-drag watermark layers, and pan/zoom photo collages.
 
 - Project: <https://github.com/sa1to-asuka/Zync>
-- Version: `2.6.0`
+- Version: `3.0.1`
 - License: MIT
-- Primary platform: Android
+- Primary platform: Android (adaptive phone & tablet split-pane UI)
+- Languages: English / 简体中文 / 日本語
 
 ## Highlights
 
 | Area | What Zync provides |
 | --- | --- |
-| Camera connection | Wi-Fi PTP/IP and USB PTP over OTG |
-| Camera browsing | JPG, NEF, and NRW browsing with embedded RAW previews |
-| Transfer | Chunked downloads, transfer queue, pause, cancel, retry, and auto-transfer |
-| Watermark studio | 16 templates, EXIF data, custom text, a unified presets panel, and physical film simulation with 20 film stocks, halation, and silver-halide grain |
-| Capture | Live view, remote shutter, exposure sliders, tap-to-focus, manual focus, interval shooting, focus peaking, zebra and histogram |
-| Photo finishing | Color presets, exposure and tone controls, crop, rotate, compare, and collage |
-| Adaptive interface | Bottom navigation on phones and a navigation rail on larger screens |
-| Updates | GitHub Releases checks with SHA-256 verification before installation |
+| Camera connection | Wi-Fi PTP/IP (AP + STA modes), USB OTG PTP, and BLE GPS `0x2007` coordinate sync |
+| AI Live-View Coach 2.0 | BYOK vision/reasoning models highlight the best cropped composition (`portrait`/`landscape`) inside cluttered scenes, offer actionable lighting/timing tips, one-tap AF on subject, and exposure/`.NP3` sync |
+| Capture | Live view, remote shutter, exposure sliders, tap-to-focus, manual focus, interval shooting, focus bracketing, exposure bracketing, HDR, recording control, peaking, zebra & histogram |
+| Gallery & Transfer | Date-sorted unified storage card view for JPG/NEF/NRW, 512 KB resumable partial downloads, `0x9431` 4 GiB+ video support, Shoot & Transfer, foreground service, and pan/zoom collage studio |
+| AI Smart Color Grading 2.0 | Sends a fast downscaled preview and Zync's built-in filter, SpektraFilm & preset catalog to AI for top 3 curated recipes with per-photo fine-tuning, hold-to-compare, and natural-language refinement |
+| Watermark studio | 16 templates, EXIF editing pill, free-drag artistic text & SVG logo layers, cloud Chinese artistic fonts, compact preset strip, and 20 SpektraFilm optical film profiles |
+| Picture Control studio | Read/write custom `.NP3`/`.NCP` slots C1–C9 over PTP/IP, Flexible Color (`0310`) conversion, and 257-point tone curve previews |
+| Video editor | Multi-clip timeline, `.cube` 3D LUT grading, keyframes, waveform/vectorscope/RGB parade/histogram, and 1080p/4K export |
+| Security & Onboarding | 4-step onboarding including API Key setup tutorial, Android Keystore (AES-256-GCM) key vault, cellular bypass in camera AP, and SHA-256 release verification |
+
+## AI Engine (BYOK)
+
+Zync 3.0.1 supports both **OpenAI-compatible** and **Anthropic-compatible** endpoints with user-supplied API keys:
+
+- **Quick provider templates**: DeepSeek Official, Alibaba Bailian (Qwen-VL), Zhipu (GLM-4V), SiliconFlow, Volcengine Ark, Google Gemini, OpenAI Official, Anthropic Claude, OpenRouter, and local Ollama.
+- **Cellular Bypass on Camera AP**: Android `CellularHttpBridge` routes single AI HTTP calls over mobile data when the phone is joined to a camera's offline Wi-Fi hotspot without breaking PTP/IP.
+- **Text-Only Model Bridge & JSON Auto-Repair**: Automatically computes a 3×3 spatial luminance/RGB/saturation/Sobel-edge telemetry summary when text-only endpoints (such as `deepseek-chat` / `deepseek-reasoner`) reject raw `image_url` blocks, and repairs truncated JSON / unclosed `<think>` reasoning blocks.
+- **Hardware Key Isolation**: Keys are stored exclusively in Android Keystore AES-256-GCM prefs and masked in all UI displays and diagnostics.
 
 ## Connection modes
 
@@ -169,40 +180,28 @@ flutter run
 
 ## Build
 
-Build a universal release APK:
+Recommended for phones: build split-per-ABI APKs (`arm64-v8a` ~49 MB), or build an ARM-only universal APK (`android-arm64,android-arm` ~75 MB, omitting emulator `x86_64`):
 
 ```bash
-flutter build apk --release
+flutter build apk --release --split-per-abi
+flutter build apk --release --target-platform android-arm64,android-arm
 ```
 
-The output is written to:
-
-```text
-build/app/outputs/flutter-apk/app-release.apk
-```
-
-Build an ARM64-only package with separate debug symbols:
-
-```bash
-flutter build apk --release --split-per-abi --target-platform android-arm64 --split-debug-info=build/symbols/1.0.0-arm64
-```
-
-The output is:
+Outputs are written to:
 
 ```text
 build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+build/app/outputs/flutter-apk/app-release.apk
 ```
-
-Keep the generated symbols with the matching APK so crash reports can be symbolized later. Do not install a debug build for normal use.
 
 ### Windows build path
 
-Flutter release AOT builds can fail when the project path contains non-ASCII characters. If `gen_snapshot` reports an error such as `Unable to read file: ...app.dill`, copy the project to an ASCII-only path and build again:
+Flutter release AOT builds fail when the project path contains non-ASCII characters. Map an ASCII drive letter with `subst` before building:
 
 ```powershell
-robocopy . D:\zync_ascii /E /XD build .dart_tool .git
-cd D:\zync_ascii
-flutter build apk --release
+subst S: "D:\your-non-ascii-path\Nikon-SnapLink"
+cd S:\Zync
+flutter build apk --release --split-per-abi
 ```
 
 ### Release signing
@@ -218,36 +217,28 @@ Fill in the generated passwords and paths in `android/key.properties`. Both the 
 
 ### Installation troubleshooting
 
-Two APKs are published: `Zync-release-<ver>.apk` (arm64, recommended) and
-`Zync-release-<ver>-armeabi-v7a.apk` (older 32-bit devices). Installing the
-32-bit build on a 64-bit-only phone fails because no matching ABI exists.
+Three APKs are produced: `Zync-release-<ver>-arm64-v8a.apk` (recommended for modern 64-bit phones), `Zync-release-<ver>.apk` (dual-ARM universal), and `Zync-release-<ver>-armeabi-v7a.apk` (older 32-bit devices).
 
 If Android refuses to install:
 
-1. Uninstall any older Zync build first. Without a release keystore, builds
-   fall back to debug signing, and a debug key belongs to the machine that
-   built the APK - a build from another computer cannot update one installed
-   here.
+1. Uninstall any older Zync build first if it was signed with a different debug/upload key.
 2. Allow "Install unknown apps" for the browser or file manager you use.
-3. If the error mentions a signature conflict, the installed copy was signed
-   with a different key; uninstalling is the only fix.
-
-Release builds fall back to debug signing when `android/key.properties` is
-absent. Configure a keystore before distributing an APK.
+3. Verify you are installing an ABI compatible with your device (`arm64-v8a` for modern Android devices).
 
 ### Release assets and update integrity
 
-Zync checks releases at <https://github.com/sa1to-asuka/Zync/releases>. Publish the APK and a SHA-256 file with a matching name:
+Zync checks releases at <https://github.com/sa1to-asuka/Zync/releases>. Publish the APKs and matching `.sha256` checksum file:
 
 ```text
-Zync-release-1.0.0.apk
-Zync-release-1.0.0.apk.sha256
+Zync-release-3.0.1.apk
+Zync-release-3.0.1-arm64-v8a.apk
+Zync-release-3.0.1.apk.sha256
 ```
 
-The checksum file should contain the APK hash and filename:
+The checksum file should contain the hash and filename:
 
 ```text
-<sha256>  Zync-release-1.0.0.apk
+<sha256>  Zync-release-3.0.1.apk
 ```
 
 The in-app updater verifies the checksum before installation and refuses to install a mismatched file.
@@ -316,8 +307,16 @@ Thank you to the maintainers and contributors of the projects below. Each projec
 | [ptpip](https://github.com/mmattes/ptpip) | PTP/IP implementation reference | Apache-2.0 |
 | [libptp](https://github.com/Fimagena/libptp) | PTP/IP and USB PTP implementation reference | LGPL-2.1 |
 | [NikonCopy](https://github.com/Zephyrion-Yuan/NikonCopy) | Android USB OTG PTP file-access reference | No license file currently declared |
-| [furble](https://github.com/gkoh/furble) | Nikon BLE shutter behavior reference | MIT |
+| [furble](https://github.com/gkoh/furble) | Nikon BLE shutter control & `0x2007` GPS coordinate sync reference | MIT |
 | [nikongeotag](https://github.com/rjmendez/nikongeotag) | Nikon BLE smart-device protocol reference | GPL-3.0 |
+| [semi-utils](https://github.com/leslievan/semi-utils) | Camera EXIF watermark template layouts (mat, blur shadow, capsule, brand match & GPS) reference | Apache-2.0 |
+| [Copicseal](https://github.com/copicseal/copicseal) | Camera parameter bar, borderless & retro film date-stamp watermark typography reference | Apache-2.0 |
+| [PicSeal](https://github.com/pipiqiang/PicSeal) | Camera model detection, brand-styled watermark generation & EXIF preservation reference | MIT |
+| [camera-watermark](https://github.com/myWsq/camera-watermark) | Mirrorless/DSLR EXIF watermark composition & customization UX reference | MIT |
+| [zf-capture-one-helper](https://github.com/open-nikonz/zf-capture-one-helper) | Nikon Z `_ptp._tcp` Bonjour TXT fields & STA wireless pairing handshake sequence reference | Apache-2.0 |
+| [OpenAI / Anthropic API Specs](https://platform.openai.com/docs/guides/vision) | OpenAI & Anthropic vision protocol compatibility for Zync BYOK AI Coach & Grading | Public API Spec |
+| [Google Fonts · English Artistic Fonts](https://github.com/google/fonts) | Bundled Playfair Display, Cinzel, Caveat & JetBrains Mono typefaces | SIL OFL-1.1 |
+| [LXGW WenKai / Zhuque Fangsong / ZCOOL](https://github.com/lxgw/LxgwWenKai) | On-demand cloud Chinese artistic fonts (LXGW WenKai, Zhuque Fangsong, ZCOOL XiaoWei, etc.) | SIL OFL-1.1 |
 
 ### Picture Control recipes and preview material
 
@@ -346,6 +345,9 @@ Thank you to the maintainers and contributors of the projects below. Each projec
 | [intl](https://github.com/dart-lang/i18n) | Internationalization and date formatting | BSD-3-Clause |
 | [path_provider](https://github.com/flutter/packages/tree/main/packages/path_provider) | Platform directory resolution | BSD-3-Clause |
 | [video_player](https://github.com/flutter/packages/tree/main/packages/video_player) | Video playback support | BSD-3-Clause |
+| [archive](https://github.com/brendan-duncan/archive) | ZIP archive extraction for recipe packs & font bundles | MIT |
+| [flutter_localizations](https://github.com/flutter/flutter/tree/master/packages/flutter_localizations) | Localization delegates & multi-language resource loading | BSD-3-Clause |
+| [animations](https://github.com/flutter/packages/tree/main/packages/animations) | Material motion transitions (FadeThrough / SharedAxis) | BSD-3-Clause |
 
 The same acknowledgement data is available in the app under **Settings → About Zync → Project & Licenses → Open-source Acknowledgements**. Projects without a declared license are listed for transparency and are not described as open source.
 

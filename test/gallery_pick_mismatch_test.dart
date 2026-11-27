@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
-import 'package:zync/engine/transfer/camera_viewed_tracker.dart';
+import 'package:zync/core/settings/app_settings.dart';
+import 'package:zync/core/utils/capture_date.dart';
 import 'package:zync/engine/transfer/download_manager.dart';
 import 'package:zync/engine/transfer/shoot_and_transfer.dart';
 import 'package:zync/protocol/camera_driver.dart';
@@ -82,15 +83,32 @@ void main() {
     } catch (_) {}
   });
 
-  testWidgets('默认「未查看」筛选下，点击某张卡片必须打开同一张', (tester) async {
-    // 显示顺序是 DSC_0009 → DSC_0001；先标记最前面两张已查看，
-    // 让筛选后的下标整体前移，复现旧实现「点 A 开 B」的条件。
-    await tester.runAsync(() async {
-      await CameraViewedTracker.instance.ensureInitialized();
-      await CameraViewedTracker.instance.clearViewed();
-      await CameraViewedTracker.instance.markViewed('DSC_0009');
-      await CameraViewedTracker.instance.markViewed('DSC_0008');
-    });
+  test('compareCaptureDateNewestFirst 按拍摄时间新到旧降序，无日期按句柄降序', () {
+    final sorted = [
+      (date: '20261124T083000', handle: 0x10),
+      (date: '2026:11:26 15:20:10', handle: 0x08),
+      (date: '', handle: 0x30),
+      (date: '2026.11.25 18:00', handle: 0x20),
+      (date: '', handle: 0x40),
+    ]..sort(
+        (a, b) => compareCaptureDateNewestFirst(
+          a.date,
+          a.handle,
+          b.date,
+          b.handle,
+        ),
+      );
+
+    expect(
+      sorted.map((e) => e.handle).toList(),
+      equals([0x08, 0x20, 0x10, 0x40, 0x30]),
+    );
+  });
+
+  testWidgets('相册默认展示全部并移除新照片筛选与角标，点击卡片打开对应照片', (tester) async {
+    AppSettings.instance.resetForTest();
+    AppSettings.instance.setGalleryFilter('unviewed');
+    expect(AppSettings.instance.galleryFilter, equals('all'));
 
     tester.view.physicalSize = const Size(400, 820);
     tester.view.devicePixelRatio = 1.0;
@@ -121,6 +139,8 @@ void main() {
       await tester.pump();
     }
     expect(target, findsOneWidget);
+    expect(find.text('新照片'), findsNothing);
+    expect(find.text('新'), findsNothing);
 
     await tester.tap(target);
     await tester.pump();

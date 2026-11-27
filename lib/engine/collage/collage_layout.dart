@@ -5,10 +5,16 @@ import '../../l10n/l10n.dart';
 
 /// 拼图导出画布比例。
 ///
-/// 只提供两种成品比例：1:1 方图与 3:4 竖屏。短边固定 [CollageAspect.shortSide]。
+/// 短边固定 [CollageAspect.shortSide]（长边超限时等比封顶，避免超长比例内存溢出）。
 enum CollageAspect {
   square('1:1', 1, 1),
-  portrait34('3:4', 3, 4);
+  portrait34('3:4', 3, 4),
+  portrait45('4:5', 4, 5),
+  landscape43('4:3', 4, 3),
+  landscape32('3:2', 3, 2),
+  portrait23('2:3', 2, 3),
+  story916('9:16', 9, 16),
+  cinema169('16:9', 16, 9);
 
   final String label;
   final int w;
@@ -16,10 +22,10 @@ enum CollageAspect {
 
   const CollageAspect(this.label, this.w, this.h);
 
-  /// 导出画布短边像素（长边等比放大，1:1 → 2048×2048，3:4 → 1536×2048）。
+  /// 导出画布基准长边像素（1:1 → 2048×2048，3:4 → 1536×2048）。
   static const double shortSide = 2048;
 
-  /// 导出画布像素尺寸。
+  /// 导出画布像素尺寸（长边固定为 [shortSide]，短边按比例计算）。
   Size get outputSize => w >= h
       ? Size(shortSide, shortSide * h / w)
       : Size(shortSide * w / h, shortSide);
@@ -289,36 +295,64 @@ const double kCollageDiagonalSlant = 0.18;
 /// 单元格内单张图片的相对变换。
 ///
 /// [scale] 以 BoxFit.cover 为 1.0 基准（取值范围 1.0–[kCollageMaxImageScale]）；
-/// [offset] 相对单元格宽高归一化，0.5 表示偏移半个单元格。
+/// [offset] 相对单元格宽高归一化，0.5 表示偏移半个单元格；
+/// [quarterTurns] 为顺时针 90° 旋转次数（0..3），[flipX] 为水平镜像。
 class CollageImageTransform {
   final double scale;
   final Offset offset;
+  final int quarterTurns;
+  final bool flipX;
 
-  const CollageImageTransform({this.scale = 1.0, this.offset = Offset.zero});
+  const CollageImageTransform({
+    this.scale = 1.0,
+    this.offset = Offset.zero,
+    this.quarterTurns = 0,
+    this.flipX = false,
+  });
 
   /// 默认状态：恰好 cover 铺满并居中。
   static const CollageImageTransform identity = CollageImageTransform();
 
-  bool get isIdentity => scale == 1.0 && offset == Offset.zero;
+  bool get isIdentity =>
+      scale == 1.0 &&
+      offset == Offset.zero &&
+      (quarterTurns % 4) == 0 &&
+      !flipX;
 
-  CollageImageTransform copyWith({double? scale, Offset? offset}) =>
+  CollageImageTransform copyWith({
+    double? scale,
+    Offset? offset,
+    int? quarterTurns,
+    bool? flipX,
+  }) =>
       CollageImageTransform(
         scale: scale ?? this.scale,
         offset: offset ?? this.offset,
+        quarterTurns: ((quarterTurns ?? this.quarterTurns) % 4 + 4) % 4,
+        flipX: flipX ?? this.flipX,
       );
 
   @override
   bool operator ==(Object other) =>
       other is CollageImageTransform &&
       other.scale == scale &&
-      other.offset == offset;
+      other.offset == offset &&
+      (other.quarterTurns % 4) == (quarterTurns % 4) &&
+      other.flipX == flipX;
 
   @override
-  int get hashCode => Object.hash(scale, offset);
+  int get hashCode =>
+      Object.hash(scale, offset, ((quarterTurns % 4) + 4) % 4, flipX);
 }
 
 /// 图片相对单元格的最大缩放倍数。
-const double kCollageMaxImageScale = 4.0;
+const double kCollageMaxImageScale = 5.0;
+
+/// 考虑单格旋转后的有效图像尺寸（奇数次 90° 旋转会互换宽高）。
+Size effectiveCollageImageSize(Size imageSize, CollageImageTransform t) =>
+    (t.quarterTurns % 2 != 0)
+        ? Size(imageSize.height, imageSize.width)
+        : imageSize;
 
 /// 把变换夹取到合法范围：缩放 [1, kCollageMaxImageScale]，
 /// 位移不越出「图片始终盖满单元格」的边界（永不露白）。
@@ -327,8 +361,9 @@ CollageImageTransform clampCollageTransform(
   Rect cell,
   CollageImageTransform t,
 ) {
+  final effSize = effectiveCollageImageSize(imageSize, t);
   final scale = t.scale.clamp(1.0, kCollageMaxImageScale).toDouble();
-  final draw = imageSize * (_coverScale(imageSize, cell) * scale);
+  final draw = effSize * (_coverScale(effSize, cell) * scale);
   final maxDx =
       draw.width <= cell.width ? 0.0 : (draw.width - cell.width) / 2 / cell.width;
   final maxDy = draw.height <= cell.height
@@ -340,17 +375,20 @@ CollageImageTransform clampCollageTransform(
       t.offset.dx.clamp(-maxDx, maxDx).toDouble(),
       t.offset.dy.clamp(-maxDy, maxDy).toDouble(),
     ),
+    quarterTurns: ((t.quarterTurns % 4) + 4) % 4,
+    flipX: t.flipX,
   );
 }
 
-/// 单元格内图片的最终绘制矩形（已应用缩放/位移并夹取到铺满单元格）。
+/// 单元格内图片的最终绘制矩形（已应用旋转等效尺寸、缩放/位移并夹取到铺满单元格）。
 Rect collageImageDstRect(
   Size imageSize,
   Rect cell,
   CollageImageTransform t,
 ) {
   final c = clampCollageTransform(imageSize, cell, t);
-  final draw = imageSize * (_coverScale(imageSize, cell) * c.scale);
+  final effSize = effectiveCollageImageSize(imageSize, c);
+  final draw = effSize * (_coverScale(effSize, cell) * c.scale);
   return Rect.fromCenter(
     center: Offset(
       cell.center.dx + c.offset.dx * cell.width,
@@ -359,6 +397,56 @@ Rect collageImageDstRect(
     width: draw.width,
     height: draw.height,
   );
+}
+
+/// 双指焦点不变性缩放：缩放时保持双指焦点对应的画面内容点位不漂移，并叠加平移增量。
+CollageImageTransform computeFocalZoomTransform({
+  required Size imageSize,
+  required Rect cell,
+  required CollageImageTransform start,
+  required double gestureScale,
+  required Offset startFocalCanvas,
+  required Offset currentFocalCanvas,
+}) {
+  if (cell.width <= 0 || cell.height <= 0) return start;
+  final nextScale =
+      (start.scale * gestureScale).clamp(1.0, kCollageMaxImageScale).toDouble();
+  final ratio = start.scale <= 0 ? 1.0 : nextScale / start.scale;
+  final fx = (startFocalCanvas.dx - cell.center.dx) / cell.width;
+  final fy = (startFocalCanvas.dy - cell.center.dy) / cell.height;
+  final panX = (currentFocalCanvas.dx - startFocalCanvas.dx) / cell.width;
+  final panY = (currentFocalCanvas.dy - startFocalCanvas.dy) / cell.height;
+  final nextOffset = Offset(
+    fx - (fx - start.offset.dx) * ratio + panX,
+    fy - (fy - start.offset.dy) * ratio + panY,
+  );
+  return clampCollageTransform(
+    imageSize,
+    cell,
+    start.copyWith(scale: nextScale, offset: nextOffset),
+  );
+}
+
+/// 主分隔线描述（供 UI 渲染手柄与命中拖拽）。
+class CollageDividerSpec {
+  /// 分割方向：`vertical` 表示左右分割（水平拖动调节），`horizontal` 表示上下分割（垂直拖动调节）。
+  final bool isVerticalDivider;
+  final Offset start;
+  final Offset end;
+  final double currentRatio;
+
+  const CollageDividerSpec({
+    required this.isVerticalDivider,
+    required this.start,
+    required this.end,
+    required this.currentRatio,
+  });
+
+  /// 拖拽手柄锚点（置于分隔线 82% 处，避免与画布正中单格图片拖拽冲突）。
+  Offset get handleAnchor => Offset.lerp(start, end, 0.82)!;
+
+  Offset get midpoint =>
+      Offset((start.dx + end.dx) / 2, (start.dy + end.dy) / 2);
 }
 
 /// BoxFit.cover 需要的缩放倍数。
@@ -385,40 +473,173 @@ Rect _polyBounds(List<Offset> poly) {
   return Rect.fromLTRB(l, t, r, b);
 }
 
-/// 一套拼图版式（比例 + 边框 + 拼接方式），负责坐标换算。
+/// 一套拼图版式（比例 + 边框 + 拼接方式 + 精细调节），负责坐标换算。
 class CollageLayout {
+  static const int defaultBorderColorValue = 0xFFFFFFFF;
+  static const double minSplitRatio = 0.25;
+  static const double maxSplitRatio = 0.75;
+
   final CollageTemplate template;
   final CollageAspect aspect;
   final CollageBorder border;
+
+  /// 自定义内间距比例（相对画布短边）；null 时沿用 [border.ratio]。
+  final double? innerGapRatio;
+
+  /// 自定义外边距比例（相对画布短边）；null 时沿用 [border.ratio]。
+  final double? outerMarginRatio;
+
+  /// 单元格圆角比例（相对画布短边，0..0.12）。
+  final double cornerRadiusRatio;
+
+  /// 边框与分界线 ARGB32 颜色（默认纯白）。
+  final int borderColorValue;
+
+  /// 可拖主分隔线比例（0.25..0.75）；null 时采用模板默认比例。
+  final double? splitRatio;
 
   const CollageLayout({
     required this.template,
     this.aspect = CollageAspect.square,
     this.border = CollageBorder.none,
+    this.innerGapRatio,
+    this.outerMarginRatio,
+    this.cornerRadiusRatio = 0.0,
+    this.borderColorValue = defaultBorderColorValue,
+    this.splitRatio,
   });
+
+  static const Object _unset = Object();
 
   CollageLayout copyWith({
     CollageTemplate? template,
     CollageAspect? aspect,
     CollageBorder? border,
+    Object? innerGapRatio = _unset,
+    Object? outerMarginRatio = _unset,
+    double? cornerRadiusRatio,
+    int? borderColorValue,
+    Object? splitRatio = _unset,
   }) =>
       CollageLayout(
         template: template ?? this.template,
         aspect: aspect ?? this.aspect,
         border: border ?? this.border,
+        innerGapRatio: identical(innerGapRatio, _unset)
+            ? this.innerGapRatio
+            : innerGapRatio as double?,
+        outerMarginRatio: identical(outerMarginRatio, _unset)
+            ? this.outerMarginRatio
+            : outerMarginRatio as double?,
+        cornerRadiusRatio:
+            (cornerRadiusRatio ?? this.cornerRadiusRatio).clamp(0.0, 0.12),
+        borderColorValue: borderColorValue ?? this.borderColorValue,
+        splitRatio: identical(splitRatio, _unset)
+            ? this.splitRatio
+            : (splitRatio as double?)?.clamp(minSplitRatio, maxSplitRatio),
       );
 
   bool get isDiagonal => template.isDiagonal;
 
   Size get canvasSize => aspect.outputSize;
 
-  /// 画布短边对应的实际边框像素宽度。
-  double get borderWidth => border.ratio * canvasSize.shortestSide;
+  /// 有效内间距比例。
+  double get effectiveInnerGapRatio =>
+      (innerGapRatio ?? border.ratio).clamp(0.0, 0.04);
+
+  /// 有效外边距比例。
+  double get effectiveOuterMarginRatio =>
+      (outerMarginRatio ?? border.ratio).clamp(0.0, 0.06);
+
+  /// 画布短边对应的实际内间距/标准边框像素宽度。
+  double get borderWidth => effectiveInnerGapRatio * canvasSize.shortestSide;
+
+  /// 画布短边对应的实际外边距像素宽度。
+  double get outerBorderWidth =>
+      effectiveOuterMarginRatio * canvasSize.shortestSide;
+
+  /// 单元格圆角半径（画布像素）。
+  double get cornerRadiusPx =>
+      cornerRadiusRatio.clamp(0.0, 0.12) * canvasSize.shortestSide;
+
+  /// 当前模板是否支持主分隔线拖拽。
+  double? get defaultSplitRatio => switch (template) {
+        CollageTemplate.topBottom ||
+        CollageTemplate.leftRight ||
+        CollageTemplate.threeTop1Bottom2 ||
+        CollageTemplate.threeTop2Bottom1 ||
+        CollageTemplate.threeLeft1Right2 =>
+          0.5,
+        CollageTemplate.topBottom21 || CollageTemplate.leftRight21 => 2 / 3,
+        CollageTemplate.topBottom12 || CollageTemplate.leftRight12 => 1 / 3,
+        _ => null,
+      };
+
+  /// 主分隔线描述（不支持拖拽的模板返回 null）。
+  CollageDividerSpec? get primaryDivider {
+    final def = defaultSplitRatio;
+    if (def == null) return null;
+    final r = (splitRatio ?? def).clamp(minSplitRatio, maxSplitRatio);
+    final size = canvasSize;
+    final vertical = template == CollageTemplate.leftRight ||
+        template == CollageTemplate.leftRight21 ||
+        template == CollageTemplate.leftRight12 ||
+        template == CollageTemplate.threeLeft1Right2;
+    if (vertical) {
+      final x = r * size.width;
+      return CollageDividerSpec(
+        isVerticalDivider: true,
+        start: Offset(x, 0),
+        end: Offset(x, size.height),
+        currentRatio: r,
+      );
+    }
+    final y = r * size.height;
+    return CollageDividerSpec(
+      isVerticalDivider: false,
+      start: Offset(0, y),
+      end: Offset(size.width, y),
+      currentRatio: r,
+    );
+  }
+
+  /// 归一化单元格列表（已应用 [splitRatio]）。
+  List<Rect> get normalizedCells {
+    final def = defaultSplitRatio;
+    if (def == null || splitRatio == null) return template.cells;
+    final r = splitRatio!.clamp(minSplitRatio, maxSplitRatio).toDouble();
+    return switch (template) {
+      CollageTemplate.topBottom ||
+      CollageTemplate.topBottom21 ||
+      CollageTemplate.topBottom12 =>
+        [Rect.fromLTRB(0, 0, 1, r), Rect.fromLTRB(0, r, 1, 1)],
+      CollageTemplate.leftRight ||
+      CollageTemplate.leftRight21 ||
+      CollageTemplate.leftRight12 =>
+        [Rect.fromLTRB(0, 0, r, 1), Rect.fromLTRB(r, 0, 1, 1)],
+      CollageTemplate.threeTop1Bottom2 => [
+          Rect.fromLTRB(0, 0, 1, r),
+          Rect.fromLTRB(0, r, .5, 1),
+          Rect.fromLTRB(.5, r, 1, 1),
+        ],
+      CollageTemplate.threeTop2Bottom1 => [
+          Rect.fromLTRB(0, 0, .5, r),
+          Rect.fromLTRB(.5, 0, 1, r),
+          Rect.fromLTRB(0, r, 1, 1),
+        ],
+      CollageTemplate.threeLeft1Right2 => [
+          Rect.fromLTRB(0, 0, r, 1),
+          Rect.fromLTRB(r, 0, 1, .5),
+          Rect.fromLTRB(r, .5, 1, 1),
+        ],
+      _ => template.cells,
+    };
+  }
 
   /// 缩放到画布坐标的单元格矩形。
   List<Rect> get cellRects {
     final size = canvasSize;
-    return template.cells
+    return normalizedCells
         .map((r) => Rect.fromLTRB(
               r.left * size.width,
               r.top * size.height,
@@ -459,14 +680,14 @@ class CollageLayout {
         .toList(growable: false);
   }
 
-  /// 单个单元格的实际绘制矩形：外边缘内缩 [borderWidth]，相邻格各内缩一半。
+  /// 单个单元格的实际绘制矩形：外边缘内缩 [outerBorderWidth]，相邻格各内缩 [borderWidth]/2。
   ///
   /// [drawOuterFrame] 为 false 时（叠加了水印模板），外围边框不占位，
   /// 只保留图片之间的分界线。
   Rect insetRect(Rect cell, {bool drawOuterFrame = true}) {
     final size = canvasSize;
     final half = borderWidth / 2;
-    final outer = drawOuterFrame ? borderWidth : 0.0;
+    final outer = drawOuterFrame ? outerBorderWidth : 0.0;
     const eps = 0.0001;
     final atLeft = cell.left <= eps;
     final atTop = cell.top <= eps;

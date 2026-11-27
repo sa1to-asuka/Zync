@@ -110,6 +110,8 @@ class MainActivity: FlutterActivity() {
     private var pendingPickMultiFilesResult: MethodChannel.Result? = null
     private val pendingIncomingFilePaths = mutableListOf<String>()
     private var methodChannel: MethodChannel? = null
+    private lateinit var secureStorage: SecureStorageBridge
+    private lateinit var cellularHttp: CellularHttpBridge
 
     private var wifiLock: WifiManager.WifiLock? = null
     private var wakeLock: PowerManager.WakeLock? = null
@@ -137,6 +139,8 @@ class MainActivity: FlutterActivity() {
         val bm = getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
         bluetoothAdapter = bm?.adapter
         usbManager = getSystemService(Context.USB_SERVICE) as? UsbManager
+        secureStorage = SecureStorageBridge(applicationContext)
+        cellularHttp = CellularHttpBridge(applicationContext)
         registerUsbPermissionReceiver()
 
         // 请求关键运行时权限 (定位/近距离设备，以便系统允许读取 Wi-Fi SSID 与扫描 BLE)
@@ -336,7 +340,21 @@ class MainActivity: FlutterActivity() {
                         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                             addCategory(Intent.CATEGORY_OPENABLE)
                             type = "*/*"
-                            putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("application/octet-stream", "text/plain", "image/png", "image/jpeg", "video/*"))
+                            putExtra(
+                                Intent.EXTRA_MIME_TYPES,
+                                arrayOf(
+                                    "application/octet-stream",
+                                    "font/ttf",
+                                    "font/otf",
+                                    "application/x-font-ttf",
+                                    "application/x-font-otf",
+                                    "application/font-sfnt",
+                                    "text/plain",
+                                    "image/png",
+                                    "image/jpeg",
+                                    "video/*",
+                                ),
+                            )
                         }
                         startActivityForResult(intent, REQUEST_PICK_FILE)
                     } catch (e: Exception) {
@@ -583,6 +601,53 @@ class MainActivity: FlutterActivity() {
                         usbAsync(result, "USB_DATA_OUT_FAILED", deviceId) {
                             requireUsbSession(deviceId).executeDataOut(opCode, data, params)
                             true
+                        }
+                    }
+                }
+                // 安全密钥存储 (Android Keystore AES-256-GCM) 与 AP 蜂窝网络旁路请求
+                "secureWriteSecret" -> {
+                    val key = call.argument<String>("key")
+                    val value = call.argument<String>("value")
+                    if (key.isNullOrBlank() || value == null) {
+                        result.error("INVALID_ARG", "key/value 不能为空", null)
+                    } else {
+                        try {
+                            secureStorage.write(key, value)
+                            result.success(true)
+                        } catch (e: Exception) {
+                            result.error("SECURE_WRITE_FAILED", e.localizedMessage, null)
+                        }
+                    }
+                }
+                "secureReadSecret" -> {
+                    val key = call.argument<String>("key")
+                    if (key.isNullOrBlank()) {
+                        result.success(null)
+                    } else {
+                        result.success(secureStorage.read(key))
+                    }
+                }
+                "secureDeleteSecret" -> {
+                    val key = call.argument<String>("key")
+                    if (!key.isNullOrBlank()) {
+                        secureStorage.delete(key)
+                    }
+                    result.success(true)
+                }
+                "httpRequestOverCellular" -> {
+                    val method = call.argument<String>("method") ?: "POST"
+                    val url = call.argument<String>("url") ?: ""
+                    val rawHeaders = call.argument<Map<*, *>>("headers") ?: emptyMap<Any, Any>()
+                    val headers = rawHeaders.entries
+                        .mapNotNull { (k, v) -> if (k != null && v != null) "$k" to "$v" else null }
+                        .toMap()
+                    val body = call.argument<String>("body")
+                    val timeoutMs = call.argument<Int>("timeoutMs") ?: 45000
+                    if (url.isBlank()) {
+                        result.error("INVALID_URL", "URL 不能为空", null)
+                    } else {
+                        cellularHttp.execute(method, url, headers, body, timeoutMs) { map ->
+                            runOnUiThread { result.success(map) }
                         }
                     }
                 }

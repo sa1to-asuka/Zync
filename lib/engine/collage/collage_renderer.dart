@@ -63,15 +63,28 @@ class CollageRenderer {
   }) {
     final full = layout.canvasSize;
     final border = layout.borderWidth;
+    final outerBorder = layout.outerBorderWidth;
+    final cornerRadius = layout.cornerRadiusPx;
+    final borderCol = Color(layout.borderColorValue);
     final paint = Paint()..filterQuality = FilterQuality.high;
     final fullRect = Rect.fromLTWH(0, 0, full.width, full.height);
 
-    // 先铺白底，边框与分界线由底色透出。
-    canvas.drawRect(fullRect, Paint()..color = borderColor);
+    // 先铺边框底色，边框与分界线由底色透出。
+    canvas.drawRect(fullRect, Paint()..color = borderCol);
 
     if (layout.isDiagonal) {
       _paintDiagonal(
-          canvas, full, images, layout, transforms, border, drawOuterFrame, paint);
+        canvas,
+        full,
+        images,
+        layout,
+        transforms,
+        border,
+        outerBorder,
+        borderCol,
+        drawOuterFrame,
+        paint,
+      );
       return;
     }
 
@@ -79,7 +92,136 @@ class CollageRenderer {
     for (var i = 0; i < cells.length && i < images.length; i++) {
       final dst = layout.insetRect(cells[i], drawOuterFrame: drawOuterFrame);
       if (dst.width <= 0 || dst.height <= 0) continue;
-      _paintImageInCell(canvas, images[i], dst, _at(transforms, i), paint);
+      _paintImageInCell(
+        canvas,
+        images[i],
+        dst,
+        _at(transforms, i),
+        paint,
+        cornerRadius: cornerRadius,
+      );
+    }
+  }
+
+  /// 将整张拼图矢量绘制进水印外框的 [targetRect] 区域（60fps 所见即所得预览用）。
+  static void paintIntoRect(
+    Canvas canvas,
+    Rect targetRect, {
+    required CollageLayout layout,
+    required List<ui.Image> images,
+    List<CollageImageTransform> transforms = const [],
+    bool drawOuterFrame = false,
+    int? activeIndex,
+    int? swapSourceIndex,
+    Color? highlightColor,
+    bool drawDividerHandle = true,
+  }) {
+    if (targetRect.width <= 0 || targetRect.height <= 0) return;
+    final full = layout.canvasSize;
+    final sx = targetRect.width / full.width;
+    final sy = targetRect.height / full.height;
+
+    canvas.save();
+    canvas.translate(targetRect.left, targetRect.top);
+    canvas.scale(sx, sy);
+    paintCollage(
+      canvas,
+      layout: layout,
+      images: images,
+      transforms: transforms,
+      drawOuterFrame: drawOuterFrame,
+    );
+    paintInteractiveOverlays(
+      canvas,
+      layout: layout,
+      imageCount: images.length,
+      drawOuterFrame: drawOuterFrame,
+      activeIndex: activeIndex,
+      swapSourceIndex: swapSourceIndex,
+      highlightColor: highlightColor,
+      drawDividerHandle: drawDividerHandle,
+    );
+    canvas.restore();
+  }
+
+  /// 绘制选中格高亮框、互换源标记与主分隔线手柄。
+  static void paintInteractiveOverlays(
+    Canvas canvas, {
+    required CollageLayout layout,
+    required int imageCount,
+    bool drawOuterFrame = true,
+    int? activeIndex,
+    int? swapSourceIndex,
+    Color? highlightColor,
+    bool drawDividerHandle = true,
+  }) {
+    final full = layout.canvasSize;
+    final hl = highlightColor;
+    if (hl != null) {
+      final stroke = math.max(2.0, full.shortestSide * 0.005);
+      final corner = layout.cornerRadiusPx;
+
+      void drawCellBorder(int idx, Color color, double widthScale) {
+        if (idx < 0 || idx >= imageCount) return;
+        final p = Paint()
+          ..color = color
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = stroke * widthScale;
+        if (layout.isDiagonal) {
+          final polys = layout.diagonalPolys;
+          if (idx < polys.length) {
+            canvas.drawPath(Path()..addPolygon(polys[idx], true), p);
+          }
+        } else {
+          final cells = layout.imageCells(drawOuterFrame: drawOuterFrame);
+          if (idx < cells.length) {
+            final r = cells[idx].deflate(stroke * widthScale / 2);
+            if (corner > 0) {
+              canvas.drawRRect(
+                RRect.fromRectAndRadius(r, Radius.circular(corner)),
+                p,
+              );
+            } else {
+              canvas.drawRect(r, p);
+            }
+          }
+        }
+      }
+
+      if (activeIndex != null) {
+        drawCellBorder(activeIndex, hl, 1.0);
+      }
+      if (swapSourceIndex != null && swapSourceIndex != activeIndex) {
+        drawCellBorder(swapSourceIndex, hl.withAlpha(180), 1.4);
+      }
+
+      if (drawDividerHandle) {
+        final divider = layout.primaryDivider;
+        if (divider != null) {
+          final anchor = divider.handleAnchor;
+          final w = divider.isVerticalDivider
+              ? full.shortestSide * 0.014
+              : full.shortestSide * 0.075;
+          final h = divider.isVerticalDivider
+              ? full.shortestSide * 0.075
+              : full.shortestSide * 0.014;
+          final pill = RRect.fromRectAndRadius(
+            Rect.fromCenter(center: anchor, width: w, height: h),
+            Radius.circular(math.min(w, h) / 2),
+          );
+          canvas.drawRRect(
+            pill,
+            Paint()..color = const Color(0xCC121418),
+          );
+          canvas.drawRRect(
+            pill,
+            Paint()
+              ..color = hl
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = math.max(1.5, full.shortestSide * 0.002),
+          );
+        }
+      }
     }
   }
 
@@ -91,6 +233,8 @@ class CollageRenderer {
     CollageLayout layout,
     List<CollageImageTransform> transforms,
     double border,
+    double outerBorder,
+    Color borderCol,
     bool drawOuterFrame,
     Paint paint,
   ) {
@@ -124,7 +268,7 @@ class CollageRenderer {
       _paintImageInCell(canvas, images[1], _polyBounds(bottom), _at(transforms, 1), paint);
       canvas.restore();
     }
-    // 未用到的格子仍保留白底即可（斜切模板固定 2 张）。
+    // 未用到的格子仍保留底色即可（斜切模板固定 2 张）。
     assert(images.length <= 2);
 
     if (border > 0) {
@@ -133,30 +277,31 @@ class CollageRenderer {
         p1,
         p2,
         Paint()
-          ..color = borderColor
+          ..color = borderCol
           ..strokeWidth = border
           ..strokeCap = StrokeCap.butt,
       );
-      if (drawOuterFrame) {
-        canvas.drawRect(
-          fullRect.deflate(border / 2),
-          Paint()
-            ..color = borderColor
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = border,
-        );
-      }
+    }
+    if (drawOuterFrame && outerBorder > 0) {
+      canvas.drawRect(
+        fullRect.deflate(outerBorder / 2),
+        Paint()
+          ..color = borderCol
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = outerBorder,
+      );
     }
   }
 
-  /// 在单元格里画一张图（含缩放/位移，超出部分裁掉，保证铺满不留白）。
+  /// 在单元格里画一张图（含旋转/镜像/缩放/位移，超出部分裁掉，保证铺满不留白）。
   static void _paintImageInCell(
     Canvas canvas,
     ui.Image img,
     Rect cell,
     CollageImageTransform t,
-    Paint paint,
-  ) {
+    Paint paint, {
+    double cornerRadius = 0.0,
+  }) {
     if (cell.width <= 0 || cell.height <= 0) return;
     final src = Rect.fromLTWH(0, 0, img.width.toDouble(), img.height.toDouble());
     final dst = collageImageDstRect(
@@ -165,8 +310,32 @@ class CollageRenderer {
       t,
     );
     canvas.save();
-    canvas.clipRect(cell);
-    canvas.drawImageRect(img, src, dst, paint);
+    if (cornerRadius > 0) {
+      final maxR = math.min(cell.width, cell.height) / 2;
+      canvas.clipRRect(
+        RRect.fromRectAndRadius(
+          cell,
+          Radius.circular(math.min(cornerRadius, maxR)),
+        ),
+      );
+    } else {
+      canvas.clipRect(cell);
+    }
+
+    final turns = ((t.quarterTurns % 4) + 4) % 4;
+    if (turns == 0 && !t.flipX) {
+      canvas.drawImageRect(img, src, dst, paint);
+    } else {
+      canvas.translate(dst.center.dx, dst.center.dy);
+      if (t.flipX) canvas.scale(-1, 1);
+      if (turns != 0) canvas.rotate(turns * math.pi / 2);
+      final localDst = Rect.fromCenter(
+        center: Offset.zero,
+        width: turns.isOdd ? dst.height : dst.width,
+        height: turns.isOdd ? dst.width : dst.height,
+      );
+      canvas.drawImageRect(img, src, localDst, paint);
+    }
     canvas.restore();
   }
 
@@ -186,7 +355,9 @@ class CollagePainter extends CustomPainter {
 
   /// 当前正在调整的单元格下标（预览高亮用；导出传 null）。
   final int? activeIndex;
+  final int? swapSourceIndex;
   final Color? highlightColor;
+  final bool drawDividerHandle;
 
   const CollagePainter({
     required this.images,
@@ -194,7 +365,9 @@ class CollagePainter extends CustomPainter {
     this.transforms = const [],
     this.drawOuterFrame = true,
     this.activeIndex,
+    this.swapSourceIndex,
     this.highlightColor,
+    this.drawDividerHandle = true,
   });
 
   @override
@@ -212,27 +385,16 @@ class CollagePainter extends CustomPainter {
       transforms: transforms,
       drawOuterFrame: drawOuterFrame,
     );
-
-    final idx = activeIndex;
-    final hl = highlightColor;
-    if (idx != null && hl != null && idx >= 0 && idx < images.length) {
-      final stroke = math.max(2.0, full.shortestSide * 0.004);
-      final linePaint = Paint()
-        ..color = hl
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = stroke;
-      if (layout.isDiagonal) {
-        final polys = layout.diagonalPolys;
-        if (idx < polys.length) {
-          canvas.drawPath(Path()..addPolygon(polys[idx], true), linePaint);
-        }
-      } else {
-        final cells = layout.imageCells(drawOuterFrame: drawOuterFrame);
-        if (idx < cells.length) {
-          canvas.drawRect(cells[idx].deflate(stroke / 2), linePaint);
-        }
-      }
-    }
+    CollageRenderer.paintInteractiveOverlays(
+      canvas,
+      layout: layout,
+      imageCount: images.length,
+      drawOuterFrame: drawOuterFrame,
+      activeIndex: activeIndex,
+      swapSourceIndex: swapSourceIndex,
+      highlightColor: highlightColor,
+      drawDividerHandle: drawDividerHandle,
+    );
     canvas.restore();
   }
 
@@ -242,7 +404,14 @@ class CollagePainter extends CustomPainter {
       old.layout.template != layout.template ||
       old.layout.aspect != layout.aspect ||
       old.layout.border != layout.border ||
+      old.layout.innerGapRatio != layout.innerGapRatio ||
+      old.layout.outerMarginRatio != layout.outerMarginRatio ||
+      old.layout.cornerRadiusRatio != layout.cornerRadiusRatio ||
+      old.layout.borderColorValue != layout.borderColorValue ||
+      old.layout.splitRatio != layout.splitRatio ||
       old.transforms != transforms ||
       old.drawOuterFrame != drawOuterFrame ||
-      old.activeIndex != activeIndex;
+      old.activeIndex != activeIndex ||
+      old.swapSourceIndex != swapSourceIndex ||
+      old.drawDividerHandle != drawDividerHandle;
 }

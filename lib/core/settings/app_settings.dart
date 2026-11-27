@@ -39,8 +39,10 @@ class AppSettings extends ChangeNotifier {
   static const AppThemeMode defaultThemeMode = AppThemeMode.system;
   static const AppLanguage defaultLanguage = AppLanguage.system;
   static const bool defaultOnboardingCompleted = false;
+  static const String currentAiGuideVersion = '3.0.1';
+  static const String defaultAiGuidePromptVersion = '';
   static const bool defaultConfirmDelete = true;
-  static const String defaultGalleryFilter = 'unviewed';
+  static const String defaultGalleryFilter = 'all';
 
   /// 水印导出 JPEG 质量：95 原图质量 / 92 标准 / 85 省空间
   static const int defaultExportQuality = 92;
@@ -118,6 +120,7 @@ class AppSettings extends ChangeNotifier {
   AppThemeMode themeMode = defaultThemeMode;
   AppLanguage language = defaultLanguage;
   bool onboardingCompleted = defaultOnboardingCompleted;
+  String aiGuidePromptVersion = defaultAiGuidePromptVersion;
   bool confirmDelete = defaultConfirmDelete;
   int exportQuality = defaultExportQuality;
   String ptpClientGuid = '';
@@ -230,6 +233,8 @@ class AppSettings extends ChangeNotifier {
       language = AppLanguage.parse(m['language']);
       onboardingCompleted =
           _readBool(m, 'onboardingCompleted', defaultOnboardingCompleted);
+      aiGuidePromptVersion =
+          _readString(m, 'aiGuidePromptVersion', defaultAiGuidePromptVersion);
       confirmDelete = _readBool(m, 'confirmDelete', defaultConfirmDelete);
       exportQuality = _normalizeExportQuality(
           _readInt(m, 'exportQuality', defaultExportQuality));
@@ -338,7 +343,7 @@ class AppSettings extends ChangeNotifier {
       tabletFilterViewPaged =
           _readBool(m, 'tabletFilterViewPaged', false);
       galleryFilter =
-          _readString(m, 'galleryFilter', defaultGalleryFilter);
+          _normalizeGalleryFilter(_readString(m, 'galleryFilter', defaultGalleryFilter));
     } catch (_) {
       // 配置文件损坏：保持默认值
     } finally {
@@ -371,6 +376,7 @@ class AppSettings extends ChangeNotifier {
         'themeMode': themeMode.name,
         'language': language.name,
         'onboardingCompleted': onboardingCompleted,
+        'aiGuidePromptVersion': aiGuidePromptVersion,
         'confirmDelete': confirmDelete,
         'exportQuality': exportQuality,
         'ptpClientGuid': ptpClientGuid,
@@ -820,10 +826,25 @@ class AppSettings extends ChangeNotifier {
     _scheduleSave();
   }
 
-  void setGalleryFilter(String value) {
+  void setAiGuidePromptVersion(String value) {
+    if (value == aiGuidePromptVersion) return;
+    aiGuidePromptVersion = value;
+    notifyListeners();
+    _scheduleSave();
+  }
+
+  static String _normalizeGalleryFilter(String value) {
     final v = value.trim();
-    if (v.isEmpty || v == galleryFilter) return;
-    galleryFilter = v;
+    if (v.isEmpty || v == 'unviewed') return defaultGalleryFilter;
+    return v;
+  }
+
+  void setGalleryFilter(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return;
+    final normalized = _normalizeGalleryFilter(trimmed);
+    if (normalized == galleryFilter) return;
+    galleryFilter = normalized;
     notifyListeners();
     _scheduleSave();
   }
@@ -977,6 +998,7 @@ class AppSettings extends ChangeNotifier {
     themeMode = defaultThemeMode;
     language = defaultLanguage;
     onboardingCompleted = defaultOnboardingCompleted;
+    aiGuidePromptVersion = defaultAiGuidePromptVersion;
     galleryFilter = defaultGalleryFilter;
     L10n.syncWithLocale(const Locale('zh'));
     confirmDelete = defaultConfirmDelete;

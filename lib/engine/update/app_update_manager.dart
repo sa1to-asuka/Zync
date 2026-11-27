@@ -89,8 +89,8 @@ class AppReleaseInfo {
 class AppUpdateManager {
   AppUpdateManager._();
 
-  static String currentVersion = '2.7.0';
-  static int currentVersionCode = 17;
+  static String currentVersion = '3.0.1';
+  static int currentVersionCode = 19;
 
   static const String githubApiUrl =
       'https://api.github.com/repos/sa1to-asuka/Zync/releases/latest';

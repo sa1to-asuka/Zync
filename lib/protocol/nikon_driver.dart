@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:typed_data';
 import '../core/constants/ptp_opcodes.dart';
 import '../core/settings/app_settings.dart';
@@ -256,11 +257,38 @@ class NikonDriver
   final StreamController<int> _eventCodeController =
       StreamController<int>.broadcast();
 
+  /// 相机端删除对象事件（0x4003 ObjectRemoved）广播句柄，供相册即时同步移除。
+  final StreamController<int> _objectRemovedController =
+      StreamController<int>.broadcast();
+
   List<int> _detectedStorageIds = [];
   final Map<int, CameraFileItem> _objectInfoCache = {};
   final Map<int, Uint8List> _thumbCache = {};
   final Set<int> _knownFileHandles = <int>{};
+  final Set<int> _knownFolderHandles = <int>{};
+  final Map<int, ({int format, String ext})> _handlePrefixFormatCache =
+      <int, ({int format, String ext})>{};
+  int _consecutiveObjectInfoAccessDenied = 0;
   int _objectInfoFailLogCount = 0;
+  int _mediaTransferLogCount = 0;
+  bool _preferPartialObject64 = false;
+  int _partialObject64ParamCount = 5;
+
+  void _logMediaTransferFailure(String detail) {
+    if (_mediaTransferLogCount >= 12) return;
+    _mediaTransferLogCount++;
+    _log('[media] $detail');
+  }
+
+  /// 清空当前会话的媒体元信息与缩略图缓存（手动刷新相册时使用，防止句柄复用返回旧图）。
+  void clearMediaCaches() {
+    _objectInfoCache.clear();
+    _thumbCache.clear();
+    _knownFileHandles.clear();
+    _objectInfoFailLogCount = 0;
+    _mediaTransferLogCount = 0;
+    _consecutiveObjectInfoAccessDenied = 0;
+  }
 
   void _log(String msg) {
     final cb = _logCallback;
@@ -421,6 +449,9 @@ class NikonDriver
   @override
   Stream<CameraFileItem> get onPhotoCaptured => _photoCapturedController.stream;
 
+  /// 相机端删除照片事件流（发射被移除的 ObjectHandle）。
+  Stream<int> get onObjectRemoved => _objectRemovedController.stream;
+
   @override
   Future<void> connect(
     String host, {
@@ -453,7 +484,13 @@ class NikonDriver
     _isRestrictedPairingSession = false;
     _staAppModeEnabled = false;
     _knownFileHandles.clear();
+    _knownFolderHandles.clear();
+    _handlePrefixFormatCache.clear();
+    _consecutiveObjectInfoAccessDenied = 0;
     _objectInfoFailLogCount = 0;
+    _mediaTransferLogCount = 0;
+    _preferPartialObject64 = false;
+    _partialObject64ParamCount = 5;
     _beginSessionInfo();
     _lastWifiHost = host;
     _lastWifiPort = port;
@@ -579,7 +616,13 @@ class NikonDriver
     _isRestrictedPairingSession = false;
     _staAppModeEnabled = false;
     _knownFileHandles.clear();
+    _knownFolderHandles.clear();
+    _handlePrefixFormatCache.clear();
+    _consecutiveObjectInfoAccessDenied = 0;
     _objectInfoFailLogCount = 0;
+    _mediaTransferLogCount = 0;
+    _preferPartialObject64 = false;
+    _partialObject64ParamCount = 5;
     _beginSessionInfo();
     _state = CameraConnectionState.connecting;
     _stateController.add(_state);
@@ -645,7 +688,13 @@ class NikonDriver
     _objectInfoCache.clear();
     _thumbCache.clear();
     _knownFileHandles.clear();
+    _knownFolderHandles.clear();
+    _handlePrefixFormatCache.clear();
+    _consecutiveObjectInfoAccessDenied = 0;
     _objectInfoFailLogCount = 0;
+    _mediaTransferLogCount = 0;
+    _preferPartialObject64 = false;
+    _partialObject64ParamCount = 5;
     _detectedStorageIds.clear();
     try {
       await CameraNativeBridge.unbindWifi();
@@ -880,10 +929,15 @@ class NikonDriver
 
     var baseIds = await listStorageIds();
     var candidates = _storageCandidates(baseIds);
+    var sawAnyHandles = false;
 
     Future<List<int>?> probe() async {
       for (final candidate in candidates) {
-        final handles = await _probeStorageCandidate(candidate, baseIds);
+        final handles = await _probeStorageCandidate(
+          candidate,
+          baseIds,
+          onHandlesSeen: () => sawAnyHandles = true,
+        );
         if (handles != null && handles.isNotEmpty) {
           return handles;
         }
@@ -903,8 +957,8 @@ class NikonDriver
 
     // 部分机身（Z 30 的「连接到计算机」模式）在进入 Application Mode 之前
     // 会返回存储卷但 0 个对象。NikonCameraControl 在 STA PC 模式下也是先发
-    // 0x9435(1) 再读卡。
-    if (_isStaSession && !_staAppModeEnabled) {
+    // 0x9435(1) 再读卡。若相机已经返回目录句柄（如空卡的 DCIM 根），则不必误触 0x9435。
+    if (_isStaSession && !_staAppModeEnabled && !sawAnyHandles) {
       _log('[media] no objects in STA session, trying 0x9435(1) app mode');
       if (await _enableStaApplicationMode()) {
         baseIds = await listStorageIds();
@@ -938,8 +992,9 @@ class NikonDriver
   /// 优先尝试 `0x00000000`，不足时再试 `0xFFFFFFFF`；若仅得到根关联句柄则递归展开目录树。
   Future<List<int>?> _probeStorageCandidate(
     int candidate,
-    List<int> baseIds,
-  ) async {
+    List<int> baseIds, {
+    void Function()? onHandlesSeen,
+  }) async {
     List<int>? rootSeeds;
 
     for (final parentParam in const <int>[0, 0xFFFFFFFF]) {
@@ -954,6 +1009,7 @@ class NikonDriver
             '[media] storage 0x${candidate.toRadixString(16)} (parent=$parentLabel) -> ${handles.length} handles'
             '${handles.isEmpty ? '' : ': ${handles.take(8).map((e) => '0x${e.toRadixString(16)}').join(', ')}'}');
         if (handles.isEmpty) continue;
+        onHandlesSeen?.call();
 
         if (!baseIds.contains(candidate)) {
           _detectedStorageIds = [candidate];
@@ -989,10 +1045,17 @@ class NikonDriver
 
   /// 检查少量句柄是否全部为目录对象，避免把根文件夹列表直接当成照片返回。
   Future<bool> _looksLikeFolderOnlyBatch(List<int> handles) async {
+    final nonZero =
+        handles.where((h) => h != 0 && h != 0xFFFFFFFF).toList(growable: false);
+    if (nonZero.isEmpty) return false;
+    final allFolderCandidates = nonZero.every(_isNikonFolderHandleCandidate);
     var inspected = 0;
-    for (final h in handles) {
-      if (h == 0 || h == 0xFFFFFFFF) continue;
-      final info = await getObjectInfo(h);
+    for (final h in nonZero) {
+      final info = await _getObjectInfoInternal(
+        h,
+        probeFolderViaHandles: allFolderCandidates,
+        allowSizeFallbacks: false,
+      );
       if (info == null) return false;
       inspected++;
       if (!info.isFolder && info.fileName.toUpperCase() != 'DCIM') {
@@ -1234,17 +1297,47 @@ class NikonDriver
         '(staApp=$_staAppModeEnabled, lv=$_liveViewActive)');
   }
 
+  int get _defaultStorageId =>
+      _detectedStorageIds.isNotEmpty ? _detectedStorageIds.first : 0x00010001;
+
+  static bool _isNikonFolderHandleCandidate(int handle) =>
+      (handle & 0xFF000000) == 0x11000000 && (handle & 0x3FFF) == 0;
+
+  CameraFileItem _synthesizedFolderItem(int handle) => CameraFileItem(
+        handle: handle,
+        storageId: _defaultStorageId,
+        format: 0x3001,
+        size: 0,
+        fileName: 'FOLDER_${handle.toRadixString(16).toUpperCase()}',
+        captureDate: '',
+      );
+
   @override
-  Future<CameraFileItem?> getObjectInfo(int handle) async {
+  Future<CameraFileItem?> getObjectInfo(int handle) =>
+      _getObjectInfoInternal(handle);
+
+  Future<CameraFileItem?> _getObjectInfoInternal(
+    int handle, {
+    bool probeFolderViaHandles = true,
+    bool allowSizeFallbacks = true,
+  }) async {
     if (!isConnected) return null;
     if (_objectInfoCache.containsKey(handle)) {
       return _objectInfoCache[handle];
     }
+    if (_knownFolderHandles.contains(handle)) {
+      final folder = _synthesizedFolderItem(handle);
+      _objectInfoCache[handle] = folder;
+      return folder;
+    }
 
-    // 1. 标准 PTP 0x1008 GetObjectInfo（相机忙 0x2019 时短暂退避重试）
-    if (_supports(PtpOpCodes.getObjectInfo)) {
+    // 1. 标准 PTP 0x1008 GetObjectInfo（连续被 0x200F 拒绝后短接跳过，避免全量扫卡耗尽命令口）
+    final allowStandardInfo = _supports(PtpOpCodes.getObjectInfo) &&
+        (_consecutiveObjectInfoAccessDenied < 3 || _liveViewActive);
+    if (allowStandardInfo) {
       final standard = await _fetchObjectInfoStandard(handle);
       if (standard != null) {
+        if (standard.isFolder) _knownFolderHandles.add(handle);
         _objectInfoCache[handle] = standard;
         return standard;
       }
@@ -1254,6 +1347,7 @@ class NikonDriver
     if (_supports(PtpOpCodes.mtpGetObjectPropList)) {
       final viaList = await _fetchObjectInfoViaMtpPropList(handle);
       if (viaList != null) {
+        if (viaList.isFolder) _knownFolderHandles.add(handle);
         _objectInfoCache[handle] = viaList;
         return viaList;
       }
@@ -1263,19 +1357,49 @@ class NikonDriver
     if (_supports(PtpOpCodes.mtpGetObjectPropValue)) {
       final viaProps = await _fetchObjectInfoViaMtpPropValue(handle);
       if (viaProps != null) {
+        if (viaProps.isFolder) _knownFolderHandles.add(handle);
         _objectInfoCache[handle] = viaProps;
         return viaProps;
       }
     }
 
-    // 4. 终极兜底：已确认为文件句柄且支持 0x9421 NikonGetObjectSize 时合成基础条目，
-    //    确保即使元信息接口被固件拒绝，用户仍可浏览缩略图与下载原图。
-    if (_knownFileHandles.contains(handle) &&
-        _supports(PtpOpCodes.nikonGetObjectSize)) {
+    // 3.5. 扁平遍历常含 DCIM/子目录句柄 (0x11xx4000 / 0x11xx0000)：用 0x1007 一次探明目录归属，
+    //      避免把目录误判为照片或向目录发 0x9421 / 0x101B。
+    if (probeFolderViaHandles &&
+        !_knownFileHandles.contains(handle) &&
+        _isNikonFolderHandleCandidate(handle) &&
+        _supports(PtpOpCodes.getObjectHandles)) {
+      try {
+        await _client!.executeDataIn(
+          PtpOpCodes.getObjectHandles,
+          [_defaultStorageId, 0, handle],
+        );
+        _knownFolderHandles.add(handle);
+        final folder = _synthesizedFolderItem(handle);
+        _objectInfoCache[handle] = folder;
+        return folder;
+      } on PtpException catch (e) {
+        if (e.responseCode == PtpOpCodes.responseInvalidParentObject) {
+          _knownFileHandles.add(handle);
+        }
+      } catch (_) {}
+    }
+
+    // 4. Nikon 0x9421 GetObjectSize + 魔数嗅探合成条目（放行扁平枚举与 ObjectAdded 句柄）
+    if (allowSizeFallbacks && _supports(PtpOpCodes.nikonGetObjectSize)) {
       final viaSize = await _fetchObjectInfoViaNikonSize(handle);
       if (viaSize != null) {
         _objectInfoCache[handle] = viaSize;
         return viaSize;
+      }
+    }
+
+    // 5. 终极兜底：若 0x9421 亦被拒绝，用 0x101B GetPartialObject 探测魔数与文件大小
+    if (allowSizeFallbacks && _supports(PtpOpCodes.getPartialObject)) {
+      final viaPartial = await _fetchObjectInfoViaPartialProbe(handle);
+      if (viaPartial != null) {
+        _objectInfoCache[handle] = viaPartial;
+        return viaPartial;
       }
     }
 
@@ -1292,6 +1416,7 @@ class NikonDriver
           return null;
         }
 
+        _consecutiveObjectInfoAccessDenied = 0;
         final bd = ByteData.sublistView(data);
         final storageId = bd.getUint32(0, Endian.little);
         final format = bd.getUint16(4, Endian.little);
@@ -1319,6 +1444,10 @@ class NikonDriver
         if (e.responseCode == PtpOpCodes.responseDeviceBusy && attempt == 0) {
           await Future<void>.delayed(const Duration(milliseconds: 120));
           continue;
+        }
+        if (e.responseCode == PtpOpCodes.responseAccessDenied &&
+            !_liveViewActive) {
+          _consecutiveObjectInfoAccessDenied++;
         }
         _markUnsupported(PtpOpCodes.getObjectInfo, e);
         _logObjectInfoFailure(handle, '0x1008 rejected: $e');
@@ -1513,6 +1642,78 @@ class NikonDriver
     );
   }
 
+  ({int format, String ext})? _sniffHeaderFormat(Uint8List head) {
+    if (head.length >= 3 &&
+        head[0] == 0xFF &&
+        head[1] == 0xD8 &&
+        head[2] == 0xFF) {
+      return (format: 0x3801, ext: 'JPG');
+    }
+    if (head.length >= 4 &&
+        ((head[0] == 0x49 &&
+                head[1] == 0x49 &&
+                head[2] == 0x2A &&
+                head[3] == 0x00) ||
+            (head[0] == 0x4D &&
+                head[1] == 0x4D &&
+                head[2] == 0x00 &&
+                head[3] == 0x2A))) {
+      return (format: 0xB101, ext: 'NEF');
+    }
+    if (head.length >= 12 &&
+        head[4] == 0x66 &&
+        head[5] == 0x74 &&
+        head[6] == 0x79 &&
+        head[7] == 0x70) {
+      final brand = String.fromCharCodes(head.sublist(8, 12));
+      if (brand == 'qt  ') return (format: 0x300D, ext: 'MOV');
+      if (brand == 'heic' ||
+          brand == 'heix' ||
+          brand == 'mif1' ||
+          brand == 'msf1') {
+        return (format: 0x3812, ext: 'HIF');
+      }
+      return (format: 0xB982, ext: 'MP4');
+    }
+    return null;
+  }
+
+  Future<({int format, String ext})> _resolveSynthesizedFormat(int handle) async {
+    final prefix = (handle >> 24) & 0xFF;
+    final cached = _handlePrefixFormatCache[prefix];
+    if (cached != null) return cached;
+
+    if (_supports(PtpOpCodes.getPartialObject)) {
+      try {
+        final head = await downloadPartialObject(handle, 0, 32);
+        final sniffed = _sniffHeaderFormat(head);
+        if (sniffed != null) {
+          if (prefix == 0x09 || prefix == 0x29) {
+            _handlePrefixFormatCache[prefix] = sniffed;
+          }
+          return sniffed;
+        }
+      } catch (_) {}
+    }
+
+    return prefix == 0x29
+        ? (format: 0xB101, ext: 'NEF')
+        : (format: 0x3801, ext: 'JPG');
+  }
+
+  /// 为缺少 0x1008 文件名的合成条目生成稳健名：同组 RAW (`0x29xxxxxx`) 与 JPG (`0x09xxxxxx`)
+  /// 剥离高 4 位的格式区分位后共享一致主干名，以便相册卡片自动合并展示 `JPG+RAW`。
+  static String _synthesizedFileName(int handle, String ext) {
+    if ((handle & 0x0F000000) == 0x09000000) {
+      final stem = (handle & 0x00FFFFFF)
+          .toRadixString(16)
+          .toUpperCase()
+          .padLeft(6, '0');
+      return 'DSC_$stem.$ext';
+    }
+    return 'DSC_${handle.toRadixString(16).toUpperCase()}.$ext';
+  }
+
   Future<CameraFileItem?> _fetchObjectInfoViaNikonSize(int handle) async {
     try {
       final data = await _client!.executeDataIn(
@@ -1526,19 +1727,77 @@ class NikonDriver
               bd.getUint32(0, Endian.little))
           : bd.getUint32(0, Endian.little);
       if (size <= 0) return null;
-      final storageId =
-          _detectedStorageIds.isNotEmpty ? _detectedStorageIds.first : 0x00010001;
+      _knownFileHandles.add(handle);
+      final fmt = await _resolveSynthesizedFormat(handle);
       return CameraFileItem(
         handle: handle,
-        storageId: storageId,
-        format: 0x3801,
+        storageId: _defaultStorageId,
+        format: fmt.format,
         size: size,
-        fileName: 'DSC_${handle.toRadixString(16).toUpperCase()}.JPG',
+        fileName: _synthesizedFileName(handle, fmt.ext),
         captureDate: '',
       );
     } on PtpException catch (e) {
       _markUnsupported(PtpOpCodes.nikonGetObjectSize, e);
+      _logObjectInfoFailure(handle, '0x9421 rejected: $e');
       return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<CameraFileItem?> _fetchObjectInfoViaPartialProbe(int handle) async {
+    try {
+      final head = await downloadPartialObject(handle, 0, 64);
+      final detected = _sniffHeaderFormat(head);
+      if (detected == null) return null;
+
+      var size = head.length;
+      if (size >= 64) {
+        Future<bool> hasByteAt(int offset) async {
+          try {
+            final b = await downloadPartialObject(handle, offset, 1);
+            return b.isNotEmpty;
+          } catch (_) {
+            return false;
+          }
+        }
+
+        const maxProbe = 1 << 30;
+        var low = size - 1;
+        var probe = 4096;
+        while (probe <= maxProbe && await hasByteAt(probe)) {
+          low = probe;
+          if (probe == maxProbe) break;
+          probe = math.min(probe * 2, maxProbe);
+        }
+
+        if (probe == maxProbe && low == maxProbe) {
+          size = maxProbe + 1;
+        } else {
+          var high = probe;
+          while (low + 1 < high) {
+            final mid = low + ((high - low) >> 1);
+            if (await hasByteAt(mid)) {
+              low = mid;
+            } else {
+              high = mid;
+            }
+          }
+          size = low + 1;
+        }
+      }
+
+      if (size <= 0) return null;
+      _knownFileHandles.add(handle);
+      return CameraFileItem(
+        handle: handle,
+        storageId: _defaultStorageId,
+        format: detected.format,
+        size: size,
+        fileName: _synthesizedFileName(handle, detected.ext),
+        captureDate: '',
+      );
     } catch (_) {
       return null;
     }
@@ -1566,35 +1825,62 @@ class NikonDriver
       return cached;
     }
 
-    // 1. 优先尝试标准 0x100A GetThumb（最多重试 2 次以应对无线偶发丢包或相机忙）
-    for (var attempt = 0; attempt < 2; attempt++) {
-      try {
-        final raw = await _client!.executeDataIn(PtpOpCodes.getThumb, [handle]);
-        final valid = extractValidJpegSlice(raw);
-        if (valid != null && valid.isNotEmpty) {
-          _thumbCache[handle] = valid;
-          return valid;
+    // 1. 优先尝试标准 0x100A GetThumb（仅在忙/偶发丢包时重试，明确拒绝时立即走后续兜底）
+    if (_supports(PtpOpCodes.getThumb)) {
+      for (var attempt = 0; attempt < 2; attempt++) {
+        try {
+          final raw =
+              await _client!.executeDataIn(PtpOpCodes.getThumb, [handle]);
+          final valid = extractValidJpegSlice(raw);
+          if (valid != null && valid.isNotEmpty) {
+            _thumbCache[handle] = valid;
+            return valid;
+          }
+          break;
+        } on PtpException catch (e) {
+          _markUnsupported(PtpOpCodes.getThumb, e);
+          _logMediaTransferFailure(
+            '0x100A thumb handle=0x${handle.toRadixString(16)} failed: 0x${e.responseCode.toRadixString(16)}',
+          );
+          if (e.responseCode != PtpOpCodes.responseDeviceBusy) {
+            break;
+          }
+        } catch (e) {
+          _logMediaTransferFailure(
+            '0x100A thumb handle=0x${handle.toRadixString(16)} error: $e',
+          );
         }
-      } catch (_) {}
-      if (attempt == 0) {
-        await Future<void>.delayed(const Duration(milliseconds: 60));
+        if (attempt == 0) {
+          await Future<void>.delayed(const Duration(milliseconds: 60));
+        }
       }
     }
 
     // 2. 回退尝试 Nikon 扩展 0x90C4 GetLargeThumb (640x480 预览图)
-    try {
-      final largeRaw = await _client!.executeDataIn(
-        PtpOpCodes.nikonGetLargeThumb,
-        [handle],
-      );
-      final valid = extractValidJpegSlice(largeRaw);
-      if (valid != null && valid.isNotEmpty) {
-        _thumbCache[handle] = valid;
-        return valid;
+    if (_supports(PtpOpCodes.nikonGetLargeThumb)) {
+      try {
+        final largeRaw = await _client!.executeDataIn(
+          PtpOpCodes.nikonGetLargeThumb,
+          [handle],
+        );
+        final valid = extractValidJpegSlice(largeRaw);
+        if (valid != null && valid.isNotEmpty) {
+          _thumbCache[handle] = valid;
+          return valid;
+        }
+      } on PtpException catch (e) {
+        _markUnsupported(PtpOpCodes.nikonGetLargeThumb, e);
+        _logMediaTransferFailure(
+          '0x90C4 largeThumb handle=0x${handle.toRadixString(16)} failed: 0x${e.responseCode.toRadixString(16)}',
+        );
+      } catch (e) {
+        _logMediaTransferFailure(
+          '0x90C4 largeThumb handle=0x${handle.toRadixString(16)} error: $e',
+        );
       }
-    } catch (_) {}
+    }
 
-    // 3. 终极兜底：读取文件头部 256KB 提取内嵌完整 JPEG 缩略图 (兼容特殊 NEF/JPG)
+    // 3. 兜底：读取文件头部 256KB 提取内嵌完整 JPEG 缩略图 (内部含 0x101B -> 0x9431 自动回退)
     try {
       final headerBytes = await downloadPartialObject(handle, 0, 256 * 1024);
       final valid = extractValidJpegSlice(headerBytes);
@@ -1602,7 +1888,42 @@ class NikonDriver
         _thumbCache[handle] = valid;
         return valid;
       }
-    } catch (_) {}
+    } on PtpException catch (e) {
+      _logMediaTransferFailure(
+        'partial thumb handle=0x${handle.toRadixString(16)} failed: 0x${e.responseCode.toRadixString(16)}',
+      );
+    } catch (e) {
+      _logMediaTransferFailure(
+        'partial thumb handle=0x${handle.toRadixString(16)} error: $e',
+      );
+    }
+
+    // 4. 终极兜底：若机身仅允许标准 0x1009 GetObject 且非视频/非超大文件，整图拉取提取预览 JPEG
+    if (_supports(PtpOpCodes.getObject)) {
+      final info = _objectInfoCache[handle];
+      final allowFullFallback = info == null ||
+          (!info.isVideo && info.size > 0 && info.size <= 24 * 1024 * 1024);
+      if (allowFullFallback) {
+        try {
+          final fullRaw =
+              await _client!.executeDataIn(PtpOpCodes.getObject, [handle]);
+          final valid = extractValidJpegSlice(fullRaw);
+          if (valid != null && valid.isNotEmpty) {
+            _thumbCache[handle] = valid;
+            return valid;
+          }
+        } on PtpException catch (e) {
+          _markUnsupported(PtpOpCodes.getObject, e);
+          _logMediaTransferFailure(
+            '0x1009 thumb handle=0x${handle.toRadixString(16)} failed: 0x${e.responseCode.toRadixString(16)}',
+          );
+        } catch (e) {
+          _logMediaTransferFailure(
+            '0x1009 thumb handle=0x${handle.toRadixString(16)} error: $e',
+          );
+        }
+      }
+    }
 
     return Uint8List(0);
   }
@@ -1700,22 +2021,58 @@ class NikonDriver
     return -1;
   }
 
+  Future<Uint8List> _executePartialObject64(
+    int handle,
+    int offset,
+    int maxBytes,
+  ) async {
+    final offsetLow = offset & 0xFFFFFFFF;
+    final offsetHigh = (offset >> 32) & 0xFFFFFFFF;
+    final maxLow = maxBytes & 0xFFFFFFFF;
+    final maxHigh = (maxBytes >> 32) & 0xFFFFFFFF;
+
+    try {
+      if (_partialObject64ParamCount == 5) {
+        try {
+          return await _client!.executeDataIn(
+            PtpOpCodes.nikonGetPartialObject64,
+            [handle, offsetLow, offsetHigh, maxLow, maxHigh],
+          );
+        } on PtpException catch (e) {
+          if (e.responseCode == PtpOpCodes.responseParameterNotSupported) {
+            _partialObject64ParamCount = 4;
+            return await _client!.executeDataIn(
+              PtpOpCodes.nikonGetPartialObject64,
+              [handle, offsetLow, offsetHigh, maxLow],
+            );
+          }
+          rethrow;
+        }
+      }
+      return await _client!.executeDataIn(
+        PtpOpCodes.nikonGetPartialObject64,
+        [handle, offsetLow, offsetHigh, maxLow],
+      );
+    } on PtpException catch (e) {
+      if (e.responseCode == PtpOpCodes.responseOperationNotSupported) {
+        _markUnsupported(PtpOpCodes.nikonGetPartialObject64, e);
+      }
+      rethrow;
+    }
+  }
+
   @override
   Future<Uint8List> downloadPartialObject(
       int handle, int offset, int maxBytes) async {
     if (!isConnected) return Uint8List(0);
 
     // 0x101B 的偏移量只有 32 位，超过 4GiB 的视频会在第 4GB 处被截断。
-    // 这时改用 Nikon 的 0x9431 GetPartialObject64：偏移拆成高低 32 位两个参数。
+    // 这时改用 Nikon 的 0x9431 GetPartialObject64：偏移与长度均拆成高低 32 位（5 参数，必要时兼容 4 参数）。
     final needs64Bit = requiresPartialObject64(offset, maxBytes);
     if (needs64Bit) {
       if (_supports(PtpOpCodes.nikonGetPartialObject64)) {
-        final low = offset & 0xFFFFFFFF;
-        final high = (offset >> 32) & 0xFFFFFFFF;
         try {
-          return await _client!.executeDataIn(
-              PtpOpCodes.nikonGetPartialObject64,
-              [handle, low, high, maxBytes]);
+          return await _executePartialObject64(handle, offset, maxBytes);
         } on PtpException catch (e) {
           _markUnsupported(PtpOpCodes.nikonGetPartialObject64, e);
           throw PtpException(
@@ -1728,9 +2085,38 @@ class NikonDriver
       throw StateError('相机不支持 0x9431，超过 4GiB 的文件无法分段读取');
     }
 
-    // 0x101B: GetPartialObject (Handle, Offset, MaxBytes)
-    return await _client!
-        .executeDataIn(PtpOpCodes.getPartialObject, [handle, offset, maxBytes]);
+    if (_preferPartialObject64 &&
+        _supports(PtpOpCodes.nikonGetPartialObject64)) {
+      return await _executePartialObject64(handle, offset, maxBytes);
+    }
+
+    // 0x101B: GetPartialObject (Handle, Offset, MaxBytes)；Z50II 等 STA 机身若拒绝则回退 0x9431
+    try {
+      return await _client!
+          .executeDataIn(PtpOpCodes.getPartialObject, [handle, offset, maxBytes]);
+    } on PtpException catch (e) {
+      final canFallbackTo64 =
+          e.responseCode == PtpOpCodes.responseAccessDenied ||
+              e.responseCode == PtpOpCodes.responseOperationNotSupported ||
+              e.responseCode == PtpOpCodes.responseParameterNotSupported;
+      if (!canFallbackTo64) rethrow;
+      _logMediaTransferFailure(
+        '0x101B handle=0x${handle.toRadixString(16)} offset=$offset rejected: 0x${e.responseCode.toRadixString(16)}',
+      );
+      if (_supports(PtpOpCodes.nikonGetPartialObject64)) {
+        try {
+          final data = await _executePartialObject64(handle, offset, maxBytes);
+          _preferPartialObject64 = true;
+          return data;
+        } on PtpException catch (e64) {
+          _logMediaTransferFailure(
+            '0x9431 fallback handle=0x${handle.toRadixString(16)} offset=$offset failed: 0x${e64.responseCode.toRadixString(16)}',
+          );
+          rethrow;
+        }
+      }
+      rethrow;
+    }
   }
 
   @override
@@ -1749,19 +2135,64 @@ class NikonDriver
           : (totalSize - currentOffset);
       Uint8List chunk = Uint8List(0);
       int retries = 0;
+      PtpException? fatalRejection;
 
-      // GetPartialObject 遇到超时/设备忙时重试。
+      // GetPartialObject 遇到超时/设备忙时重试；明确协议拒绝时不再无效重试 3 次。
       while (retries < 3) {
         try {
           chunk =
               await downloadPartialObject(handle, currentOffset, requestBytes);
           if (chunk.isNotEmpty) break;
+        } on PtpException catch (e) {
+          if (e.responseCode == PtpOpCodes.responseAccessDenied ||
+              e.responseCode == PtpOpCodes.responseOperationNotSupported ||
+              e.responseCode == PtpOpCodes.responseParameterNotSupported) {
+            fatalRejection = e;
+            break;
+          }
         } catch (_) {}
         retries++;
         await Future.delayed(const Duration(milliseconds: 100));
       }
 
+      if (chunk.isEmpty &&
+          currentOffset == 0 &&
+          _supports(PtpOpCodes.getObject)) {
+        try {
+          final full =
+              await _client!.executeDataIn(PtpOpCodes.getObject, [handle]);
+          if (full.isNotEmpty) {
+            if (totalSize > 0 && full.length != totalSize) {
+              throw CameraFailure(
+                CameraFailureKind.incomplete,
+                details: <String, Object?>{
+                  'actual': full.length,
+                  'total': totalSize,
+                },
+              );
+            }
+            onProgress?.call(full.length, totalSize > 0 ? totalSize : full.length);
+            return full;
+          }
+        } on PtpException catch (e) {
+          _markUnsupported(PtpOpCodes.getObject, e);
+          _logMediaTransferFailure(
+            '0x1009 full handle=0x${handle.toRadixString(16)} failed: 0x${e.responseCode.toRadixString(16)}',
+          );
+        } catch (e) {
+          if (e is CameraFailure) rethrow;
+          _logMediaTransferFailure(
+            '0x1009 full handle=0x${handle.toRadixString(16)} error: $e',
+          );
+        }
+      }
+
       if (chunk.isEmpty) {
+        if (fatalRejection != null) {
+          _logMediaTransferFailure(
+            'downloadFullObject handle=0x${handle.toRadixString(16)} aborted at $currentOffset: 0x${fatalRejection.responseCode.toRadixString(16)}',
+          );
+        }
         throw CameraFailure(
           CameraFailureKind.emptyChunk,
           details: <String, Object?>{'offset': currentOffset},
@@ -1813,6 +2244,14 @@ class NikonDriver
         if (fileInfo != null) {
           _photoCapturedController.add(fileInfo);
         }
+      } else if (eventCode == PtpOpCodes.eventObjectRemoved) {
+        final removedHandle = eventPacket.getUint32(6);
+        _objectInfoCache.remove(removedHandle);
+        _thumbCache.remove(removedHandle);
+        _knownFileHandles.remove(removedHandle);
+        if (!_objectRemovedController.isClosed) {
+          _objectRemovedController.add(removedHandle);
+        }
       }
     }
   }
@@ -1834,8 +2273,10 @@ class NikonDriver
             '[media] ops(${ops.length}): '
             '1007=${ops.contains(PtpOpCodes.getObjectHandles)} '
             '1008=${ops.contains(PtpOpCodes.getObjectInfo)} '
+            '1009=${ops.contains(PtpOpCodes.getObject)} '
             '100A=${ops.contains(PtpOpCodes.getThumb)} '
             '101B=${ops.contains(PtpOpCodes.getPartialObject)} '
+            '9431=${ops.contains(PtpOpCodes.nikonGetPartialObject64)} '
             '9805=${ops.contains(PtpOpCodes.mtpGetObjectPropList)} '
             '9803=${ops.contains(PtpOpCodes.mtpGetObjectPropValue)} '
             '9421=${ops.contains(PtpOpCodes.nikonGetObjectSize)} '
@@ -1964,6 +2405,7 @@ class NikonDriver
     _photoCapturedController.close();
     _stateController.close();
     _eventCodeController.close();
+    _objectRemovedController.close();
   }
 
   // ==========================================

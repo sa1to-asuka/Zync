@@ -11,6 +11,7 @@ import '../../l10n/l10n.dart';
 import '../../protocol/camera_native_bridge.dart';
 import '../design/design.dart';
 import '../onboarding/onboarding_flow.dart';
+import 'settings/ai_settings_section.dart';
 import 'usb_diagnostics.dart';
 import 'capture/storage_folder_sheet.dart';
 import '../widgets/adaptive_layout.dart';
@@ -18,6 +19,7 @@ import '../widgets/adaptive_layout.dart';
 enum _SettingsSectionId {
   appearance,
   language,
+  aiEngine,
   camera,
   liveView,
   wireless,
@@ -158,6 +160,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return switch (section) {
       _SettingsSectionId.appearance => l10n.settingsAppearanceTitle,
       _SettingsSectionId.language => l10n.settingsLanguageTitle,
+      _SettingsSectionId.aiEngine => l10n.settingsAiEngineTitle,
       _SettingsSectionId.camera => l10n.settingsCameraTitle,
       _SettingsSectionId.liveView => l10n.settingsLiveViewTitle,
       _SettingsSectionId.wireless => l10n.settingsWirelessTitle,
@@ -174,6 +177,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return switch (section) {
       _SettingsSectionId.appearance => [const _AppearanceDetailContent()],
       _SettingsSectionId.language => [const _LanguageDetailContent()],
+      _SettingsSectionId.aiEngine => [const AiSettingsDetailContent()],
       _SettingsSectionId.camera => [
           _CameraConnectionDetailContent(
             onEditIp: () => _showIpEditDialog(context),
@@ -228,6 +232,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
               value: _languageLabel(context, settings.language),
               isLink: true,
               onTap: () => _openSection(_SettingsSectionId.language, isTwoPane),
+            ),
+            ZTile(
+              key: const ValueKey<String>('settings_tile_ai_engine'),
+              leadingIcon: Icons.auto_awesome_outlined,
+              leadingColor: activeIconColor(_SettingsSectionId.aiEngine),
+              title: l10n.settingsAiEngineTitle,
+              subtitle: l10n.settingsAiEngineSub,
+              isLink: true,
+              onTap: () => _openSection(_SettingsSectionId.aiEngine, isTwoPane),
             ),
             ZTile(
               key: const ValueKey<String>('settings_tile_camera'),
@@ -410,6 +423,19 @@ String _languageSubtitle(BuildContext context, AppLanguage lang) {
     AppLanguage.zh => l10n.langZhSub,
     AppLanguage.ja => l10n.langJaSub,
   };
+}
+
+/// 独立二级页：直接打开 AI 视觉引擎与 API Key 管理（供弹窗与欢迎引导一键直达）。
+class AiSettingsPage extends StatelessWidget {
+  const AiSettingsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return _SettingsDetailScaffold(
+      title: context.l10n.settingsAiEngineTitle,
+      children: const [AiSettingsDetailContent()],
+    );
+  }
 }
 
 class _SettingsDetailScaffold extends StatelessWidget {

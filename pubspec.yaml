@@ -1,7 +1,7 @@
 name: zync
 description: "Zync - Pro Nikon Z-Series Wireless Tethering, Transfer & Watermark Studio"
 publish_to: 'none'
-version: 2.7.0+17
+version: 3.0.1+19
 
 environment:
   sdk: '>=3.13.0 <4.0.0'
@@ -33,6 +33,7 @@ flutter:
   assets:
     - assets/licenses/spektrafilm-GPL-3.0.txt
     - assets/licenses/spektrafilm-CC-BY-SA-4.0.txt
+    - assets/licenses/OFL-1.1.txt
     - assets/icons/zync_logo.svg
     - assets/icons/zync_logo.png
     - assets/samples/pc_preview/
@@ -45,3 +46,16 @@ flutter:
     - third_party/spektrafilm_native/data/output_gamut_srgb.bin
     - third_party/spektrafilm_native/data/output_gamut_srgb.json
     - third_party/spektrafilm_native/data/raw_luts/
+  fonts:
+    - family: ZyncPlayfair
+      fonts:
+        - asset: assets/fonts/PlayfairDisplay-SemiBold.ttf
+    - family: ZyncCinzel
+      fonts:
+        - asset: assets/fonts/Cinzel-SemiBold.ttf
+    - family: ZyncCaveat
+      fonts:
+        - asset: assets/fonts/Caveat-SemiBold.ttf
+    - family: ZyncJetBrainsMono
+      fonts:
+        - asset: assets/fonts/JetBrainsMono-Medium.ttf

@@ -3615,4 +3615,620 @@ class AppLocalizationsEn extends AppLocalizations {
   String storageFolderPath(Object folder) {
     return 'DCIM/$folder';
   }
+
+  @override
+  String get collageFineBorderTitle => 'Fine Border';
+
+  @override
+  String get collageInnerGapLabel => 'Inner Gap';
+
+  @override
+  String get collageOuterMarginLabel => 'Outer Margin';
+
+  @override
+  String get collageCornerRadiusLabel => 'Corner';
+
+  @override
+  String get collageBorderColorLabel => 'Color';
+
+  @override
+  String get collageRotate90 => 'Rotate';
+
+  @override
+  String get collageFlipHorizontal => 'Flip';
+
+  @override
+  String get collageSwapCell => 'Swap';
+
+  @override
+  String get collageSwapPickTarget => 'Tap another cell to swap';
+
+  @override
+  String get collageZoomLabel => 'Zoom';
+
+  @override
+  String get collageResetCell => 'Reset';
+
+  @override
+  String get wmSubArtText => 'Art Text';
+
+  @override
+  String get wmArtAddText => 'Add Art Text';
+
+  @override
+  String get wmArtEditText => 'Edit Text';
+
+  @override
+  String get wmArtTextHint => 'Type text or tap EXIF tokens below';
+
+  @override
+  String get wmArtExifTokens => 'Insert EXIF tokens';
+
+  @override
+  String get wmArtFontTitle => 'Fonts & Cloud Store';
+
+  @override
+  String get wmArtVerticalToggle => 'Vertical';
+
+  @override
+  String get wmArtBgStyle => 'Badge';
+
+  @override
+  String get wmArtBgNone => 'None';
+
+  @override
+  String get wmArtBgPill => 'Glass Pill';
+
+  @override
+  String get wmArtBgTag => 'Solid Tag';
+
+  @override
+  String get wmArtBgSealYang => 'Seal Red';
+
+  @override
+  String get wmArtBgSealYin => 'Seal Fill';
+
+  @override
+  String get wmArtBgCinema => 'Cinema Bar';
+
+  @override
+  String get wmArtOpacityLabel => 'Opacity';
+
+  @override
+  String get wmArtStrokeLabel => 'Stroke';
+
+  @override
+  String get wmArtShadowLabel => 'Shadow';
+
+  @override
+  String get wmArtSavePreset => 'Save Custom Preset';
+
+  @override
+  String get wmArtMyPresets => 'My Watermark Presets';
+
+  @override
+  String get wmArtPresetSavedToast => 'Custom watermark preset saved';
+
+  @override
+  String get wmArtPresetNameHint => 'Preset name';
+
+  @override
+  String get wmArtEmptyHint =>
+      'Tap Add Art Text, then drag, pinch to zoom, or twist to rotate anywhere on the canvas';
+
+  @override
+  String get wmFontStoreTitle => 'Artistic Font Studio & Store';
+
+  @override
+  String get wmFontTabBuiltin => 'Built-in';
+
+  @override
+  String get wmFontTabCloud => 'Cloud Fonts (OFL)';
+
+  @override
+  String get wmFontTabLocal => 'Imported';
+
+  @override
+  String get wmFontRefreshManifest => 'Refresh catalog';
+
+  @override
+  String get wmFontDownload => 'Download';
+
+  @override
+  String get wmFontInstalled => 'Installed';
+
+  @override
+  String get wmFontImportLocal => 'Import local .ttf / .otf font';
+
+  @override
+  String wmFontImportSuccess(Object name) {
+    return 'Font imported & active: $name';
+  }
+
+  @override
+  String wmFontDownloadFailed(Object error) {
+    return 'Font download failed: $error';
+  }
+
+  @override
+  String get wmFontOpenSourceNotice =>
+      'Cloud fonts hosted on GitHub (sa1to-asuka/Zync · SIL OFL-1.1 License)';
+
+  @override
+  String get settingsAiEngineTitle => 'AI Engine & API Keys';
+
+  @override
+  String get settingsAiEngineSub =>
+      'OpenAI & Anthropic compatible · Models & cellular bypass';
+
+  @override
+  String get settingsAiValueUnconfigured => 'Not set';
+
+  @override
+  String get aiActiveModelsSection => 'Active Models';
+
+  @override
+  String get aiCoachModelLabel => 'Live View Coach Model';
+
+  @override
+  String get aiGradeModelLabel => 'AI Color Grading Model';
+
+  @override
+  String get aiModelUnselected => 'Not selected (add and import a model first)';
+
+  @override
+  String get aiProfilesSection => 'AI Provider Profiles';
+
+  @override
+  String get aiAddProfileButton => 'Add Provider Profile';
+
+  @override
+  String get aiProtocolLabel => 'API Protocol';
+
+  @override
+  String get aiProtocolOpenAi => 'OpenAI Compat';
+
+  @override
+  String get aiProtocolAnthropic => 'Anthropic Compat';
+
+  @override
+  String get aiQuickFillLabel => 'Quick Endpoint Presets';
+
+  @override
+  String get aiProfileNameLabel => 'Profile Name';
+
+  @override
+  String get aiBaseUrlLabel => 'Base URL';
+
+  @override
+  String get aiApiKeyLabel => 'API Key (Hardware Encrypted)';
+
+  @override
+  String get aiApiKeyLeaveEmptyHint => 'Leave empty to keep existing key';
+
+  @override
+  String get aiFetchModelsButton => 'Fetch Available Models';
+
+  @override
+  String get aiFetchingModels => 'Fetching models…';
+
+  @override
+  String get aiOnlyVisionFilter => 'Vision models only';
+
+  @override
+  String get aiSearchModelHint => 'Search model ID';
+
+  @override
+  String get aiManualModelHint => 'Manual model ID';
+
+  @override
+  String get aiManualAddButton => 'Add';
+
+  @override
+  String aiImportSelectedButton(Object count) {
+    return 'Import Selected ($count)';
+  }
+
+  @override
+  String get aiVerifyVisionButton => 'Verify Vision';
+
+  @override
+  String aiVisionVerifiedOk(Object ms) {
+    return 'Vision OK · $ms ms';
+  }
+
+  @override
+  String get aiVisionUnsupported => 'No vision support';
+
+  @override
+  String get aiVisionLikelyBadge => 'Vision';
+
+  @override
+  String get aiSaveProfileButton => 'Save Profile';
+
+  @override
+  String get aiSetAsCoach => 'Use for Coach';
+
+  @override
+  String get aiSetAsGrade => 'Use for Grading';
+
+  @override
+  String get aiCellularBypassTitle =>
+      'Use cellular data for AI in camera AP mode';
+
+  @override
+  String get aiCellularBypassSub =>
+      'Routes AI HTTPS over cellular without breaking camera Wi-Fi';
+
+  @override
+  String get aiIncludeTelemetryTitle =>
+      'Send focal length & exposure telemetry';
+
+  @override
+  String get aiIncludeTelemetrySub =>
+      'Sends aperture, shutter, ISO and focal length (never GPS)';
+
+  @override
+  String get aiSecurityFootnote =>
+      'API keys are encrypted via Android Keystore AES-256-GCM and never written to plain configs or logs.';
+
+  @override
+  String get aiCoachButton => 'AI Coach';
+
+  @override
+  String get aiCoachSheetTitle => 'AI Live View Coach';
+
+  @override
+  String get aiCoachOfflineTag => 'Local Estimate';
+
+  @override
+  String get aiCoachAnalyzeNow => 'Analyze Frame';
+
+  @override
+  String get aiCoachAnalyzing => 'Analyzing frame & exposure...';
+
+  @override
+  String get aiCoachNoFrame => 'Start Live View and wait for a frame first';
+
+  @override
+  String get aiCoachSceneIntentHint =>
+      'Scene intent (e.g. sunset portrait, street silhouette, optional)';
+
+  @override
+  String get aiCoachSceneAuto => 'Auto';
+
+  @override
+  String get aiCoachScenePortrait => 'Portrait';
+
+  @override
+  String get aiCoachSceneLandscape => 'Landscape';
+
+  @override
+  String get aiCoachSceneStreet => 'Street';
+
+  @override
+  String get aiCoachSceneNight => 'Night';
+
+  @override
+  String get aiCoachSceneFood => 'Still Life';
+
+  @override
+  String aiCoachCompScore(int score) {
+    return 'Comp $score';
+  }
+
+  @override
+  String aiCoachExpScore(int score) {
+    return 'Exp $score';
+  }
+
+  @override
+  String get aiCoachCompositionSection => 'Composition';
+
+  @override
+  String get aiCoachToneSection => 'Tone & Color';
+
+  @override
+  String get aiCoachExposureSyncSection => 'Exposure Sync';
+
+  @override
+  String get aiCoachApplyExposure => 'Apply to Camera';
+
+  @override
+  String aiCoachExposureApplied(int count) {
+    return 'Applied $count parameter(s) to camera';
+  }
+
+  @override
+  String get aiCoachExposureNoneWritable =>
+      'No writable camera parameters matched in current mode';
+
+  @override
+  String get aiCoachNp3Section => 'Matched Picture Control (.NP3)';
+
+  @override
+  String get aiCoachNp3WriteSlot => 'Write to C1–C9';
+
+  @override
+  String get aiCoachNp3SelectSlotTitle => 'Choose Target Custom Slot';
+
+  @override
+  String aiCoachNp3SlotLabel(int slot) {
+    return 'C$slot';
+  }
+
+  @override
+  String aiCoachNp3WriteSuccess(String name, int slot) {
+    return 'Wrote \'$name\' to C$slot and activated';
+  }
+
+  @override
+  String aiCoachNp3WriteFailed(String err, int slot) {
+    return 'Failed to write C$slot: $err';
+  }
+
+  @override
+  String get aiCoachNp3RequiresNikon =>
+      'Writing to custom slots requires a connected Nikon camera';
+
+  @override
+  String get aiCoachClearOverlay => 'Clear Overlay';
+
+  @override
+  String get aiCoachSetupAiFirst =>
+      'No AI API Key or active model is configured yet. Open AI Settings to add your key (DeepSeek, Qwen-VL, OpenAI, Claude, etc.), or try local histogram estimation first.';
+
+  @override
+  String get aiGradeButton => 'AI Grade';
+
+  @override
+  String get aiGradeSheetTitle => 'AI Smart Color Grading';
+
+  @override
+  String get aiGradeGenerating => 'Analyzing photo & generating 3 looks...';
+
+  @override
+  String get aiGradeRefining => 'Refining look with AI...';
+
+  @override
+  String get aiGradeStyleHint =>
+      'Desired look (e.g. soft pastel, warm film, teal & orange, optional)';
+
+  @override
+  String get aiGradeGenerateBtn => 'Generate Looks';
+
+  @override
+  String get aiGradeRegenerateBtn => 'Re-analyze';
+
+  @override
+  String aiGradeIntensity(int pct) {
+    return 'Intensity $pct%';
+  }
+
+  @override
+  String get aiGradeRefineHint =>
+      'Refine in words (e.g. brighter skin tones, softer contrast)';
+
+  @override
+  String get aiGradeRefineSend => 'Refine';
+
+  @override
+  String get aiGradeApplyToCanvas => 'Apply Look';
+
+  @override
+  String get aiGradeSavePreset => 'Save Preset';
+
+  @override
+  String aiGradeAppliedToast(String name) {
+    return 'Applied AI grade \'$name\'';
+  }
+
+  @override
+  String aiGradeSavedToast(String name) {
+    return 'Saved preset \'$name\'';
+  }
+
+  @override
+  String get aiGradeNoImage =>
+      'Load a photo first before using AI Color Grading';
+
+  @override
+  String get aiGradeOfflineTag => 'Local Histogram Look';
+
+  @override
+  String get aiOpenSettingsBtn => 'AI Settings';
+
+  @override
+  String get aiRetryBtn => 'Retry';
+
+  @override
+  String get aiUseOfflineBaselineBtn => 'Use Local Histogram Fallback';
+
+  @override
+  String get aiUnconfiguredTitle => 'API Key Not Configured';
+
+  @override
+  String get aiRequestFailedTitle => 'AI Request Failed';
+
+  @override
+  String get aiErrNetworkHint =>
+      'Network unreachable or blocked by camera Wi-Fi AP. Enable Cellular Bypass in AI Settings and verify mobile data.';
+
+  @override
+  String get aiErrAuthHint =>
+      'API key is invalid, expired, or out of quota. Check your credentials in AI Settings.';
+
+  @override
+  String get aiErrEndpointHint =>
+      'Endpoint URL or model ID was not found (404). Verify Base URL and protocol in AI Settings.';
+
+  @override
+  String get aiErrVisionHint =>
+      'This endpoint or model rejected image input (no vision support). Switch to a vision-capable multimodal model.';
+
+  @override
+  String get aiErrRateLimitHint =>
+      'Rate limited or quota exceeded. Please try again in a moment.';
+
+  @override
+  String get aiErrParseHint =>
+      'Model response did not match the expected JSON format. Retry or pick another vision model.';
+
+  @override
+  String get aiErrServerHint =>
+      'AI server returned an error. Please try again shortly.';
+
+  @override
+  String get aiGradeEmptyPromptCardTitle =>
+      'Describe a style or let AI match built-in recipes';
+
+  @override
+  String get aiGradeEmptyPromptCardSub =>
+      'Sends your photo, histogram, and Zync\'s filters, SpektraFilm optical stocks & presets to AI to select the top 3 matches.';
+
+  @override
+  String get aiGradeInspirationLabel => 'Style Inspiration';
+
+  @override
+  String get aiGradeStyleChipShinkai => 'Shinkai Anime Sky';
+
+  @override
+  String get aiGradeStyleChipWong => 'Wong Kar-wai Neon';
+
+  @override
+  String get aiGradeStyleChipHamada => 'Airy Pastel Film';
+
+  @override
+  String get aiGradeStyleChipKodak => 'Warm Kodak Portra';
+
+  @override
+  String get aiGradeStyleChipTealOrange => 'Cinematic Teal & Orange';
+
+  @override
+  String get aiGradeStyleChipForest => 'Fuji Forest Green';
+
+  @override
+  String get aiGradeStyleChipBw => 'High-Contrast B&W';
+
+  @override
+  String get aiGradeRecipeBadgeFilter => 'Filter';
+
+  @override
+  String get aiGradeRecipeBadgeSpektra => 'Optical Film';
+
+  @override
+  String get aiGradeRecipeBadgePreset => 'Preset';
+
+  @override
+  String get aiGradeRecipeBadgeCustom => 'AI Custom';
+
+  @override
+  String get aiGradeCompareHold => 'Hold to Compare';
+
+  @override
+  String get aiGradeAnalyzingHint => 'Sending photo & recipe catalog to AI...';
+
+  @override
+  String get aiCoachReadyHintTitle => 'Discover the Best Shot in Busy Scenes';
+
+  @override
+  String get aiCoachReadyHintSub =>
+      'AI locates the strongest subject, suggests portrait or landscape crop aspect, and provides actionable on-set tips.';
+
+  @override
+  String get aiCoachCropPreviewTitle => 'AI Recommended Framing';
+
+  @override
+  String get aiCoachOrientationPortrait => 'Portrait';
+
+  @override
+  String get aiCoachOrientationLandscape => 'Landscape';
+
+  @override
+  String get aiCoachOrientationSquare => 'Square';
+
+  @override
+  String get aiCoachViewOriginalCrop => 'Show on Frame';
+
+  @override
+  String get aiCoachViewCroppedResult => 'Preview Crop';
+
+  @override
+  String get aiCoachShowOnViewfinder => 'Overlay on Live View';
+
+  @override
+  String get aiCoachFocusCropSubject => 'AF on Subject';
+
+  @override
+  String get aiCoachShootingTipsSection => 'Actionable Shooting Tips';
+
+  @override
+  String get aiCoachOverlayPillLabel => 'AI Frame';
+
+  @override
+  String get wmDetailedParamsPill => 'Details';
+
+  @override
+  String get aiGradeLaunchReadySub => 'Matches Zync recipes · 3 curated looks';
+
+  @override
+  String get aiGradeLaunchSetupSub =>
+      'No API Key configured — tap to set up or try local';
+
+  @override
+  String get aiApiKeyNotConfiguredShort => 'No API Key';
+
+  @override
+  String get aiViewTutorialBtn => 'Setup Guide';
+
+  @override
+  String get onboardingAiTitle => 'Set Up AI API Key';
+
+  @override
+  String get onboardingAiSubtitle =>
+      'Bring your own API key (BYOK) to unlock AI Live-View Composition Coach and AI Smart Color Grading. Keys stay encrypted locally in Android Keystore.';
+
+  @override
+  String get aiGuideModalTitle => 'Zync 3.0.1 · AI API Key Setup Guide';
+
+  @override
+  String get aiGuideModalSubtitle =>
+      'No AI API Key detected yet. Follow 4 quick steps below to enable AI Composition Coach and AI Smart Color Grading.';
+
+  @override
+  String get aiGuideStep1Title => '1. Get an API Key';
+
+  @override
+  String get aiGuideStep1Desc =>
+      'Create and copy an API key (usually starting with sk-) from DeepSeek, Alibaba Bailian (Qwen-VL), Zhipu (GLM-4V), OpenAI, or Anthropic.';
+
+  @override
+  String get aiGuideStep2Title => '2. Add Profile & Quick-Fill URL';
+
+  @override
+  String get aiGuideStep2Desc =>
+      'Open Settings → AI Vision Engine → Add Provider Profile and tap a quick preset to auto-fill the protocol and Base URL.';
+
+  @override
+  String get aiGuideStep3Title => '3. Paste Key & Select Models';
+
+  @override
+  String get aiGuideStep3Desc =>
+      'Paste your API Key, tap Fetch Models (or enter a model ID like deepseek-chat, qwen-vl-max, gpt-4o), check it, and save.';
+
+  @override
+  String get aiGuideStep4Title => '4. Assign Coach & Grading Models';
+
+  @override
+  String get aiGuideStep4Desc =>
+      'At the top of AI Settings, assign your imported model to Live-View Coach and AI Color Grading to start using them immediately.';
+
+  @override
+  String get aiGuideConfigureNowBtn => 'Configure API Key';
+
+  @override
+  String get aiGuideConfiguredBadge => 'API Key Configured';
+
+  @override
+  String get aiGuideLaterBtn => 'Later';
 }

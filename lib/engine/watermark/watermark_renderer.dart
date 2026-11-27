@@ -10,6 +10,7 @@ import '../../core/utils/exif_helper.dart';
 import '../filter/photo_filter.dart';
 import '../spektrafilm/spektrafilm_models.dart';
 import '../spektrafilm/spektrafilm_renderer.dart';
+import 'watermark_overlay_layer.dart';
 import 'watermark_painter.dart';
 import 'watermark_template.dart';
 
@@ -79,6 +80,7 @@ class WatermarkRenderer {
     bool writeExif = true,
     SpektrafilmSettings? spektrafilm,
     String? filmStockName,
+    List<WatermarkTextLayer> textLayers = const [],
   }) async {
     // 胶片模拟完全接管色彩：先把源图处理成新位图，画框 / 水印排版保持原样。
     var image = sourceImage;
@@ -149,6 +151,7 @@ class WatermarkRenderer {
       watermarkOpacity: watermarkOpacity,
       customTextAlign: customTextAlign,
       logoCorner: logoCorner,
+      textLayers: textLayers,
     );
 
     // 绘制完整合成图

@@ -107,6 +107,8 @@ class LiveViewController extends ChangeNotifier {
   }
   int get droppedFrames => _pipeline.droppedFrames;
 
+  Uint8List? get latestJpeg => _pipeline.latestJpeg;
+
   /// 开始取景。已在取景中时是空操作。
   Future<void> start() async {
     if (_disposed) return;
