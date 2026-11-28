@@ -2037,5 +2037,13 @@
   "aiGuideStep4Desc": "At the top of AI Settings, assign your imported model to Live-View Coach and AI Color Grading to start using them immediately.",
   "aiGuideConfigureNowBtn": "Configure API Key",
   "aiGuideConfiguredBadge": "API Key Configured",
-  "aiGuideLaterBtn": "Later"
+  "aiGuideLaterBtn": "Later",
+  "pcFilterFavorites": "Favorites",
+  "pcFavoriteAction": "Favorite Recipe",
+  "pcUnfavoriteAction": "Unfavorite",
+  "pcRemoveAction": "Remove Recipe",
+  "pcSampleDownloading": "Downloading cloud sample preview...",
+  "pcSampleOfflineHint": "Cloud sample preview unavailable offline. Retry or pick a local photo.",
+  "pcSampleRetryAction": "Retry",
+  "pcFavoritesEmptyHint": "No favorite recipes yet. Tap the star icon on any recipe card to save it here."
 }

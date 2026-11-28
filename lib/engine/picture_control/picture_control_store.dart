@@ -72,20 +72,68 @@ class PictureControlImportReport {
   });
 }
 
+/// 可注入的云端样片字节下载器，便于测试覆盖镜像回退与缓存校验。
+typedef SampleDownloadTransport = Future<Uint8List?> Function(Uri uri);
+
+class _RemoteSampleSpec {
+  final int revision;
+  final String sha256;
+  final String fileName;
+
+  const _RemoteSampleSpec({
+    required this.revision,
+    required this.sha256,
+    required this.fileName,
+  });
+}
+
 /// 手机本地尼康优化校准配方库持久化中心。
 class PictureControlStore extends ChangeNotifier {
   static final PictureControlStore instance = PictureControlStore._();
 
   PictureControlStore._();
 
+  static const String z30FiltersCatalogAsset =
+      'assets/recipes/z30_filters/catalog.json';
+  static const String _githubSampleBase =
+      'https://raw.githubusercontent.com/sa1to-asuka/Zync/main/cloud_assets/pc_preview';
+  static const String _jsdelivrSampleBase =
+      'https://cdn.jsdelivr.net/gh/sa1to-asuka/Zync@main/cloud_assets/pc_preview';
+
+  @visibleForTesting
+  static SampleDownloadTransport? debugSampleTransport;
+
   final List<PictureControlLibraryItem> _items = [];
   final Set<String> _deletedBuiltinIds = <String>{};
+  final Set<String> _favoriteIds = <String>{};
   static final Map<String, Uint8List> _sceneBytesCache = {};
+  final Map<String, _RemoteSampleSpec> _remoteSampleSpecs = {};
+  final Map<String, Map<String, dynamic>> _localSampleMeta = {};
+  int _sampleCacheVersion = 0;
+  bool _manifestRefreshedThisRun = false;
   Directory? _storeDir;
   bool _initialized = false;
 
   List<PictureControlLibraryItem> get items => List.unmodifiable(_items);
   bool get isInitialized => _initialized;
+  int get sampleCacheVersion => _sampleCacheVersion;
+  Set<String> get favoriteIds => Set.unmodifiable(_favoriteIds);
+  int get favoriteCount =>
+      _items.where((e) => _favoriteIds.contains(e.id)).length;
+  bool isFavorite(String id) => _favoriteIds.contains(id);
+
+  /// 构造云端样片或 manifest 的多镜像候选下载地址。
+  static List<Uri> sampleCandidateUrls(String fileName) {
+    final clean = fileName.trim();
+    if (clean.isEmpty) return const [];
+    final raw = '$_githubSampleBase/$clean';
+    return [
+      Uri.parse(raw),
+      Uri.parse('$_jsdelivrSampleBase/$clean'),
+      Uri.parse('https://ghfast.top/$raw'),
+      Uri.parse('https://gh-proxy.com/$raw'),
+    ];
+  }
 
   /// 初始化本地配方库目录并加载已保存配方与内置经典初始配方。
   Future<void> ensureInitialized({Directory? overrideDirectory}) async {
@@ -98,6 +146,13 @@ class PictureControlStore extends ChangeNotifier {
 
     _items.clear();
     _deletedBuiltinIds.clear();
+    _favoriteIds.clear();
+    if (overrideDirectory != null) {
+      _sceneBytesCache.clear();
+      _remoteSampleSpecs.clear();
+      _localSampleMeta.clear();
+      _manifestRefreshedThisRun = false;
+    }
 
     final indexFile = File('${_storeDir!.path}/index.json');
     if (indexFile.existsSync()) {
@@ -108,6 +163,10 @@ class PictureControlStore extends ChangeNotifier {
                 ?.whereType<String>() ??
             const <String>[];
         _deletedBuiltinIds.addAll(deleted);
+        final favs = (decoded['favoriteIds'] as List<dynamic>?)
+                ?.whereType<String>() ??
+            const <String>[];
+        _favoriteIds.addAll(favs);
 
         final rawList = (decoded['items'] as List<dynamic>?) ?? const [];
         for (final entry in rawList.whereType<Map<String, dynamic>>()) {
@@ -145,6 +204,8 @@ class PictureControlStore extends ChangeNotifier {
         }
       } catch (_) {}
     }
+
+    await _loadLocalSampleMeta();
 
     // 注入尚未安装且未被用户手动删除的内置初始配方
     var modified = false;
@@ -247,13 +308,154 @@ class PictureControlStore extends ChangeNotifier {
       }
     }
 
+    // 加载打包自 1dlut-z30-filters 的 121 款社区与影调曲线配方（全部编码为标准 0300 NP3）
+    try {
+      final catalogJson = await rootBundle.loadString(z30FiltersCatalogAsset);
+      final z30Entries = parseZ30FiltersCatalogJson(
+        catalogJson,
+        seedStartMs: seedTime,
+      );
+      for (final entry in z30Entries) {
+        if (existingIds.contains(entry.id) ||
+            _deletedBuiltinIds.contains(entry.id)) {
+          continue;
+        }
+        final binFile = File('${_storeDir!.path}/${entry.fileName}');
+        await binFile.writeAsBytes(entry.rawBytes, flush: true);
+        _items.add(entry);
+        existingIds.add(entry.id);
+        seedTime++;
+        modified = true;
+      }
+    } catch (_) {
+      // 测试环境未挂载 asset bundle 时静默跳过
+    }
+
     if (modified) {
       await _saveIndex();
     }
     _initialized = true;
     notifyListeners();
-    // 异步静默预载并永久留存 8 张高清对比样片至手机，下次秒开不请求网络
-    unawaited(preloadAllSampleScenes());
+    // 异步刷新云端 manifest 并按需预下载 11 张预览样片（仅首次覆盖/版本变更时触发下载）
+    if (overrideDirectory == null || debugSampleTransport != null) {
+      unawaited(_refreshManifestAndPreload());
+    }
+  }
+
+  /// 解析 `assets/recipes/z30_filters/catalog.json` 并生成标准 0300 .NP3 配方列表。
+  @visibleForTesting
+  static List<PictureControlLibraryItem> parseZ30FiltersCatalogJson(
+    String catalogJson, {
+    int seedStartMs = 0,
+  }) {
+    final decoded = jsonDecode(catalogJson);
+    if (decoded is! Map<String, dynamic>) return const [];
+    final rawRecipes = decoded['recipes'];
+    if (rawRecipes is! List) return const [];
+
+    final out = <PictureControlLibraryItem>[];
+    var ts = seedStartMs;
+    for (final raw in rawRecipes.whereType<Map<String, dynamic>>()) {
+      final id = (raw['id'] as String? ?? '').trim();
+      final camName = Np3Codec.sanitizeCameraName(
+        (raw['cameraName'] as String? ?? id),
+      );
+      if (id.isEmpty) continue;
+
+      final baseName = raw['base'] as String? ?? 'neutral';
+      final base = PictureControlBase.values.firstWhere(
+        (b) => b.name == baseName,
+        orElse: () => PictureControlBase.neutral,
+      );
+      final catName = raw['category'] as String? ?? 'vintage';
+      final category = PictureControlCategory.values.firstWhere(
+        (c) => c.name == catName && c != PictureControlCategory.all,
+        orElse: () => PictureControlCategory.vintage,
+      );
+
+      final rawPts = (raw['pts'] as List<dynamic>?) ?? const [];
+      final points = <PictureControlCurvePoint>[];
+      for (final p in rawPts) {
+        if (p is List && p.length >= 2) {
+          points.add(
+            PictureControlCurvePoint(
+              (p[0] as num).toInt().clamp(0, 255),
+              (p[1] as num).toInt().clamp(0, 255),
+            ),
+          );
+        }
+      }
+      final rawLut = (raw['lut257'] as List<dynamic>?)
+              ?.map((e) => (e as num).toInt().clamp(0, 32767))
+              .toList() ??
+          const <int>[];
+      final Uint8List? curveBlock = rawLut.length == 257
+          ? Np3Codec.buildCurveBlockFromLut257(
+              rawLut,
+              controlPoints: points.length >= 2 ? points : null,
+            )
+          : (points.length >= 2
+              ? Np3Codec.buildCurveBlockFromPoints(points)
+              : null);
+      final hasCurve = curveBlock != null;
+
+      final isMono = base == PictureControlBase.monochrome;
+      final tempRecipe = PictureControlRecipe(
+        format: PictureControlFormat.np3Standard,
+        cameraName: camName,
+        base: base,
+        sharpeningQuarters: (raw['sharpeningQ'] as num?)?.toInt() ?? 0,
+        midRangeSharpeningQuarters:
+            (raw['midSharpeningQ'] as num?)?.toInt() ?? 0,
+        clarityQuarters: (raw['clarityQ'] as num?)?.toInt() ?? 0,
+        contrastQuarters:
+            hasCurve ? 0 : ((raw['contrastQ'] as num?)?.toInt() ?? 0),
+        brightnessQuarters:
+            hasCurve ? 0 : ((raw['brightnessQ'] as num?)?.toInt() ?? 0),
+        saturationQuarters:
+            isMono ? null : ((raw['saturationQ'] as num?)?.toInt() ?? 0),
+        hueQuarters: isMono ? null : ((raw['hueQ'] as num?)?.toInt() ?? 0),
+        hasCustomCurve: hasCurve,
+        curvePoints: points,
+        rawCurveBlock: curveBlock,
+      );
+
+      final bytes = Np3Codec.encodeNp3File(tempRecipe);
+      final parsed = Np3Codec.parse(bytes);
+      out.add(
+        PictureControlLibraryItem(
+          id: id,
+          fileName: '$id.NP3',
+          cameraName: parsed.cameraName,
+          noteName: (raw['noteNameZh'] as String? ?? camName).trim(),
+          description: (raw['descriptionZh'] as String? ?? '').trim(),
+          recommendedSceneId:
+              (raw['recommendedSceneId'] as String? ?? 'street').trim(),
+          category: category,
+          isBuiltIn: true,
+          importedAtMs: ts++,
+          recipe: parsed,
+          rawBytes: bytes,
+        ),
+      );
+    }
+    return out;
+  }
+
+  /// 切换指定配方的收藏状态并持久化。
+  Future<bool> toggleFavorite(String id) async {
+    await ensureInitialized();
+    final bool nowFavorite;
+    if (_favoriteIds.contains(id)) {
+      _favoriteIds.remove(id);
+      nowFavorite = false;
+    } else {
+      _favoriteIds.add(id);
+      nowFavorite = true;
+    }
+    await _saveIndex();
+    notifyListeners();
+    return nowFavorite;
   }
 
   /// 恢复所有被删除的内置经典初始配方。
@@ -265,70 +467,271 @@ class PictureControlStore extends ChangeNotifier {
     await ensureInitialized(overrideDirectory: _storeDir?.parent);
   }
 
-  /// 加载预览样片原始字节（内存缓存 > 手机本地沙盒持久化高精原图 > PicUI 远程下载并永久留存手机 > 内置 asset 兜底）。
-  Future<Uint8List?> loadSampleSceneBytes(PictureControlSampleScene scene) async {
-    final inMem = _sceneBytesCache[scene.id];
-    if (inMem != null && inMem.isNotEmpty) return inMem;
+  Future<void> _loadLocalSampleMeta() async {
+    _localSampleMeta.clear();
+    if (_storeDir == null) return;
+    final metaFile = File('${_storeDir!.path}/samples/samples_meta.json');
+    if (!metaFile.existsSync()) return;
+    try {
+      final decoded = jsonDecode(await metaFile.readAsString());
+      if (decoded is Map<String, dynamic>) {
+        final scenes = decoded['scenes'];
+        if (scenes is Map<String, dynamic>) {
+          for (final entry in scenes.entries) {
+            if (entry.value is Map<String, dynamic>) {
+              _localSampleMeta[entry.key] =
+                  Map<String, dynamic>.from(entry.value as Map);
+            }
+          }
+        }
+      }
+    } catch (_) {}
+  }
 
+  Future<void> _saveLocalSampleMeta() async {
+    if (_storeDir == null) return;
+    final sampleDir = Directory('${_storeDir!.path}/samples');
+    if (!sampleDir.existsSync()) {
+      sampleDir.createSync(recursive: true);
+    }
+    final metaFile = File('${sampleDir.path}/samples_meta.json');
+    await metaFile.writeAsString(
+      jsonEncode({'version': 2, 'scenes': _localSampleMeta}),
+      flush: true,
+    );
+  }
+
+  /// 静默拉取 GitHub 云端样片清单：如远端版本号或 SHA-256 更新，自动清理旧缓存并通知界面刷新。
+  Future<void> refreshSampleManifestInBackground({bool force = false}) async {
+    if (_manifestRefreshedThisRun && !force) return;
+    _manifestRefreshedThisRun = true;
     await ensureInitialized();
+
+    Uint8List? rawManifest;
+    for (final uri in sampleCandidateUrls('manifest.json')) {
+      rawManifest = await _downloadUrlBytes(uri, timeoutSeconds: 6);
+      if (rawManifest != null && rawManifest.isNotEmpty) break;
+    }
+    if (rawManifest == null || rawManifest.isEmpty) return;
+
+    try {
+      final decoded = jsonDecode(utf8.decode(rawManifest));
+      if (decoded is! Map<String, dynamic>) return;
+      final list = decoded['scenes'];
+      if (list is! List) return;
+
+      var invalidatedAny = false;
+      final sampleDir = Directory('${_storeDir!.path}/samples');
+
+      for (final raw in list.whereType<Map<String, dynamic>>()) {
+        final id = (raw['id'] as String? ?? '').trim();
+        if (id.isEmpty) continue;
+        final rev = (raw['revision'] as num?)?.toInt() ?? 1;
+        final sha = (raw['sha256'] as String? ?? '').trim().toLowerCase();
+        final fileName = (raw['fileName'] as String? ?? '$id.jpg').trim();
+
+        _remoteSampleSpecs[id] = _RemoteSampleSpec(
+          revision: rev,
+          sha256: sha,
+          fileName: fileName,
+        );
+
+        final localMeta = _localSampleMeta[id];
+        final localRev = (localMeta?['revision'] as num?)?.toInt() ?? 0;
+        final localSha =
+            (localMeta?['sha256'] as String? ?? '').trim().toLowerCase();
+        final cachedFile = File('${sampleDir.path}/$id.jpg');
+
+        final revOutdated = rev > localRev;
+        final shaChanged = sha.isNotEmpty && localSha != sha;
+        if (cachedFile.existsSync() &&
+            (localMeta == null || revOutdated || shaChanged)) {
+          try {
+            cachedFile.deleteSync();
+          } catch (_) {}
+          _localSampleMeta.remove(id);
+          _sceneBytesCache.remove(id);
+          invalidatedAny = true;
+        }
+      }
+
+      if (invalidatedAny) {
+        await _saveLocalSampleMeta();
+        _sampleCacheVersion++;
+        notifyListeners();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _refreshManifestAndPreload() async {
+    await refreshSampleManifestInBackground();
+    await preloadAllSampleScenes();
+  }
+
+  /// 加载预览样片原始字节（内存缓存 > 版本/哈希匹配沙盒缓存 > GitHub 多镜像云端下载，不随包内嵌）。
+  Future<Uint8List?> loadSampleSceneBytes(
+    PictureControlSampleScene scene, {
+    bool forceRefresh = false,
+  }) async {
+    await ensureInitialized();
+    final remoteSpec = _remoteSampleSpecs[scene.id];
+    final targetRev = (remoteSpec != null && remoteSpec.revision > scene.revision)
+        ? remoteSpec.revision
+        : scene.revision;
+    final targetSha = (remoteSpec != null && remoteSpec.sha256.isNotEmpty)
+        ? remoteSpec.sha256
+        : scene.sha256.trim().toLowerCase();
+    final targetFileName =
+        (remoteSpec != null && remoteSpec.fileName.isNotEmpty)
+            ? remoteSpec.fileName
+            : scene.fileName;
+
     final sampleDir = Directory('${_storeDir!.path}/samples');
     if (!sampleDir.existsSync()) {
       sampleDir.createSync(recursive: true);
     }
     final cachedFile = File('${sampleDir.path}/${scene.id}.jpg');
-    if (cachedFile.existsSync()) {
-      try {
-        final length = cachedFile.lengthSync();
-        // 需大于 50KB（避免旧版 600px 小图或截断脏缓存）
-        if (length > 50 * 1024) {
-          final bytes = await cachedFile.readAsBytes();
-          if (bytes.isNotEmpty) {
-            _sceneBytesCache[scene.id] = bytes;
-            return bytes;
+
+    if (!forceRefresh) {
+      final inMem = _sceneBytesCache[scene.id];
+      final localMeta = _localSampleMeta[scene.id];
+      if (inMem != null &&
+          inMem.isNotEmpty &&
+          _isMetaValid(localMeta, targetRev, targetSha)) {
+        return inMem;
+      }
+
+      if (cachedFile.existsSync()) {
+        try {
+          if (_isMetaValid(localMeta, targetRev, targetSha) &&
+              cachedFile.lengthSync() > 8 * 1024) {
+            final bytes = await cachedFile.readAsBytes();
+            if (_looksLikeValidSampleImage(bytes) &&
+                (targetSha.isEmpty ||
+                    sha256.convert(bytes).toString().toLowerCase() ==
+                        targetSha)) {
+              _sceneBytesCache[scene.id] = bytes;
+              return bytes;
+            }
           }
-        } else {
+          // 旧版本（如 v3.0.x 无 samples_meta）或版本/SHA 不匹配：强制淘汰旧缓存！
           try {
             cachedFile.deleteSync();
           } catch (_) {}
-        }
-      } catch (_) {}
-    }
-
-    if (scene.remoteUrl != null && scene.remoteUrl!.isNotEmpty) {
-      try {
-        final uri = Uri.parse(scene.remoteUrl!);
-        final client = HttpClient()..connectionTimeout = const Duration(seconds: 5);
-        final request = await client.getUrl(uri);
-        final response = await request.close().timeout(const Duration(seconds: 8));
-        if (response.statusCode == 200) {
-          final bytesBuilder = BytesBuilder();
-          await for (final chunk in response) {
-            bytesBuilder.add(chunk);
-          }
-          final bytes = bytesBuilder.toBytes();
-          if (bytes.isNotEmpty && bytes.length > 50 * 1024) {
-            await cachedFile.writeAsBytes(bytes, flush: true);
-            _sceneBytesCache[scene.id] = bytes;
-            return bytes;
-          }
-        }
-      } catch (_) {}
-    }
-
-    // 离线或下载超时，回退至内置轻量级 Asset
-    try {
-      final bd = await rootBundle.load(scene.assetPath);
-      final fallback = bd.buffer.asUint8List(bd.offsetInBytes, bd.lengthInBytes);
-      if (fallback.isNotEmpty) {
-        _sceneBytesCache[scene.id] = fallback;
+          _localSampleMeta.remove(scene.id);
+          _sceneBytesCache.remove(scene.id);
+        } catch (_) {}
       }
-      return fallback;
+    } else {
+      try {
+        if (cachedFile.existsSync()) cachedFile.deleteSync();
+      } catch (_) {}
+      _localSampleMeta.remove(scene.id);
+      _sceneBytesCache.remove(scene.id);
+    }
+
+    for (final uri in sampleCandidateUrls(targetFileName)) {
+      final downloaded = await _downloadUrlBytes(uri, timeoutSeconds: 12);
+      if (downloaded == null || !_looksLikeValidSampleImage(downloaded)) {
+        continue;
+      }
+      final actualSha = sha256.convert(downloaded).toString().toLowerCase();
+      if (targetSha.isNotEmpty && actualSha != targetSha) {
+        continue;
+      }
+      try {
+        final tmpFile = File('${cachedFile.path}.tmp');
+        await tmpFile.writeAsBytes(downloaded, flush: true);
+        await tmpFile.rename(cachedFile.path);
+        _localSampleMeta[scene.id] = {
+          'revision': targetRev,
+          'sha256': actualSha,
+          'fileName': targetFileName,
+        };
+        await _saveLocalSampleMeta();
+      } catch (_) {}
+      _sceneBytesCache[scene.id] = downloaded;
+      _sampleCacheVersion++;
+      notifyListeners();
+      return downloaded;
+    }
+
+    return null;
+  }
+
+  static bool _isMetaValid(
+    Map<String, dynamic>? meta,
+    int targetRev,
+    String targetSha,
+  ) {
+    if (meta == null) return false;
+    final metaRev = (meta['revision'] as num?)?.toInt() ?? 0;
+    if (metaRev < targetRev) return false;
+    if (targetSha.isNotEmpty) {
+      final metaSha = (meta['sha256'] as String? ?? '').trim().toLowerCase();
+      if (metaSha != targetSha) return false;
+    }
+    return true;
+  }
+
+  static bool _looksLikeValidSampleImage(Uint8List bytes) {
+    if (bytes.length < 8 * 1024) return false;
+    // JPEG: FF D8 FF
+    if (bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF) return true;
+    // WebP: RIFF....WEBP
+    if (bytes.length >= 12 &&
+        bytes[0] == 0x52 &&
+        bytes[1] == 0x49 &&
+        bytes[2] == 0x46 &&
+        bytes[3] == 0x46 &&
+        bytes[8] == 0x57 &&
+        bytes[9] == 0x45 &&
+        bytes[10] == 0x42 &&
+        bytes[11] == 0x50) {
+      return true;
+    }
+    // PNG: 89 50 4E 47
+    if (bytes[0] == 0x89 &&
+        bytes[1] == 0x50 &&
+        bytes[2] == 0x4E &&
+        bytes[3] == 0x47) {
+      return true;
+    }
+    return false;
+  }
+
+  static Future<Uint8List?> _downloadUrlBytes(
+    Uri uri, {
+    int timeoutSeconds = 10,
+  }) async {
+    if (debugSampleTransport != null) {
+      try {
+        return await debugSampleTransport!(uri);
+      } catch (_) {
+        return null;
+      }
+    }
+    final client = HttpClient()
+      ..connectionTimeout = const Duration(seconds: 5)
+      ..idleTimeout = const Duration(seconds: 1);
+    try {
+      final request = await client.getUrl(uri);
+      final response =
+          await request.close().timeout(Duration(seconds: timeoutSeconds));
+      if (response.statusCode != 200) return null;
+      final builder = BytesBuilder(copy: false);
+      await for (final chunk in response) {
+        builder.add(chunk);
+      }
+      return builder.toBytes();
     } catch (_) {
       return null;
+    } finally {
+      client.close(force: true);
     }
   }
 
-  /// 后台异步静默预下载并永久留存全部 8 张高清样片在手机沙盒中。
+  /// 后台异步静默预下载并持久化全部 11 张高清云端样片在手机沙盒中。
   Future<void> preloadAllSampleScenes() async {
     for (final scene in BuiltinNp3Catalog.sampleScenes) {
       try {
@@ -544,6 +947,7 @@ class PictureControlStore extends ChangeNotifier {
     final idx = _items.indexWhere((e) => e.id == id);
     if (idx < 0) return;
     final removed = _items.removeAt(idx);
+    _favoriteIds.remove(removed.id);
     if (removed.isBuiltIn) {
       _deletedBuiltinIds.add(removed.id);
     }
@@ -687,8 +1091,9 @@ class PictureControlStore extends ChangeNotifier {
     if (_storeDir == null) return;
     final indexFile = File('${_storeDir!.path}/index.json');
     final data = {
-      'version': 1,
+      'version': 2,
       'deletedBuiltinIds': _deletedBuiltinIds.toList(),
+      'favoriteIds': _favoriteIds.toList(),
       'items': _items.map((e) => e.toIndexJson()).toList(),
     };
     await indexFile.writeAsString(jsonEncode(data), flush: true);

@@ -4101,4 +4101,29 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get aiGuideLaterBtn => 'あとで';
+
+  @override
+  String get pcFilterFavorites => 'お気に入り';
+
+  @override
+  String get pcFavoriteAction => 'お気に入りに追加';
+
+  @override
+  String get pcUnfavoriteAction => 'お気に入り解除';
+
+  @override
+  String get pcRemoveAction => 'レシピを削除';
+
+  @override
+  String get pcSampleDownloading => 'クラウドからサンプル画像を取得中…';
+
+  @override
+  String get pcSampleOfflineHint =>
+      'クラウドサンプルを読み込めませんでした。再試行するか端末内の写真を選択してください。';
+
+  @override
+  String get pcSampleRetryAction => '再試行';
+
+  @override
+  String get pcFavoritesEmptyHint => 'お気に入りのレシピはまだありません。カードの星アイコンから追加できます';
 }

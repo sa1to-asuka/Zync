@@ -4075,4 +4075,28 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiGuideLaterBtn => '稍后再说';
+
+  @override
+  String get pcFilterFavorites => '我的收藏';
+
+  @override
+  String get pcFavoriteAction => '收藏配方';
+
+  @override
+  String get pcUnfavoriteAction => '取消收藏';
+
+  @override
+  String get pcRemoveAction => '移除配方';
+
+  @override
+  String get pcSampleDownloading => '正在从云端获取高清样片…';
+
+  @override
+  String get pcSampleOfflineHint => '暂未获取到云端样片，可检查网络后重试或使用手机本地照片对比';
+
+  @override
+  String get pcSampleRetryAction => '重试下载';
+
+  @override
+  String get pcFavoritesEmptyHint => '暂无收藏配方，点击配方卡片上的星标即可加入收藏';
 }

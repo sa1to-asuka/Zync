@@ -297,7 +297,7 @@ Thank you to the maintainers and contributors of the projects below. Each projec
 | [digiCamControl](https://github.com/dukus/digiCamControl) | Bracketing sequence generation, parameter restoration, and A-B focus-stacking interaction reference | MIT |
 | [airnef](https://github.com/besi/airnef) | Resumable-download validation approach reference; no source code reused | GPL-3.0 |
 | [LutCameraPro](https://github.com/laodamanbaout/LutCameraPro-) | PTP/IP live-view and connection-boundary reference | Apache-2.0 |
-| [1dlut-z30-filters](https://github.com/haotiandi1011-lgtm/1dlut-z30-filters) | Z 30 tone-curve payload layout and C1-C9 write-back verification reference | MIT |
+| [1dlut-z30-filters](https://github.com/haotiandi1011-lgtm/1dlut-z30-filters) | Z 30 tone-curve payload layout, 121 community/tonal recipes, and C1-C9 write-back verification reference | MIT |
 | [aero-shutter](https://github.com/subhashraveendran/aero-shutter) | Wi-Fi PTP/IP import behavior reference | MIT |
 | [NikonCameraControl](https://github.com/youdangshi/NikonCameraControl) | Android remote-control and transfer flow reference | MIT |
 | [SnapBridge-Enhanced](https://github.com/MXWF0/SnapBridge-Enhanced) | Nikon connection flow and interaction reference | No license file currently declared |
@@ -314,7 +314,8 @@ Thank you to the maintainers and contributors of the projects below. Each projec
 | [PicSeal](https://github.com/pipiqiang/PicSeal) | Camera model detection, brand-styled watermark generation & EXIF preservation reference | MIT |
 | [camera-watermark](https://github.com/myWsq/camera-watermark) | Mirrorless/DSLR EXIF watermark composition & customization UX reference | MIT |
 | [zf-capture-one-helper](https://github.com/open-nikonz/zf-capture-one-helper) | Nikon Z `_ptp._tcp` Bonjour TXT fields & STA wireless pairing handshake sequence reference | Apache-2.0 |
-| [OpenAI / Anthropic API Specs](https://platform.openai.com/docs/guides/vision) | OpenAI & Anthropic vision protocol compatibility for Zync BYOK AI Coach & Grading | Public API Spec |
+| [openai-openapi](https://github.com/openai/openai-openapi) | OpenAI-compatible multimodal vision API specification reference for Zync BYOK AI Coach & Grading | MIT |
+| [anthropic-sdk-python](https://github.com/anthropics/anthropic-sdk-python) | Anthropic Messages API protocol reference for Zync BYOK AI Coach & Grading | Apache-2.0 |
 | [Google Fonts · English Artistic Fonts](https://github.com/google/fonts) | Bundled Playfair Display, Cinzel, Caveat & JetBrains Mono typefaces | SIL OFL-1.1 |
 | [LXGW WenKai / Zhuque Fangsong / ZCOOL](https://github.com/lxgw/LxgwWenKai) | On-demand cloud Chinese artistic fonts (LXGW WenKai, Zhuque Fangsong, ZCOOL XiaoWei, etc.) | SIL OFL-1.1 |
 
@@ -326,7 +327,7 @@ Thank you to the maintainers and contributors of the projects below. Each projec
 | [NikonNP3](https://github.com/Timor88/NikonNP3) | Nikon NP3 creative color recipe collection and category reference | Community-shared |
 | [nikon-flexible-color-picture-control](https://github.com/ssssota/nikon-flexible-color-picture-control) | Nikon Flexible Color NP3 (0310) binary offsets and color-mixer structure reference | MIT |
 | [Nikon Imaging](https://www.nikon-image.com/) | Sample photographs for approximate Picture Control previews (Z 30 / Z fc / Z f / Z 8) | Nikon sample display terms |
-| [Pakutaso](https://www.pakutaso.com/) | Free portrait and lifestyle sample photographs as preview fallbacks | Pakutaso free material terms |
+| [Pakutaso](https://www.pakutaso.com/) | Cloud sample photographs (portrait, street, sakura, nature, ocean, starry sky, sunset) for Picture Control preview | Pakutaso free material terms |
 | [影视飓风 (YSJF)](https://www.ysjf.com/index) | Landscape and nature sample material acknowledgement | Free sample material terms |
 
 ### Runtime and foundational dependencies

@@ -4231,4 +4231,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiGuideLaterBtn => 'Later';
+
+  @override
+  String get pcFilterFavorites => 'Favorites';
+
+  @override
+  String get pcFavoriteAction => 'Favorite Recipe';
+
+  @override
+  String get pcUnfavoriteAction => 'Unfavorite';
+
+  @override
+  String get pcRemoveAction => 'Remove Recipe';
+
+  @override
+  String get pcSampleDownloading => 'Downloading cloud sample preview...';
+
+  @override
+  String get pcSampleOfflineHint =>
+      'Cloud sample preview unavailable offline. Retry or pick a local photo.';
+
+  @override
+  String get pcSampleRetryAction => 'Retry';
+
+  @override
+  String get pcFavoritesEmptyHint =>
+      'No favorite recipes yet. Tap the star icon on any recipe card to save it here.';
 }

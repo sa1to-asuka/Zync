@@ -296,7 +296,7 @@ Wi-Fi と USB の転送は、公開されている Picture Transfer Protocol の
 | [airnef](https://github.com/besi/airnef) | レジューム転送の検証方針の参考。ソースコードは流用していません | GPL-3.0 |
 | [Shotdeck](https://github.com/Fluoro-Antimonic-Acid/Shotdeck) | ライブビュー・撮影・オブジェクト確定動作の参考 | GPL-3.0 |
 | [LutCameraPro](https://github.com/laodamanbaout/LutCameraPro-) | PTP/IP ライブビューと接続境界の参考 | Apache-2.0 |
-| [1dlut-z30-filters](https://github.com/haotiandi1011-lgtm/1dlut-z30-filters) | Z 30 トーンカーブペイロード構造と C1–C9 書き戻し検証の参考 | MIT |
+| [1dlut-z30-filters](https://github.com/haotiandi1011-lgtm/1dlut-z30-filters) | Z 30 トーンカーブ構造、121 種のコミュニティ/階調レシピおよび C1–C9 書込検証の参考 | MIT |
 | [aero-shutter](https://github.com/subhashraveendran/aero-shutter) | Wi-Fi PTP/IP 取り込み動作の参考 | MIT |
 | [NikonCameraControl](https://github.com/youdangshi/NikonCameraControl) | Android リモート操作と転送フローの参考 | MIT |
 | [SnapBridge-Enhanced](https://github.com/MXWF0/SnapBridge-Enhanced) | Nikon の接続フローと操作の参考 | 現在ライセンスファイルなし |
@@ -313,7 +313,8 @@ Wi-Fi と USB の転送は、公開されている Picture Transfer Protocol の
 | [PicSeal](https://github.com/pipiqiang/PicSeal) | カメラ機種自動判定・ブランド風生成・EXIF 保持のリファレンス | MIT |
 | [camera-watermark](https://github.com/myWsq/camera-watermark) | ミラーレス/一眼 EXIF ウォーターマークおよび項目カスタマイズ UI の参考 | MIT |
 | [zf-capture-one-helper](https://github.com/open-nikonz/zf-capture-one-helper) | Nikon Z `_ptp._tcp` Bonjour フィールドと STA ペアリング手順の参考 | Apache-2.0 |
-| [OpenAI / Anthropic API Specs](https://platform.openai.com/docs/guides/vision) | Zync BYOK AI 撮影支援・スマート補正用マルチモーダル視覚 API 仕様準拠 | Public API Spec |
+| [openai-openapi](https://github.com/openai/openai-openapi) | Zync BYOK AI 撮影支援・スマート補正用 OpenAI 互換マルチモーダル視覚 API 仕様の参考 | MIT |
+| [anthropic-sdk-python](https://github.com/anthropics/anthropic-sdk-python) | Zync BYOK AI 撮影支援・スマート補正用 Anthropic Messages API プロトコルの参考 | Apache-2.0 |
 | [Google Fonts · English Artistic Fonts](https://github.com/google/fonts) | Playfair Display / Cinzel / Caveat / JetBrains Mono 内蔵欧文フォント | SIL OFL-1.1 |
 | [LXGW WenKai / Zhuque Fangsong / ZCOOL](https://github.com/lxgw/LxgwWenKai) | クラウドオンデマンド中国語アートフォント群 | SIL OFL-1.1 |
 
@@ -325,7 +326,7 @@ Wi-Fi と USB の転送は、公開されている Picture Transfer Protocol の
 | [NikonNP3](https://github.com/Timor88/NikonNP3) | Nikon NP3 クリエイティブカラーレシピ集とカテゴリの参考 | コミュニティ共有 |
 | [nikon-flexible-color-picture-control](https://github.com/ssssota/nikon-flexible-color-picture-control) | Nikon Flexible Color NP3（0310）のバイナリオフセットとカラーミキサー構造の参考 | MIT |
 | [Nikon Imaging（ニコンイメージング）](https://www.nikon-image.com/) | ピクチャーコントロール近似プレビュー用の公式サンプル写真（Z 30 / Z fc / Z f / Z 8） | Nikon 公式サンプル展示条件 |
-| [Pakutaso（ぱくたそ）](https://www.pakutaso.com/) | ピクチャーコントロール近似プレビュー用の無料ポートレート・ライフスタイルサンプル | Pakutaso 無料素材条件 |
+| [Pakutaso（ぱくたそ）](https://www.pakutaso.com/) | ピクチャーコントロール近似プレビュー用クラウドサンプル素材（人物・街並み・桜・自然・海・星空・夕日） | Pakutaso 無料素材条件 |
 | [影视飓风（YSJF）](https://www.ysjf.com/index) | ピクチャーコントロール近似プレビュー用の風景・自然サンプル素材の謝辞 | 無料サンプル素材条件 |
 
 ### ランタイムと基盤依存関係

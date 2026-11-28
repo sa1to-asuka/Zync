@@ -1,0 +1,83 @@
+{
+  "version": 2,
+  "updatedAt": "2026-11-28T04:48:23Z",
+  "scenes": [
+    {
+      "id": "portrait",
+      "fileName": "portrait.jpg",
+      "revision": 2,
+      "sizeBytes": 236645,
+      "sha256": "987ed42ba9b04f1c7732369a248aa6b74c0cee389adccb6b52083604293e55d9"
+    },
+    {
+      "id": "street",
+      "fileName": "street.jpg",
+      "revision": 2,
+      "sizeBytes": 316718,
+      "sha256": "446bcbfe51c9826b2d58f041bb957450c6d0be1ca61e8f2c34a1fc6037f428b8"
+    },
+    {
+      "id": "landscape",
+      "fileName": "landscape.jpg",
+      "revision": 1,
+      "sizeBytes": 175194,
+      "sha256": "b0b9867e6bebb4ed621388a56f1ce72e6938ea5dda0e5ce48abe34b64188e192"
+    },
+    {
+      "id": "nature",
+      "fileName": "nature.jpg",
+      "revision": 1,
+      "sizeBytes": 643204,
+      "sha256": "69ebe0cd0d461af40be01e916a665d3fde93771ac44bfd69b9763040308a3828"
+    },
+    {
+      "id": "sakura",
+      "fileName": "sakura.jpg",
+      "revision": 2,
+      "sizeBytes": 311566,
+      "sha256": "f4a70d3855c0291f1590c059f67e7858e73fbd98ad6baff73371abaed7e4eb9f"
+    },
+    {
+      "id": "ocean",
+      "fileName": "ocean.jpg",
+      "revision": 2,
+      "sizeBytes": 380922,
+      "sha256": "0cdb35e9e5e44ff1bfdb3c5fe8cbde71780328427c1c896123159be361a16638"
+    },
+    {
+      "id": "sunset",
+      "fileName": "sunset.jpg",
+      "revision": 1,
+      "sizeBytes": 157652,
+      "sha256": "96a132562a06ae8b6d56f4b5978bd6ce9b7f682b8b9b062246843390beb5ef08"
+    },
+    {
+      "id": "starry",
+      "fileName": "starry.jpg",
+      "revision": 1,
+      "sizeBytes": 482182,
+      "sha256": "8f224b698aa0cdf41a12c8914971dcecd4f2f9c3f33ee54b794fe5c8bacfb856"
+    },
+    {
+      "id": "night",
+      "fileName": "night.jpg",
+      "revision": 1,
+      "sizeBytes": 103966,
+      "sha256": "1e3056b8e601fa95ee5ae090c1400d9bc5f82f93c9e46ce7f5b7aeebf8c0a47a"
+    },
+    {
+      "id": "cat",
+      "fileName": "cat.jpg",
+      "revision": 1,
+      "sizeBytes": 62128,
+      "sha256": "13e237f67750dc180d5fc523f4a5968c8e52cd6deb6867c195efe96a9a6032d9"
+    },
+    {
+      "id": "food",
+      "fileName": "food.jpg",
+      "revision": 1,
+      "sizeBytes": 191136,
+      "sha256": "019217f59e25675eac876f918a142c2a4609bde2ae3de89070ce1f110bec0dbd"
+    }
+  ]
+}

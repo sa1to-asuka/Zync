@@ -136,12 +136,32 @@ void main() {
     expect(find.text('尚未连接尼康相机'), findsOneWidget);
   });
 
-  test('内置配方库分类与 PicUI 云端样片完整性校验', () {
-    // 验证样片场景均具备 PicUI CDN 远程图床直链
-    expect(BuiltinNp3Catalog.sampleScenes.length, 8);
+  test('内置配方库分类与 GitHub 云端 11 场景样片清单完整性校验', () {
+    expect(BuiltinNp3Catalog.sampleScenes.length, 11);
+    final sceneIds = BuiltinNp3Catalog.sampleScenes.map((s) => s.id).toSet();
+    expect(
+      sceneIds,
+      containsAll([
+        'portrait',
+        'street',
+        'landscape',
+        'nature',
+        'sakura',
+        'ocean',
+        'sunset',
+        'starry',
+        'night',
+        'cat',
+        'food',
+      ]),
+    );
     for (final scene in BuiltinNp3Catalog.sampleScenes) {
-      expect(scene.remoteUrl, isNotNull);
-      expect(scene.remoteUrl, startsWith('https://free.picui.cn/'));
+      final urls = PictureControlStore.sampleCandidateUrls(scene.fileName);
+      expect(urls, isNotEmpty);
+      expect(
+        urls.first.toString(),
+        contains('sa1to-asuka/Zync/main/cloud_assets/pc_preview/'),
+      );
     }
 
     // 验证官方创作者与调色预设

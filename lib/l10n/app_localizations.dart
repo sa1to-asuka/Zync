@@ -7623,6 +7623,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Later'**
   String get aiGuideLaterBtn;
+
+  /// No description provided for @pcFilterFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites'**
+  String get pcFilterFavorites;
+
+  /// No description provided for @pcFavoriteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorite Recipe'**
+  String get pcFavoriteAction;
+
+  /// No description provided for @pcUnfavoriteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Unfavorite'**
+  String get pcUnfavoriteAction;
+
+  /// No description provided for @pcRemoveAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Recipe'**
+  String get pcRemoveAction;
+
+  /// No description provided for @pcSampleDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading cloud sample preview...'**
+  String get pcSampleDownloading;
+
+  /// No description provided for @pcSampleOfflineHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud sample preview unavailable offline. Retry or pick a local photo.'**
+  String get pcSampleOfflineHint;
+
+  /// No description provided for @pcSampleRetryAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get pcSampleRetryAction;
+
+  /// No description provided for @pcFavoritesEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'No favorite recipes yet. Tap the star icon on any recipe card to save it here.'**
+  String get pcFavoritesEmptyHint;
 }
 
 class _AppLocalizationsDelegate

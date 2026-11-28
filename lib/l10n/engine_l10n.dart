@@ -78,9 +78,9 @@ abstract final class EngineL10n {
       en: 'PTP/IP live view and connection boundary reference',
       ja: 'PTP/IP ライブビューと接続境界の参考'
     ),
-    'Z 30 影调曲线负载结构参考': (
-      en: 'Z 30 tone-curve payload structure reference',
-      ja: 'Z 30 トーンカーブペイロード構造の参考'
+    'Z 30 影调曲线负载结构、121 套社区/影调配方与 C1–C9 回读校验参考': (
+      en: 'Z 30 tone-curve payload layout, 121 community/tonal recipes, and C1-C9 write-back verification reference',
+      ja: 'Z 30 トーンカーブ構造、121 種のコミュニティ/階調レシピおよび C1–C9 書込検証の参考'
     ),
     'PTP/IP、尼康操作码与响应码表参考': (
       en: 'PTP/IP, Nikon opcode and response-code table reference',
@@ -691,9 +691,13 @@ abstract final class EngineL10n {
       en: 'Nikon Flexible Color NP3 (0310) binary layout & Color Blender parser reference',
       ja: 'ニコン Flexible Color NP3 (0310) バイナリ構造およびカラーブレンダー解析リファレンス',
     ),
-    'Zync AI 实时取景指导与智能识图调色 BYOK 多模态视觉接口规范兼容': (
-      en: 'OpenAI & Anthropic vision protocol compatibility for Zync BYOK AI Coach & Grading',
-      ja: 'Zync BYOK AI 撮影支援・スマート補正用マルチモーダル視覚 API 仕様準拠',
+    'Zync AI 实时取景指导与智能识图调色 OpenAI 兼容多模态接口规范参考': (
+      en: 'OpenAI-compatible multimodal vision API specification reference for Zync BYOK AI Coach & Grading',
+      ja: 'Zync BYOK AI 撮影支援・スマート補正用 OpenAI 互換マルチモーダル視覚 API 仕様の参考',
+    ),
+    'Zync AI 实时取景指导与智能识图调色 Anthropic Messages 接口协议参考': (
+      en: 'Anthropic Messages API protocol reference for Zync BYOK AI Coach & Grading',
+      ja: 'Zync BYOK AI 撮影支援・スマート補正用 Anthropic Messages API プロトコルの参考',
     ),
     'ZIP 压缩包与配方合集归档解压': (
       en: 'ZIP archive extraction for NP3/NCP recipe packs & font bundles',
@@ -707,9 +711,9 @@ abstract final class EngineL10n {
       en: 'On-demand cloud Chinese artistic fonts (LXGW WenKai, Zhuque Fangsong, ZCOOL XiaoWei, Ma Shan Zheng, Long Cang, Zhi Mang Xing)',
       ja: 'クラウドオンデマンド中国語アートフォント（霞鶩文楷・朱雀仿宋・ZCOOL 小薇・馬善政・龍蔵・志莽行書）',
     ),
-    '色彩优化近似效果预览内置免费人像、街景、花朵与生活样片素材': (
-      en: 'Free portrait, street, floral & lifestyle sample photos for Picture Control preview',
-      ja: 'ピクチャーコントロール近似プレビュー用ポートレート・街並み・花・日常フリー素材',
+    '色彩优化近似效果预览云端人像、街景、樱花、自然、大海、星空与夕日样片素材致谢': (
+      en: 'Cloud sample photographs (portrait, street, sakura, nature, ocean, starry sky, sunset) for Picture Control preview',
+      ja: 'ピクチャーコントロール近似プレビュー用クラウドサンプル素材（人物・街並み・桜・自然・海・星空・夕日）',
     ),
     'Pakutaso 免费素材许可': (
       en: 'Pakutaso Free Stock License',

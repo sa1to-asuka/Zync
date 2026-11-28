@@ -26,21 +26,34 @@ enum PictureControlCategory {
       };
 }
 
-/// 预览样片场景定义（支持 PicUI 图床远程高精图与内置本地 fallback）。
+/// 预览样片场景定义（GitHub 云端按需下载 + 版本/SHA-256 双层缓存校验，不打入安装包）。
 class PictureControlSampleScene {
   final String id;
-  final String assetPath;
-  final String? remoteUrl;
+  final String fileName;
+  final int revision;
+  final String sha256;
   final String labelZh;
+  final String labelEn;
+  final String labelJa;
   final String sourceName;
 
   const PictureControlSampleScene({
     required this.id,
-    required this.assetPath,
-    this.remoteUrl,
+    required this.fileName,
+    this.revision = 1,
+    this.sha256 = '',
     required this.labelZh,
+    required this.labelEn,
+    required this.labelJa,
     required this.sourceName,
   });
+
+  String localizedLabel(String localeName) {
+    final lower = localeName.toLowerCase();
+    if (lower.startsWith('en')) return labelEn;
+    if (lower.startsWith('ja')) return labelJa;
+    return labelZh;
+  }
 }
 
 /// 内置初始 NP3 配方定义。
@@ -750,58 +763,123 @@ class BuiltinNp3Catalog {
   static const List<PictureControlSampleScene> sampleScenes = [
     PictureControlSampleScene(
       id: 'portrait',
-      assetPath: 'assets/samples/pc_preview/portrait.jpg',
-      remoteUrl: 'https://free.picui.cn/free/13625/2026/10/29/6ae31d9f060d0.jpg',
+      fileName: 'portrait.jpg',
+      revision: 2,
+      sha256:
+          '987ed42ba9b04f1c7732369a248aa6b74c0cee389adccb6b52083604293e55d9',
       labelZh: '人像',
-      sourceName: 'Nikon 官方样张 · Z 30',
+      labelEn: 'Portrait',
+      labelJa: 'ポートレート',
+      sourceName: 'Pakutaso（ぱくたそ）· manaIMG_4927',
     ),
     PictureControlSampleScene(
       id: 'street',
-      assetPath: 'assets/samples/pc_preview/street.jpg',
-      remoteUrl: 'https://free.picui.cn/free/13625/2026/10/29/6ae31da09ee8b.jpg',
+      fileName: 'street.jpg',
+      revision: 2,
+      sha256:
+          '446bcbfe51c9826b2d58f041bb957450c6d0be1ca61e8f2c34a1fc6037f428b8',
       labelZh: '街景',
-      sourceName: 'Nikon 官方样张 · Z f',
+      labelEn: 'Street',
+      labelJa: 'ストリート',
+      sourceName: 'Pakutaso（ぱくたそ）· paks85s2124',
     ),
     PictureControlSampleScene(
       id: 'landscape',
-      assetPath: 'assets/samples/pc_preview/landscape.jpg',
-      remoteUrl: 'https://free.picui.cn/free/13625/2026/10/29/6ae31da2ac745.jpg',
+      fileName: 'landscape.jpg',
+      revision: 1,
+      sha256:
+          'b0b9867e6bebb4ed621388a56f1ce72e6938ea5dda0e5ce48abe34b64188e192',
       labelZh: '风景',
+      labelEn: 'Landscape',
+      labelJa: '風景',
       sourceName: 'Nikon 官方样张 · Z 8 (Linksphotograph)',
     ),
     PictureControlSampleScene(
-      id: 'sakura',
-      assetPath: 'assets/samples/pc_preview/sakura.jpg',
-      remoteUrl: 'https://free.picui.cn/free/13625/2026/10/29/6ae31da49aa91.jpg',
-      labelZh: '樱花',
-      sourceName: 'Nikon 官方样张 · Z 30 (@ooooooayumioooooo)',
+      id: 'nature',
+      fileName: 'nature.jpg',
+      revision: 1,
+      sha256:
+          '69ebe0cd0d461af40be01e916a665d3fde93771ac44bfd69b9763040308a3828',
+      labelZh: '自然',
+      labelEn: 'Nature',
+      labelJa: '自然',
+      sourceName: 'Pakutaso（ぱくたそ）· pkscn030',
     ),
     PictureControlSampleScene(
-      id: 'night',
-      assetPath: 'assets/samples/pc_preview/night.jpg',
-      remoteUrl: 'https://free.picui.cn/free/13625/2026/10/29/6ae31da657361.jpg',
-      labelZh: '夜景',
-      sourceName: 'Nikon 官方样张 · Z f (Lina Trinh)',
+      id: 'sakura',
+      fileName: 'sakura.jpg',
+      revision: 2,
+      sha256:
+          'f4a70d3855c0291f1590c059f67e7858e73fbd98ad6baff73371abaed7e4eb9f',
+      labelZh: '樱花',
+      labelEn: 'Sakura',
+      labelJa: '桜',
+      sourceName: 'Pakutaso（ぱくたそ）· 120fj21329',
     ),
     PictureControlSampleScene(
       id: 'ocean',
-      assetPath: 'assets/samples/pc_preview/ocean.jpg',
-      remoteUrl: 'https://free.picui.cn/free/13625/2026/10/29/6ae31da84a470.jpg',
+      fileName: 'ocean.jpg',
+      revision: 2,
+      sha256:
+          '0cdb35e9e5e44ff1bfdb3c5fe8cbde71780328427c1c896123159be361a16638',
       labelZh: '大海',
-      sourceName: 'Nikon 官方样张 · Z 30 (morinone)',
+      labelEn: 'Ocean',
+      labelJa: '海',
+      sourceName: 'Pakutaso（ぱくたそ）· miyakojima-12666',
+    ),
+    PictureControlSampleScene(
+      id: 'sunset',
+      fileName: 'sunset.jpg',
+      revision: 1,
+      sha256:
+          '96a132562a06ae8b6d56f4b5978bd6ce9b7f682b8b9b062246843390beb5ef08',
+      labelZh: '夕日',
+      labelEn: 'Sunset',
+      labelJa: '夕日',
+      sourceName: 'Pakutaso（ぱくたそ）· SI_T8A8952',
+    ),
+    PictureControlSampleScene(
+      id: 'starry',
+      fileName: 'starry.jpg',
+      revision: 1,
+      sha256:
+          '8f224b698aa0cdf41a12c8914971dcecd4f2f9c3f33ee54b794fe5c8bacfb856',
+      labelZh: '星空',
+      labelEn: 'Starry Sky',
+      labelJa: '星空',
+      sourceName: 'Pakutaso（ぱくたそ）· hosizoraIMGL5084',
+    ),
+    PictureControlSampleScene(
+      id: 'night',
+      fileName: 'night.jpg',
+      revision: 1,
+      sha256:
+          '1e3056b8e601fa95ee5ae090c1400d9bc5f82f93c9e46ce7f5b7aeebf8c0a47a',
+      labelZh: '夜景',
+      labelEn: 'Night',
+      labelJa: '夜景',
+      sourceName: 'Nikon 官方样张 · Z f (Lina Trinh)',
     ),
     PictureControlSampleScene(
       id: 'cat',
-      assetPath: 'assets/samples/pc_preview/cat.jpg',
-      remoteUrl: 'https://free.picui.cn/free/13625/2026/10/29/6ae31da9db1b5.jpg',
+      fileName: 'cat.jpg',
+      revision: 1,
+      sha256:
+          '13e237f67750dc180d5fc523f4a5968c8e52cd6deb6867c195efe96a9a6032d9',
       labelZh: '猫咪',
+      labelEn: 'Cat',
+      labelJa: '猫',
       sourceName: 'Nikon 官方样张 · Z f (鎌田風花)',
     ),
     PictureControlSampleScene(
       id: 'food',
-      assetPath: 'assets/samples/pc_preview/food.jpg',
-      remoteUrl: 'https://free.picui.cn/free/13625/2026/10/29/6ae31daba5b65.jpg',
+      fileName: 'food.jpg',
+      revision: 1,
+      sha256:
+          '019217f59e25675eac876f918a142c2a4609bde2ae3de89070ce1f110bec0dbd',
       labelZh: '美食',
+      labelEn: 'Food',
+      labelJa: 'グルメ',
       sourceName: 'Nikon 官方样张 · Z fc (Yansu Kim)',
     ),
   ];

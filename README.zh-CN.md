@@ -300,7 +300,7 @@ Wi-Fi 与 USB 传输遵循公开的 Picture Transfer Protocol 模型：
 | [airnef](https://github.com/besi/airnef) | 断点续传状态校验思路参考，未复用其源代码 | GPL-3.0 |
 | [Shotdeck](https://github.com/Fluoro-Antimonic-Acid/Shotdeck) | 实时取景、拍摄与对象落盘确认行为参考 | GPL-3.0 |
 | [LutCameraPro](https://github.com/laodamanbaout/LutCameraPro-) | PTP/IP 取景与连接边界参考 | Apache-2.0 |
-| [1dlut-z30-filters](https://github.com/haotiandi1011-lgtm/1dlut-z30-filters) | Z 30 影调曲线负载结构与 C1–C9 回读校验参考 | MIT |
+| [1dlut-z30-filters](https://github.com/haotiandi1011-lgtm/1dlut-z30-filters) | Z 30 影调曲线负载结构、121 套社区/影调配方与 C1–C9 回读校验参考 | MIT |
 | [aero-shutter](https://github.com/subhashraveendran/aero-shutter) | Wi-Fi PTP/IP 导入行为参考 | MIT |
 | [NikonCameraControl](https://github.com/youdangshi/NikonCameraControl) | Android 遥控与传输流程参考 | MIT |
 | [SnapBridge-Enhanced](https://github.com/MXWF0/SnapBridge-Enhanced) | 尼康连接流程与交互参考 | 仓库当前未声明许可证 |
@@ -317,7 +317,8 @@ Wi-Fi 与 USB 传输遵循公开的 Picture Transfer Protocol 模型：
 | [PicSeal](https://github.com/pipiqiang/PicSeal) | 相机设备自动识别、品牌风格水印生成与 EXIF 保留参考 | MIT |
 | [camera-watermark](https://github.com/myWsq/camera-watermark) | 单反/微单 EXIF 合成相机水印与参数自定义交互参考 | MIT |
 | [zf-capture-one-helper](https://github.com/open-nikonz/zf-capture-one-helper) | 尼康 Z 系列 `_ptp._tcp` Bonjour 广播字段与 STA 无线配对握手序列参考 | Apache-2.0 |
-| [OpenAI / Anthropic API Specs](https://platform.openai.com/docs/guides/vision) | Zync AI 实时取景指导与智能识图调色 BYOK 多模态视觉接口规范兼容 | Public API Spec |
+| [openai-openapi](https://github.com/openai/openai-openapi) | Zync AI 实时取景指导与智能识图调色 OpenAI 兼容多模态接口规范参考 | MIT |
+| [anthropic-sdk-python](https://github.com/anthropics/anthropic-sdk-python) | Zync AI 实时取景指导与智能识图调色 Anthropic Messages 接口协议参考 | Apache-2.0 |
 | [Google Fonts · English Artistic Fonts](https://github.com/google/fonts) | Playfair Display、Cinzel、Caveat、JetBrains Mono 内置英文字体资源 | SIL OFL-1.1 |
 | [LXGW WenKai / Zhuque Fangsong / ZCOOL](https://github.com/lxgw/LxgwWenKai) | 云端按需艺术中文字体商店（霞鹜文楷、朱雀仿宋、站酷小薇、马善政、龙藏体、钟齐志莽行书） | SIL OFL-1.1 |
 
@@ -329,7 +330,7 @@ Wi-Fi 与 USB 传输遵循公开的 Picture Transfer Protocol 模型：
 | [NikonNP3](https://github.com/Timor88/NikonNP3) | 尼康 NP3 创意色彩配方合集与分类标签参考 | 社区共享 |
 | [nikon-flexible-color-picture-control](https://github.com/ssssota/nikon-flexible-color-picture-control) | 尼康 Flexible Color NP3（0310）二进制偏移与色彩混合器结构解析参考 | MIT |
 | [Nikon Imaging（ニコンイメージング）](https://www.nikon-image.com/) | 色彩优化近似效果预览官方样片素材（Z 30 / Z fc / Z f / Z 8 实拍样片） | Nikon 官方样片展示许可 |
-| [Pakutaso（ぱくたそ）](https://www.pakutaso.com/) | 色彩优化近似效果预览免费人像与生活样片素材备选参考 | Pakutaso 免费素材许可 |
+| [Pakutaso（ぱくたそ）](https://www.pakutaso.com/) | 色彩优化近似效果预览云端人像、街景、樱花、自然、大海、星空与夕日样片素材致谢 | Pakutaso 免费素材许可 |
 | [影视飓风（YSJF）](https://www.ysjf.com/index) | 色彩优化近似效果预览风光与自然样片素材致谢 | 免费样片素材许可 |
 
 ### 运行时与基础依赖

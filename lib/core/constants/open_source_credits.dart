@@ -75,7 +75,7 @@ const List<OpenSourceCredit> openSourceProjectCredits = [
   ),
   OpenSourceCredit(
     name: '1dlut-z30-filters',
-    description: 'Z 30 影调曲线负载结构参考',
+    description: 'Z 30 影调曲线负载结构、121 套社区/影调配方与 C1–C9 回读校验参考',
     url: 'https://github.com/haotiandi1011-lgtm/1dlut-z30-filters',
     license: 'MIT',
   ),
@@ -207,7 +207,7 @@ const List<OpenSourceCredit> openSourceProjectCredits = [
   ),
   OpenSourceCredit(
     name: 'Pakutaso (ぱくたそ)',
-    description: '色彩优化近似效果预览免费人像与生活样片素材备选参考',
+    description: '色彩优化近似效果预览云端人像、街景、樱花、自然、大海、星空与夕日样片素材致谢',
     url: 'https://www.pakutaso.com/',
     license: 'Pakutaso 免费素材许可',
   ),
@@ -224,10 +224,16 @@ const List<OpenSourceCredit> openSourceProjectCredits = [
     license: 'GPL-3.0 / CC BY-SA 4.0',
   ),
   OpenSourceCredit(
-    name: 'OpenAI / Anthropic API Specs',
-    description: 'Zync AI 实时取景指导与智能识图调色 BYOK 多模态视觉接口规范兼容',
-    url: 'https://platform.openai.com/docs/guides/vision',
-    license: 'Public API Spec',
+    name: 'openai-openapi',
+    description: 'Zync AI 实时取景指导与智能识图调色 OpenAI 兼容多模态接口规范参考',
+    url: 'https://github.com/openai/openai-openapi',
+    license: 'MIT',
+  ),
+  OpenSourceCredit(
+    name: 'anthropic-sdk-python',
+    description: 'Zync AI 实时取景指导与智能识图调色 Anthropic Messages 接口协议参考',
+    url: 'https://github.com/anthropics/anthropic-sdk-python',
+    license: 'Apache-2.0',
   ),
   OpenSourceCredit(
     name: 'Google Fonts · English Artistic Fonts',

@@ -1007,6 +1007,47 @@ class Np3Codec {
         ..add(const PictureControlCurvePoint(255, 255));
     }
     final count = math.min(20, sorted.length);
+    final lut = <int>[];
+    for (var i = 0; i < 257; i++) {
+      final t = (i / 256.0) * 255.0;
+      final yNorm =
+          _evaluateSmoothCurve(sorted.take(count).toList(), t) / 255.0;
+      lut.add((yNorm.clamp(0.0, 1.0) * 32767.0).round().clamp(0, 32767));
+    }
+    return buildCurveBlockFromLut257(
+      lut,
+      controlPoints: sorted.take(count).toList(),
+    );
+  }
+
+  /// 直接使用 257 点 15-bit LUT（0..32767）构造标准 578 字节曲线块。
+  /// 若未传入 [controlPoints]，则自动等距抽样 7 个代表点用于界面曲线图绘制。
+  static Uint8List buildCurveBlockFromLut257(
+    List<int> lut257, {
+    List<PictureControlCurvePoint>? controlPoints,
+  }) {
+    final normalizedLut = List<int>.generate(257, (i) {
+      if (lut257.isEmpty) return (i / 256.0 * 32767.0).round();
+      final idx = i < lut257.length ? i : lut257.length - 1;
+      return lut257[idx].clamp(0, 32767);
+    });
+
+    final sorted = controlPoints != null && controlPoints.length >= 2
+        ? (List<PictureControlCurvePoint>.from(controlPoints)
+          ..sort((a, b) => a.x.compareTo(b.x)))
+        : <PictureControlCurvePoint>[
+            for (final x in const [0, 42, 85, 128, 170, 213, 255])
+              PictureControlCurvePoint(
+                x,
+                (normalizedLut[(x * 256 / 255).round().clamp(0, 256)] *
+                        255.0 /
+                        32767.0)
+                    .round()
+                    .clamp(0, 255),
+              ),
+          ];
+
+    final count = math.min(20, sorted.length);
     final block = Uint8List(curveBlockLength);
 
     // Header magic 0x49, 0x30 + bounds + gamma 0x0100
@@ -1025,14 +1066,9 @@ class Np3Codec {
       block[10 + i * 2] = sorted[i].y.clamp(0, 255);
     }
 
-    // 生成 257 点 15-bit (0..32767) 平滑插值 LUT
     final bd = ByteData.sublistView(block);
     for (var i = 0; i < 257; i++) {
-      final t = (i / 256.0) * 255.0;
-      final yNorm =
-          _evaluateSmoothCurve(sorted.take(count).toList(), t) / 255.0;
-      final lutVal = (yNorm.clamp(0.0, 1.0) * 32767.0).round().clamp(0, 32767);
-      bd.setUint16(64 + i * 2, lutVal, Endian.big);
+      bd.setUint16(64 + i * 2, normalizedLut[i], Endian.big);
     }
     return block;
   }

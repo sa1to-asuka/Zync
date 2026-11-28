@@ -57,6 +57,7 @@ class PictureControlScreenState extends State<PictureControlScreen>
 
   String? _selectedItemId;
   PictureControlCategory _categoryFilter = PictureControlCategory.all;
+  bool _favoritesOnly = false;
   PictureControlBase? _baseFilter;
   String _selectedSceneId = 'portrait';
   String? _customSamplePath;
@@ -68,6 +69,9 @@ class PictureControlScreenState extends State<PictureControlScreen>
   static final Map<String, Uint8List> _originalSceneJpgCache = {};
   static final Map<String, Uint8List> _renderedPreviewCache = {};
   bool _isRenderingPreview = false;
+  bool _isSampleLoading = false;
+  bool _sampleLoadFailed = false;
+  int _lastSampleCacheVersion = 0;
 
   // 相机 C1–C9 槽位状态
   List<CameraPictureControlSlot> _cameraSlots = const [];
@@ -94,6 +98,7 @@ class PictureControlScreenState extends State<PictureControlScreen>
   }
 
   Future<void> _initStoreAndSample() async {
+    _lastSampleCacheVersion = _store.sampleCacheVersion;
     await _store.ensureInitialized();
     if (!mounted) return;
     if (_store.items.isNotEmpty && _selectedItemId == null) {
@@ -109,6 +114,12 @@ class PictureControlScreenState extends State<PictureControlScreen>
 
   void _onStoreChanged() {
     if (!mounted) return;
+    if (_store.sampleCacheVersion != _lastSampleCacheVersion) {
+      _lastSampleCacheVersion = _store.sampleCacheVersion;
+      _decodedSceneCache.removeWhere((k, _) => !k.startsWith('file:'));
+      _originalSceneJpgCache.removeWhere((k, _) => !k.startsWith('file:'));
+      _renderedPreviewCache.clear();
+    }
     final items = _store.items;
     if (items.isNotEmpty &&
         (_selectedItemId == null ||
@@ -133,14 +144,25 @@ class PictureControlScreenState extends State<PictureControlScreen>
   }
 
   List<PictureControlLibraryItem> get _filteredItems {
-    var all = _store.items;
-    if (_categoryFilter != PictureControlCategory.all) {
-      all = all.where((e) => e.category == _categoryFilter).toList();
+    Iterable<PictureControlLibraryItem> all = _store.items;
+    if (_favoritesOnly) {
+      all = all.where((e) => _store.isFavorite(e.id));
+    } else if (_categoryFilter != PictureControlCategory.all) {
+      all = all.where((e) => e.category == _categoryFilter);
     }
     if (_baseFilter != null) {
-      all = all.where((e) => e.recipe.base == _baseFilter).toList();
+      all = all.where((e) => e.recipe.base == _baseFilter);
     }
-    return all;
+    final favs = <PictureControlLibraryItem>[];
+    final others = <PictureControlLibraryItem>[];
+    for (final item in all) {
+      if (_store.isFavorite(item.id)) {
+        favs.add(item);
+      } else {
+        others.add(item);
+      }
+    }
+    return [...favs, ...others];
   }
 
   @visibleForTesting
@@ -246,16 +268,19 @@ class PictureControlScreenState extends State<PictureControlScreen>
     _triggerRenderActivePreview();
   }
 
-  Future<img.Image?> _loadBaseSampleImage() async {
+  Future<img.Image?> _loadBaseSampleImage({bool forceRefresh = false}) async {
     final cacheKey = _customSamplePath != null && _customSamplePath!.isNotEmpty
         ? 'file:$_customSamplePath'
-        : 'asset:$_selectedSceneId';
-    if (_decodedSceneCache.containsKey(cacheKey)) {
+        : 'cloud:$_selectedSceneId';
+    if (!forceRefresh && _decodedSceneCache.containsKey(cacheKey)) {
+      if (mounted && _sampleLoadFailed) {
+        setState(() => _sampleLoadFailed = false);
+      }
       return _decodedSceneCache[cacheKey];
     }
 
     try {
-      Uint8List rawBytes;
+      Uint8List? rawBytes;
       if (_customSamplePath != null && _customSamplePath!.isNotEmpty) {
         rawBytes = await File(_customSamplePath!).readAsBytes();
       } else {
@@ -263,16 +288,29 @@ class PictureControlScreenState extends State<PictureControlScreen>
           (s) => s.id == _selectedSceneId,
           orElse: () => BuiltinNp3Catalog.sampleScenes.first,
         );
-        final loaded = await _store.loadSampleSceneBytes(scene);
-        if (loaded != null && loaded.isNotEmpty) {
-          rawBytes = loaded;
-        } else {
-          final bd = await rootBundle.load(scene.assetPath);
-          rawBytes = bd.buffer.asUint8List(bd.offsetInBytes, bd.lengthInBytes);
+        if (mounted) {
+          setState(() {
+            _isSampleLoading = true;
+            _sampleLoadFailed = false;
+          });
+        }
+        rawBytes = await _store.loadSampleSceneBytes(
+          scene,
+          forceRefresh: forceRefresh,
+        );
+        if (mounted) {
+          setState(() {
+            _isSampleLoading = false;
+            _sampleLoadFailed = rawBytes == null || rawBytes.isEmpty;
+          });
         }
       }
+      if (rawBytes == null || rawBytes.isEmpty) return null;
       final decoded = img.decodeImage(rawBytes);
-      if (decoded == null) return null;
+      if (decoded == null) {
+        if (mounted) setState(() => _sampleLoadFailed = true);
+        return null;
+      }
       // 保持高清分辨率（最高 1280px），保证手机屏幕对比预览清晰不模糊
       const maxDim = 1280;
       final resized = decoded.width > maxDim || decoded.height > maxDim
@@ -285,24 +323,32 @@ class PictureControlScreenState extends State<PictureControlScreen>
           Uint8List.fromList(img.encodeJpg(resized, quality: 92));
       return resized;
     } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isSampleLoading = false;
+          _sampleLoadFailed = true;
+        });
+      }
       return null;
     }
   }
 
-  Future<void> _triggerRenderActivePreview() async {
+  Future<void> _triggerRenderActivePreview({bool forceRefresh = false}) async {
     final active = _selectedItem;
     if (active == null) return;
     final sceneKey = _customSamplePath != null && _customSamplePath!.isNotEmpty
         ? 'file:$_customSamplePath'
-        : 'asset:$_selectedSceneId';
+        : 'cloud:$_selectedSceneId';
     final renderKey = '${active.id}|${active.cameraName}|$sceneKey';
-    if (_renderedPreviewCache.containsKey(renderKey)) {
+    if (!forceRefresh &&
+        _renderedPreviewCache.containsKey(renderKey) &&
+        _originalSceneJpgCache.containsKey(sceneKey)) {
       if (mounted) setState(() {});
       return;
     }
 
     if (mounted) setState(() => _isRenderingPreview = true);
-    final baseImg = await _loadBaseSampleImage();
+    final baseImg = await _loadBaseSampleImage(forceRefresh: forceRefresh);
     if (baseImg != null) {
       final rendered = PictureControlPreviewRenderer.renderPreviewJpg(
         baseImg,
@@ -317,7 +363,7 @@ class PictureControlScreenState extends State<PictureControlScreen>
   String _activeRenderKey(PictureControlLibraryItem item) {
     final sceneKey = _customSamplePath != null && _customSamplePath!.isNotEmpty
         ? 'file:$_customSamplePath'
-        : 'asset:$_selectedSceneId';
+        : 'cloud:$_selectedSceneId';
     return '${item.id}|${item.cameraName}|$sceneKey';
   }
 
@@ -1149,17 +1195,16 @@ class PictureControlScreenState extends State<PictureControlScreen>
     final zt = context.zt;
     final l10n = context.l10n;
     final active = _selectedItem;
-    final currentScene = BuiltinNp3Catalog.sampleScenes.firstWhere(
-      (s) => s.id == _selectedSceneId,
-      orElse: () => BuiltinNp3Catalog.sampleScenes.first,
-    );
 
     final sceneKey = _customSamplePath != null && _customSamplePath!.isNotEmpty
         ? 'file:$_customSamplePath'
-        : 'asset:$_selectedSceneId';
+        : 'cloud:$_selectedSceneId';
     final origBytes = _originalSceneJpgCache[sceneKey];
     final renderedBytes =
         active != null ? _renderedPreviewCache[_activeRenderKey(active)] : null;
+
+    final hasSampleImage = origBytes != null ||
+        (_customSamplePath != null && _customSamplePath!.isNotEmpty);
 
     Widget origLayer = origBytes != null
         ? Image.memory(
@@ -1176,12 +1221,7 @@ class PictureControlScreenState extends State<PictureControlScreen>
                 width: double.infinity,
                 height: double.infinity,
               )
-            : Image.asset(
-                currentScene.assetPath,
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: double.infinity,
-              ));
+            : Container(color: zc.surfaceHigh));
 
     Widget presetLayer;
     if (renderedBytes != null) {
@@ -1290,6 +1330,83 @@ class PictureControlScreenState extends State<PictureControlScreen>
                       ),
                     ),
                   ),
+
+                  // 4.5 无样片时的加载中 / 离线重试浮层（仅单份居中展示）
+                  if (!hasSampleImage)
+                    Positioned.fill(
+                      child: Container(
+                        color: zc.surfaceHigh.withAlpha(235),
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.fromLTRB(
+                          ZSpace.lg,
+                          36,
+                          ZSpace.lg,
+                          ZSpace.md,
+                        ),
+                        child: _isSampleLoading
+                            ? Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: zc.accent,
+                                    ),
+                                  ),
+                                  const SizedBox(height: ZSpace.xs),
+                                  Text(
+                                    l10n.pcSampleDownloading,
+                                    style: zt.caption
+                                        .copyWith(color: zc.textSecondary),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              )
+                            : Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.cloud_off_rounded,
+                                    size: 24,
+                                    color: zc.textTertiary,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    l10n.pcSampleOfflineHint,
+                                    style: zt.caption
+                                        .copyWith(color: zc.textSecondary),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: ZSpace.sm),
+                                  Wrap(
+                                    spacing: ZSpace.xs,
+                                    children: [
+                                      ZButton(
+                                        label: l10n.pcSampleRetryAction,
+                                        icon: Icons.refresh_rounded,
+                                        size: ZButtonSize.sm,
+                                        variant: ZButtonVariant.secondary,
+                                        onTap: () => _triggerRenderActivePreview(
+                                          forceRefresh: true,
+                                        ),
+                                      ),
+                                      ZButton(
+                                        label: l10n.pcPickCustomSampleAction,
+                                        icon: Icons.add_photo_alternate_outlined,
+                                        size: ZButtonSize.sm,
+                                        variant: ZButtonVariant.ghost,
+                                        onTap: _pickCustomSampleImage,
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ),
 
                   // 5. 左上角：原图标签
                   Positioned(
@@ -1416,7 +1533,7 @@ class PictureControlScreenState extends State<PictureControlScreen>
                     ),
                     alignment: Alignment.center,
                     child: Text(
-                      L10n.tr(scene.labelZh, lang),
+                      scene.localizedLabel(lang),
                       style: zt.caption.copyWith(
                         color: selected ? zc.accent : zc.textSecondary,
                         fontWeight:
@@ -1483,6 +1600,7 @@ class PictureControlScreenState extends State<PictureControlScreen>
 
     final recipe = active.recipe;
     final lut256 = PictureControlPreviewRenderer.buildToneLut256(recipe);
+    final isFav = _store.isFavorite(active.id);
 
     return ZCard(
       padding: const EdgeInsets.all(ZSpace.md),
@@ -1505,6 +1623,15 @@ class PictureControlScreenState extends State<PictureControlScreen>
                   ],
                 ),
               ),
+              ZIconButton(
+                icon: isFav ? Icons.star_rounded : Icons.star_outline_rounded,
+                size: 32,
+                iconSize: 18,
+                color: isFav ? zc.accent : zc.textSecondary,
+                tooltip: isFav ? l10n.pcUnfavoriteAction : l10n.pcFavoriteAction,
+                onTap: () => _store.toggleFavorite(active.id),
+              ),
+              const SizedBox(width: ZSpace.xs),
               ZTag(
                 text: switch (recipe.format) {
                   PictureControlFormat.np3Standard => 'NP3 · 0300',
@@ -1790,7 +1917,16 @@ class PictureControlScreenState extends State<PictureControlScreen>
         Expanded(
           child: items.isEmpty
               ? Center(
-                  child: Text(l10n.commonNone, style: zt.bodySmall),
+                  child: Padding(
+                    padding: const EdgeInsets.all(ZSpace.lg),
+                    child: Text(
+                      _favoritesOnly
+                          ? l10n.pcFavoritesEmptyHint
+                          : l10n.commonNone,
+                      style: zt.bodySmall.copyWith(color: zc.textSecondary),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                 )
               : isPaged
                   ? _buildPagedLibraryView(context, items)
@@ -1902,18 +2038,106 @@ class PictureControlScreenState extends State<PictureControlScreen>
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
-          for (final cat in PictureControlCategory.values) ...[
+          for (final cat in [PictureControlCategory.all]) ...[
             Builder(builder: (ctx) {
-              final selected = _categoryFilter == cat;
-              final count = cat == PictureControlCategory.all
-                  ? _store.items.length
-                  : _store.items.where((e) => e.category == cat).length;
+              final selected = !_favoritesOnly && _categoryFilter == cat;
+              final count = _store.items.length;
               return Padding(
                 padding: const EdgeInsets.only(right: 6),
                 child: InkWell(
                   borderRadius: ZRadius.brPill,
                   onTap: () {
                     setState(() {
+                      _favoritesOnly = false;
+                      _categoryFilter = cat;
+                      _libCurrentPage = 0;
+                    });
+                  },
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: selected ? zc.accentContainer : zc.surfaceHigh,
+                      borderRadius: ZRadius.brPill,
+                      border: Border.all(
+                        color: selected ? zc.accent : zc.outline,
+                        width: 0.8,
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '${getCategoryLabel(cat)} ($count)',
+                      style: zt.caption.copyWith(
+                        color: selected ? zc.accent : zc.textSecondary,
+                        fontWeight:
+                            selected ? FontWeight.w700 : FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ],
+          // 我的收藏筛选标签
+          Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: InkWell(
+              key: const ValueKey<String>('pc_filter_favorites'),
+              borderRadius: ZRadius.brPill,
+              onTap: () {
+                setState(() {
+                  _favoritesOnly = !_favoritesOnly;
+                  _libCurrentPage = 0;
+                });
+              },
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                decoration: BoxDecoration(
+                  color: _favoritesOnly ? zc.accentContainer : zc.surfaceHigh,
+                  borderRadius: ZRadius.brPill,
+                  border: Border.all(
+                    color: _favoritesOnly ? zc.accent : zc.outline,
+                    width: 0.8,
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _favoritesOnly
+                          ? Icons.star_rounded
+                          : Icons.star_outline_rounded,
+                      size: 13,
+                      color: _favoritesOnly ? zc.accent : zc.textSecondary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${l10n.pcFilterFavorites} (${_store.favoriteCount})',
+                      style: zt.caption.copyWith(
+                        color: _favoritesOnly ? zc.accent : zc.textSecondary,
+                        fontWeight:
+                            _favoritesOnly ? FontWeight.w700 : FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          for (final cat in PictureControlCategory.values
+              .where((c) => c != PictureControlCategory.all)) ...[
+            Builder(builder: (ctx) {
+              final selected = !_favoritesOnly && _categoryFilter == cat;
+              final count = _store.items.where((e) => e.category == cat).length;
+              return Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: InkWell(
+                  borderRadius: ZRadius.brPill,
+                  onTap: () {
+                    setState(() {
+                      _favoritesOnly = false;
                       _categoryFilter = cat;
                       _libCurrentPage = 0;
                     });
@@ -2235,7 +2459,7 @@ class PictureControlScreenState extends State<PictureControlScreen>
                 ),
               ],
               const SizedBox(height: ZSpace.sm),
-              // 底部统一操作按钮行：写入相机 C1–C9 + 重命名/分享/删除
+              // 底部统一操作按钮行：写入相机 C1–C9 + 收藏/重命名/分享/移除
               Row(
                 children: [
                   Expanded(
@@ -2248,20 +2472,43 @@ class PictureControlScreenState extends State<PictureControlScreen>
                   ),
                   const SizedBox(width: ZSpace.xs),
                   ZIconButton(
+                    key: ValueKey<String>('pc_fav_${item.id}'),
+                    icon: _store.isFavorite(item.id)
+                        ? Icons.star_rounded
+                        : Icons.star_outline_rounded,
+                    size: 34,
+                    iconSize: 18,
+                    color: _store.isFavorite(item.id)
+                        ? zc.accent
+                        : zc.textSecondary,
+                    tooltip: _store.isFavorite(item.id)
+                        ? l10n.pcUnfavoriteAction
+                        : l10n.pcFavoriteAction,
+                    onTap: () => _store.toggleFavorite(item.id),
+                  ),
+                  const SizedBox(width: 2),
+                  ZIconButton(
                     icon: Icons.drive_file_rename_outline_rounded,
+                    size: 34,
+                    iconSize: 18,
                     tooltip: l10n.pcRenameAction,
                     onTap: () => _showRenameDialog(item),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 2),
                   ZIconButton(
                     icon: Icons.ios_share_rounded,
+                    size: 34,
+                    iconSize: 18,
                     tooltip: l10n.pcShareAction,
                     onTap: () => _shareRecipeItem(item),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 2),
                   ZIconButton(
+                    key: ValueKey<String>('pc_remove_${item.id}'),
                     icon: Icons.delete_outline_rounded,
-                    tooltip: l10n.commonDelete,
+                    size: 34,
+                    iconSize: 18,
+                    tooltip: l10n.pcRemoveAction,
                     onTap: () => _showDeleteConfirmDialog(item),
                   ),
                 ],
